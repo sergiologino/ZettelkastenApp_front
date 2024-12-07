@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { ReactFlowProvider } from "reactflow";
 import GraphBoard from "./components/GraphBoard";
 import ProjectPanel from "./components/ProjectPanel";
 import { fetchProjects, fetchNotes } from "./api/api";
+import { ReactFlowProvider } from "reactflow";
 
 const App = () => {
   const [notes, setNotes] = useState([]);
   const [projects, setProjects] = useState([]);
-  const [selectedProjectId, setSelectedProjectId] = React.useState(null);
+  const [selectedProjectId, setSelectedProjectId] = useState(null);
 
   useEffect(() => {
     const loadProjects = async () => {
@@ -40,28 +40,27 @@ const App = () => {
   };
 
   return (
-      <ReactFlowProvider>
+
       <div style={{ display: "flex", height: "100vh" }}>
         <ProjectPanel
             projects={projects}
             onSelect={handleProjectSelect}
         />
-
+        <ReactFlowProvider>
         {selectedProjectId ? (
             <GraphBoard
                 notes={notes}
                 onUpdateNote={handleUpdateNote}
                 projects={projects} // Передаём projects в GraphBoard
-
-            />
+           />
             ):(
             <div style={{ flex: 1, display: "flex", justifyContent: "center", alignItems: "center" }}>
               <h3>Выберите проект, чтобы увидеть граф заметок</h3>
             </div>
         )}
-
-      </div>
       </ReactFlowProvider>
+      </div>
+
   );
 };
 

@@ -18,7 +18,7 @@ const NoteModal = ({
                        open,
                        onClose,
                        onSave,
-                       projects = projects, // Значение по умолчанию,
+                       projects = [], // Значение по умолчанию,
                        isGlobalAnalysisEnabled,
                        note ={ content: "", tags: [] }, // Значение по умолчанию, // Значение по умолчанию
                    }) => {

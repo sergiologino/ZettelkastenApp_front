@@ -1,60 +1,82 @@
 import React, { useState, useEffect } from "react";
 import ReactFlow, { MiniMap, Controls, Background } from "reactflow";
-import NoteModal from "./NoteModal";
 import "reactflow/dist/style.css";
+import NoteModal from "./NoteModal";
+
 
 const GraphBoard = ({ notes, onUpdateNote }) => {
     const [nodes, setNodes] = useState([]);
     const [edges, setEdges] = useState([]);
-    const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedNote, setSelectedNote] = useState(null);
-    const [selectedProject,setSelectedProject] = useState();
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
-    useEffect(() => {
-        // Обновляем узлы и связи при изменении заметок
-        setNodes(
-            notes.map((note, index) => ({
-                id: note.id,
-                data: {
-                    label: (
-                        <div>
-                            <div>{note.content}</div>
-                            <div style={{ marginTop: 8 }}>
-                                {note.tags?.map((tag) => (
-                                    <span
-                                        key={tag}
-                                        style={{
-                                            fontSize: "0.8rem",
-                                            border: "1px solid #ccc",
-                                            borderRadius: "4px",
-                                            padding: "2px 4px",
-                                            marginRight: "4px",
-                                            color: getColorForTag(tag),
-                                        }}
-                                    >
-                    {tag}
-                  </span>
-                                ))}
-                            </div>
-                        </div>
-                    ),
-                },
-                position: { x: note.x || index * 200, y: note.y || index * 100 },
-                style: {
-                    background: "#fff",
-                    borderRadius: "8px",
-                    padding: "8px",
-                    border: "1px solid #ccc",
-                },
-            }))
+
+    const onNodeDragStop = (_, node) => {
+        const updatedNodes = nodes.map((n) =>
+            n.id === node.id ? { ...n, position: node.position } : n
         );
+        setNodes(updatedNodes);
 
-        setEdges(getEdges(notes));
+        // Обновляем координаты заметки на сервере
+        const movedNote = notes.find((note) => note.id === node.id);
+        if (movedNote) {
+            onUpdateNote({
+                ...movedNote,
+                x: node.position.x,
+                y: node.position.y,
+            });
+        }
+    };
+
+   useEffect(() => {
+        // Обновляем узлы и связи при изменении заметок
+       setNodes(
+           notes.map((note, index) => ({
+               id: note.id,
+               data: {
+                   label: (
+                       <div>
+                           <div>{note.content}</div>
+                           <div style={{ marginTop: 8 }}>
+                               {note.tags?.map((tag) => (
+                                   <span
+                                       key={tag}
+                                       style={{
+                                           fontSize: "0.8rem",
+                                           border: "1px solid #ccc",
+                                           borderRadius: "4px",
+                                           padding: "2px 4px",
+                                           marginRight: "4px",
+                                           color: getColorForTag(tag),
+                                       }}
+                                   >
+                                    {tag}
+                                </span>
+                               ))}
+                           </div>
+                       </div>
+                   ),
+               },
+               position: { x: note.x || index * 200, y: note.y || index * 100 },
+               style: {
+                   background: "#fff",
+                   borderRadius: "8px",
+                   padding: "8px",
+                   border: "1px solid #ccc",
+               },
+           }))
+       );
+
+       setEdges(getEdges(notes));
     }, [notes]);
 
-    const handleNodeClick = (_, node) => {
+    const handleNodeClick = (event, node) => {
         const note = notes.find((n) => n.id === node.id);
-        setSelectedNote(note || {});
+        if (!note) {
+            console.error("Заметка не найдена:", node.id);
+            return;
+        }
+        setSelectedNote(note);
         setIsModalOpen(true);
     };
 
@@ -69,26 +91,26 @@ const GraphBoard = ({ notes, onUpdateNote }) => {
                 nodes={nodes}
                 edges={edges}
                 fitView
-                onNodeClick={handleNodeClick} // Добавляем обработчик клика
+                onNodeClick={handleNodeClick} // Добавляем обработчик клика>
+                onNodeDragStop={onNodeDragStop} // Обработчик перемещения узлов
             >
                 <MiniMap />
                 <Controls />
                 <Background gap={16} size={0.5} color="#ddd" />
             </ReactFlow>
-
             {isModalOpen && (
                 <NoteModal
                     open={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
                     onSave={handleSaveNote}
                     note={selectedNote}
-                    projects={selectedProject}
-                    isGlobalAnalysisEnabled={false}
                 />
             )}
         </div>
     );
 };
+
+
 
 const getEdges = (notes) => {
     const edges = [];
@@ -124,5 +146,7 @@ const getColorForTag = (tag) => {
     const colors = ["#FF5733", "#33FF57", "#3357FF", "#F333FF", "#FF5733"];
     return colors[hash % colors.length];
 };
+
+
 
 export default GraphBoard;
