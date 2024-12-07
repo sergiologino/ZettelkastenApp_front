@@ -3,12 +3,16 @@ import ReactFlow, { MiniMap, Controls, Background } from "reactflow";
 import "reactflow/dist/style.css";
 
 const GraphBoard = ({ notes }) => {
+    console.log("Полученные заметки в GraphBoard:", notes); // Логируем входящие заметки
+
     const nodes = notes.map((note, index) => ({
         id: note.id,
         data: { label: note.content },
         position: { x: note.x || index * 200, y: note.y || index * 100 },
         style: { background: "#fff", borderRadius: "8px", padding: "8px", border: "1px solid #ccc" },
     }));
+
+    console.log("Сгенерированные узлы:", nodes); // Логируем узлы
 
     const edges = [];
     notes.forEach((noteA, indexA) => {
@@ -27,6 +31,8 @@ const GraphBoard = ({ notes }) => {
             }
         });
     });
+
+    console.log("Сгенерированные связи:", edges); // Логируем связи
 
     return (
         <div style={{ width: "100%", height: "100%" }}>

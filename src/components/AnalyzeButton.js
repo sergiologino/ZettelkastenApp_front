@@ -6,8 +6,13 @@ const AnalyzeButton = ({ selectedNotes, onAnalyze }) => {
         <Button
             variant="contained"
             color="primary"
-            onClick={() => onAnalyze(selectedNotes)}
             disabled={selectedNotes.length === 0}
+            onClick={() => onAnalyze(selectedNotes)}
+            sx={{
+                position: "fixed",
+                bottom: "16px",
+                left: "16px",
+            }}
         >
             Отправить на анализ
         </Button>

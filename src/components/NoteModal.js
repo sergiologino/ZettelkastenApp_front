@@ -5,74 +5,103 @@ import {
     Modal,
     TextField,
     Typography,
-    IconButton,
+    Select,
+    MenuItem,
+    FormControl,
+    InputLabel,
+    Switch,
+    FormControlLabel,
 } from "@mui/material";
 import AttachFileIcon from "@mui/icons-material/AttachFile";
 
-const NoteModal = ({ open, onClose, onSave }) => {
+const NoteModal = ({ open, onClose, onSave, projects, isGlobalAnalysisEnabled }) => {
     const [content, setContent] = useState("");
     const [file, setFile] = useState(null);
+    const [selectedProject, setSelectedProject] = useState("");
+    const [individualAnalysisFlag, setIndividualAnalysisFlag] = useState(isGlobalAnalysisEnabled);
+    const [tags, setTags] = useState(note.tags || []);
 
     const handleFileChange = (e) => {
         setFile(e.target.files[0]);
     };
 
+    const handleAddTag = () => {
+        if (newTag.trim() && !tags.includes(newTag.trim())) {
+            setTags([...tags, newTag.trim()]);
+            setNewTag("");
+        }
+    };
+
+    const handleDeleteTag = (tagToDelete) => {
+        setTags(tags.filter((tag) => tag !== tagToDelete));
+    };
+
+
     const handleSave = () => {
-        onSave({ content, file });
+
+        if (!content.trim()) {
+            alert("Текст заметки не может быть пустым.");
+            return;
+
+        }
+
+        if (!selectedProject) {
+            alert("Выберите проект.");
+            return;
+        }
+
+        onSave({ content, file, projectId: selectedProject, individualAnalysisFlag, tags });
         setContent("");
         setFile(null);
+        setSelectedProject("");
+        setIndividualAnalysisFlag(isGlobalAnalysisEnabled);
         onClose();
     };
 
     return (
-        <Modal
-            open={open}
-            onClose={onClose}
-            aria-labelledby="modal-title"
-            aria-describedby="modal-description"
-        >
-            <Box
-                sx={{
-                    position: "absolute",
-                    top: "50%",
-                    left: "50%",
-                    transform: "translate(-50%, -50%)",
-                    width: 400,
-                    bgcolor: "background.paper",
-                    boxShadow: 24,
-                    p: 4,
-                    borderRadius: 2,
-                }}
-            >
-                <Typography id="modal-title" variant="h6" component="h2">
-                    Добавить заметку
-                </Typography>
+        <Dialog open={open} onClose={onClose} fullWidth>
+            <DialogTitle>{note.id ? "Редактировать заметку" : "Новая заметка"}</DialogTitle>
+            <DialogContent>
                 <TextField
                     fullWidth
-                    margin="normal"
                     label="Текст заметки"
-                    multiline
-                    rows={4}
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
+                    multiline
+                    rows={4}
+                    sx={{ marginBottom: 2 }}
                 />
-                <Box display="flex" alignItems="center" justifyContent="space-between">
-                    <Button variant="contained" component="label" startIcon={<AttachFileIcon />}>
-                        Загрузить файл
-                        <input type="file" hidden onChange={handleFileChange} />
-                    </Button>
-                    {file && <Typography>{file.name}</Typography>}
-                </Box>
-                <Box mt={2} display="flex" justifyContent="space-between">
-                    <Button onClick={onClose} color="secondary">
-                        Отмена
-                    </Button>
-                    <Button onClick={handleSave} variant="contained" color="primary">
-                        Сохранить
+                <Box>
+                    <TextField
+                        label="Добавить тег"
+                        value={newTag}
+                        onChange={(e) => setNewTag(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && handleAddTag()}
+                        sx={{ marginRight: 2 }}
+                    />
+                    <Button variant="contained" onClick={handleAddTag}>
+                        Добавить
                     </Button>
                 </Box>
-            </Box>
-        </Modal>
+                <Box sx={{ marginTop: 2, display: "flex", flexWrap: "wrap", gap: 1 }}>
+                    {tags.map((tag) => (
+                        <Chip
+                            key={tag}
+                            label={tag}
+                            onDelete={() => handleDeleteTag(tag)}
+                            color="primary"
+                            variant="outlined"
+                        />
+                    ))}
+                </Box>
+            </DialogContent>
+            <DialogActions>
+                <Button onClick={onClose}>Отмена</Button>
+                <Button variant="contained" onClick={handleSave}>
+                    Сохранить
+                </Button>
+            </DialogActions>
+        </Dialog>
     );
 };
 
