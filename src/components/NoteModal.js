@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
     Box,
     Button,
@@ -11,15 +11,31 @@ import {
     InputLabel,
     Switch,
     FormControlLabel,
+    Chip,
 } from "@mui/material";
-import AttachFileIcon from "@mui/icons-material/AttachFile";
 
-const NoteModal = ({ open, onClose, onSave, projects, isGlobalAnalysisEnabled }) => {
-    const [content, setContent] = useState("");
+const NoteModal = ({
+                       open,
+                       onClose,
+                       onSave,
+                       projects = [], // Значение по умолчанию,
+                       isGlobalAnalysisEnabled,
+                       note ={ content: "", tags: [] }, // Значение по умолчанию, // Значение по умолчанию
+                   }) => {
+    const [content, setContent] = useState(note.content || "");
     const [file, setFile] = useState(null);
-    const [selectedProject, setSelectedProject] = useState("");
-    const [individualAnalysisFlag, setIndividualAnalysisFlag] = useState(isGlobalAnalysisEnabled);
-    const [tags, setTags] = useState(note.tags || []);
+    const [selectedProject, setSelectedProject] = useState(note.projectId || "");
+    const [individualAnalysisFlag, setIndividualAnalysisFlag] = useState(
+        isGlobalAnalysisEnabled
+    );
+    const [tags, setTags] = useState(note?.tags || []); // Безопасный доступ к tags
+    const [newTag, setNewTag] = useState("");
+    console.log("Список проектов в NoteModal:", projects);
+
+    useEffect(() => {
+        // Обновляем состояние tags, если note изменился
+        setTags(note?.tags || []);
+    }, [note]);
 
     const handleFileChange = (e) => {
         setFile(e.target.files[0]);
@@ -36,13 +52,10 @@ const NoteModal = ({ open, onClose, onSave, projects, isGlobalAnalysisEnabled })
         setTags(tags.filter((tag) => tag !== tagToDelete));
     };
 
-
     const handleSave = () => {
-
         if (!content.trim()) {
             alert("Текст заметки не может быть пустым.");
             return;
-
         }
 
         if (!selectedProject) {
@@ -50,7 +63,15 @@ const NoteModal = ({ open, onClose, onSave, projects, isGlobalAnalysisEnabled })
             return;
         }
 
-        onSave({ content, file, projectId: selectedProject, individualAnalysisFlag, tags });
+        onSave({
+            id: note.id || null,
+            content,
+            file,
+            projectId: selectedProject,
+            individualAnalysisFlag,
+            tags,
+        });
+
         setContent("");
         setFile(null);
         setSelectedProject("");
@@ -59,17 +80,50 @@ const NoteModal = ({ open, onClose, onSave, projects, isGlobalAnalysisEnabled })
     };
 
     return (
-        <Dialog open={open} onClose={onClose} fullWidth>
-            <DialogTitle>{note.id ? "Редактировать заметку" : "Новая заметка"}</DialogTitle>
-            <DialogContent>
+        <Modal
+            open={open}
+            onClose={onClose}
+            aria-labelledby="modal-title"
+            aria-describedby="modal-description"
+        >
+            <Box
+                sx={{
+                    position: "absolute",
+                    top: "50%",
+                    left: "50%",
+                    transform: "translate(-50%, -50%)",
+                    width: 400,
+                    bgcolor: "background.paper",
+                    boxShadow: 24,
+                    p: 4,
+                    borderRadius: 2,
+                }}
+            >
+                <Typography id="modal-title" variant="h6" component="h2">
+                    {note.id ? "Редактировать заметку" : "Добавить заметку"}
+                </Typography>
+                <FormControl fullWidth margin="normal">
+                    <InputLabel id="project-select-label">Проект</InputLabel>
+                    <Select
+                        labelId="project-select-label"
+                        value={selectedProject}
+                        onChange={(e) => setSelectedProject(e.target.value)}
+                    >
+                        {projects?.map((project) => (
+                            <MenuItem key={project.id} value={project.id}>
+                                {project.name}
+                            </MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
                 <TextField
                     fullWidth
+                    margin="normal"
                     label="Текст заметки"
-                    value={content}
-                    onChange={(e) => setContent(e.target.value)}
                     multiline
                     rows={4}
-                    sx={{ marginBottom: 2 }}
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
                 />
                 <Box>
                     <TextField
@@ -84,7 +138,7 @@ const NoteModal = ({ open, onClose, onSave, projects, isGlobalAnalysisEnabled })
                     </Button>
                 </Box>
                 <Box sx={{ marginTop: 2, display: "flex", flexWrap: "wrap", gap: 1 }}>
-                    {tags.map((tag) => (
+                    {tags?.map((tag) => ( // Безопасный доступ к tags
                         <Chip
                             key={tag}
                             label={tag}
@@ -94,14 +148,26 @@ const NoteModal = ({ open, onClose, onSave, projects, isGlobalAnalysisEnabled })
                         />
                     ))}
                 </Box>
-            </DialogContent>
-            <DialogActions>
-                <Button onClick={onClose}>Отмена</Button>
-                <Button variant="contained" onClick={handleSave}>
-                    Сохранить
-                </Button>
-            </DialogActions>
-        </Dialog>
+                <FormControlLabel
+                    control={
+                        <Switch
+                            checked={individualAnalysisFlag}
+                            onChange={(e) => setIndividualAnalysisFlag(e.target.checked)}
+                        />
+                    }
+                    label="Отправить на анализ"
+                    sx={{ marginTop: "16px" }}
+                />
+                <Box mt={2} display="flex" justifyContent="space-between">
+                    <Button onClick={onClose} color="secondary">
+                        Отмена
+                    </Button>
+                    <Button onClick={handleSave} variant="contained" color="primary">
+                        Сохранить
+                    </Button>
+                </Box>
+            </Box>
+        </Modal>
     );
 };
 

@@ -1,9 +1,19 @@
-import React from "react";
+import React, { useState } from "react";
 import ReactFlow, { MiniMap, Controls, Background } from "reactflow";
 import "reactflow/dist/style.css";
+import NoteModal from "./NoteModal";
 
-const GraphBoard = ({ notes }) => {
-    console.log("Полученные заметки в GraphBoard:", notes); // Логируем входящие заметки
+const GraphBoard = ({ notes, onUpdateNote, projects }) => {
+    const [selectedNote, setSelectedNote] = useState(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
+    const handleNodeClick = (event, node) => {
+        const note = notes.find((n) => n.id === node.id);
+        console.log("Клик по заметке:", note); // Логируем выбранную заметку
+        setSelectedNote(note || {}); // Если заметка не найдена, передаём пустой объект
+        console.log("Выбранная заметка:", selectedNote);
+        setIsModalOpen(true);
+    };
 
     const nodes = notes.map((note, index) => ({
         id: note.id,
@@ -11,8 +21,6 @@ const GraphBoard = ({ notes }) => {
         position: { x: note.x || index * 200, y: note.y || index * 100 },
         style: { background: "#fff", borderRadius: "8px", padding: "8px", border: "1px solid #ccc" },
     }));
-
-    console.log("Сгенерированные узлы:", nodes); // Логируем узлы
 
     const edges = [];
     notes.forEach((noteA, indexA) => {
@@ -32,15 +40,31 @@ const GraphBoard = ({ notes }) => {
         });
     });
 
-    console.log("Сгенерированные связи:", edges); // Логируем связи
-
     return (
         <div style={{ width: "100%", height: "100%" }}>
-            <ReactFlow nodes={nodes} edges={edges} fitView>
+            <ReactFlow
+                nodes={nodes}
+                edges={edges}
+                fitView
+                onNodeClick={handleNodeClick} // Добавляем обработчик клика
+            >
                 <MiniMap />
                 <Controls />
                 <Background gap={16} size={0.5} color="#ddd" />
             </ReactFlow>
+            {isModalOpen && (
+                <NoteModal
+                    open={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    onSave={(updatedNote) => {
+                        onUpdateNote(updatedNote);
+                        setIsModalOpen(false);
+                    }}
+                    note={selectedNote} // Убедитесь, что передаётся `selectedNote`
+                    projects={projects}
+                    isGlobalAnalysisEnabled={false}
+                />
+            )}
         </div>
     );
 };

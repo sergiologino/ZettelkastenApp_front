@@ -32,6 +32,12 @@ const App = () => {
     }
   };
 
+  const handleUpdateNote = (updatedNote) => {
+    setNotes((prevNotes) =>
+        prevNotes.map((note) => (note.id === updatedNote.id ? updatedNote : note))
+    );
+  };
+
   return (
       <div style={{ display: "flex", height: "100vh" }}>
         <ProjectPanel
@@ -39,8 +45,12 @@ const App = () => {
             onSelect={handleProjectSelect}
         />
         {selectedProjectId ? (
-            <GraphBoard notes={notes} />
-        ) : (
+            <GraphBoard
+                notes={notes}
+                onUpdateNote={handleUpdateNote}
+                projects={projects} // Передаём projects в GraphBoard
+           />
+            ):(
             <div style={{ flex: 1, display: "flex", justifyContent: "center", alignItems: "center" }}>
               <h3>Выберите проект, чтобы увидеть граф заметок</h3>
             </div>
