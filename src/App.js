@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import GraphBoard from "./components/GraphBoard";
 import ProjectPanel from "./components/ProjectPanel";
 import { fetchProjects, fetchNotes } from "./api/api";
+import { ReactFlowProvider } from "reactflow";
 
 const App = () => {
   const [notes, setNotes] = useState([]);
@@ -39,11 +40,13 @@ const App = () => {
   };
 
   return (
+
       <div style={{ display: "flex", height: "100vh" }}>
         <ProjectPanel
             projects={projects}
             onSelect={handleProjectSelect}
         />
+        <ReactFlowProvider>
         {selectedProjectId ? (
             <GraphBoard
                 notes={notes}
@@ -55,7 +58,9 @@ const App = () => {
               <h3>Выберите проект, чтобы увидеть граф заметок</h3>
             </div>
         )}
+      </ReactFlowProvider>
       </div>
+
   );
 };
 
