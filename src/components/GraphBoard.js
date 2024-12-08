@@ -4,7 +4,7 @@ import "reactflow/dist/style.css";
 import NoteModal from "./NoteModal";
 
 
-const GraphBoard = ({ notes, onUpdateNote }) => {
+const GraphBoard = ({ notes, onUpdateNote,projects }) => {
     const [nodes, setNodes] = useState([]);
     const [edges, setEdges] = useState([]);
     const [selectedNote, setSelectedNote] = useState(null);
@@ -104,6 +104,7 @@ const GraphBoard = ({ notes, onUpdateNote }) => {
                     onClose={() => setIsModalOpen(false)}
                     onSave={handleSaveNote}
                     note={selectedNote}
+                    projects={projects} // Передаём список проектов
                 />
             )}
         </div>

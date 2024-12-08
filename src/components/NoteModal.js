@@ -34,7 +34,12 @@ const NoteModal = ({
 
     useEffect(() => {
         // Обновляем состояние tags, если note изменился
-        setTags(note?.tags || []);
+        //setTags(note?.tags || []);
+        if (note) {
+            setContent(note.content || "");
+            setSelectedProject(note.projectId || "");
+            setTags(note?.tags || []);
+        }
     }, [note]);
 
     const handleFileChange = (e) => {
