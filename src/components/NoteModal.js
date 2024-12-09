@@ -20,7 +20,7 @@ const NoteModal = ({
                        onSave,
                        projects = [], // Значение по умолчанию,
                        isGlobalAnalysisEnabled,
-                       note ={ content: "", tags: [] }, // Значение по умолчанию, // Значение по умолчанию
+                       note =null, // Значение по умолчанию, // Значение по умолчанию
                    }) => {
     const [content, setContent] = useState(note.content || "");
     const [file, setFile] = useState(null);
@@ -33,12 +33,16 @@ const NoteModal = ({
     console.log("Список проектов в NoteModal:", projects);
 
     useEffect(() => {
-        // Обновляем состояние tags, если note изменился
-        setTags(note?.tags || []);
+        if (note) { // Обновляем состояние tags, если note изменился
+            setTags(note?.tags || []);
+            setContent(note.content || "");
+            setSelectedProject(note.projectId || "");
+        }
     }, [note]);
 
     const handleFileChange = (e) => {
         setFile(e.target.files[0]);
+
     };
 
     const handleAddTag = () => {

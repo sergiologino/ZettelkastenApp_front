@@ -4,12 +4,11 @@ import "reactflow/dist/style.css";
 import NoteModal from "./NoteModal";
 
 
-const GraphBoard = ({ notes, onUpdateNote,projects }) => {
+const GraphBoard = ({ notes, onUpdateNote,projects, onCreateNote }) => {
     const [nodes, setNodes] = useState([]);
     const [edges, setEdges] = useState([]);
     const [selectedNote, setSelectedNote] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
-
 
     const onNodeDragStop = (_, node) => {
         const updatedNodes = nodes.map((n) =>
@@ -81,12 +80,18 @@ const GraphBoard = ({ notes, onUpdateNote,projects }) => {
     };
 
     const handleSaveNote = (updatedNote) => {
-        onUpdateNote(updatedNote);
+        if (updatedNote.id) {
+            // Обновление существующей заметки
+            onUpdateNote(updatedNote);
+        } else {
+            // Создание новой заметки
+            onCreateNote(updatedNote);
+        }
         setIsModalOpen(false);
     };
 
     return (
-        <div style={{ width: "100%", height: "100%" }}>
+        <div style={{width: "100%", height: "100%"}}>
             <ReactFlow
                 nodes={nodes}
                 edges={edges}
@@ -94,10 +99,31 @@ const GraphBoard = ({ notes, onUpdateNote,projects }) => {
                 onNodeClick={handleNodeClick} // Добавляем обработчик клика>
                 onNodeDragStop={onNodeDragStop} // Обработчик перемещения узлов
             >
-                <MiniMap />
-                <Controls />
-                <Background gap={16} size={0.5} color="#ddd" />
+                <MiniMap/>
+                <Controls/>
+                <Background gap={16} size={0.5} color="#ddd"/>
             </ReactFlow>
+            <button
+                onClick={() => {
+                    setSelectedNote(null);
+                    setIsModalOpen(true);
+                }}
+                style={{
+                    position: "absolute",
+                    bottom: "16px",
+                    right: "16px",
+                    backgroundColor: "#007bff",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: "50%",
+                    width: "56px",
+                    height: "56px",
+                    fontSize: "24px",
+                    cursor: "pointer",
+                }}
+            >
+                +
+            </button>
             {isModalOpen && (
                 <NoteModal
                     open={isModalOpen}
@@ -110,7 +136,6 @@ const GraphBoard = ({ notes, onUpdateNote,projects }) => {
         </div>
     );
 };
-
 
 
 const getEdges = (notes) => {
