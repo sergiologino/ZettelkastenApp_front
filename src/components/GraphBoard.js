@@ -3,16 +3,23 @@ import ReactFlow, { MiniMap, Controls, Background } from "reactflow";
 import "reactflow/dist/style.css";
 import NoteModal from "./NoteModal";
 
-const GraphBoard = ({ notes, onUpdateNote, projects }) => {
+const GraphBoard = ({ notes, onUpdateNote, projects, onCreateNote  }) => {
     const [selectedNote, setSelectedNote] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    //-----------
+    // const [nodes, setNodes] = useState([]);
+    // const [edges, setEdges] = useState([]);
+    // const [selectedNote, setSelectedNote] = useState(null);
+    // const [isModalOpen, setIsModalOpen] = useState(false);
+    //------------
+
 
     const handleNodeClick = (event, node) => {
         const note = notes.find((n) => n.id === node.id);
-        console.log("Клик по заметке:", note); // Логируем выбранную заметку
+
         setSelectedNote(note || {}); // Если заметка не найдена, передаём пустой объект
-        console.log("Выбранная заметка:", selectedNote);
         setIsModalOpen(true);
+
     };
 
     const nodes = notes.map((note, index) => ({
