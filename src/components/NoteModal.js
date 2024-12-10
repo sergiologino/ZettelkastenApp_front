@@ -18,31 +18,35 @@ const NoteModal = ({
                        open,
                        onClose,
                        onSave,
-                       projects = [], // Значение по умолчанию,
-                       isGlobalAnalysisEnabled,
-                       note =null, // Значение по умолчанию, // Значение по умолчанию
+                       projects = [],
+                       isGlobalAnalysisEnabled = false,
+                       note = null, // Обрабатываем null корректно
                    }) => {
-    const [content, setContent] = useState(note.content || "");
+    const [content, setContent] = useState(note?.content || "");
     const [file, setFile] = useState(null);
     const [selectedProject, setSelectedProject] = useState(note.projectId || "");
     const [individualAnalysisFlag, setIndividualAnalysisFlag] = useState(
         isGlobalAnalysisEnabled
     );
-    const [tags, setTags] = useState(note?.tags || []); // Безопасный доступ к tags
+    const [tags, setTags] = useState(note?.tags || []);
     const [newTag, setNewTag] = useState("");
-    console.log("Список проектов в NoteModal:", projects);
+    console.log("note: ",note);
+    console.log("project: ",note.projectId);
 
     useEffect(() => {
-        if (note) { // Обновляем состояние tags, если note изменился
-            setTags(note?.tags || []);
+        if (note) {
             setContent(note.content || "");
             setSelectedProject(note.projectId || "");
+            setTags(note.tags || []);
+        } else {
+            setContent("");
+            setSelectedProject("");
+            setTags([]);
         }
     }, [note]);
 
     const handleFileChange = (e) => {
         setFile(e.target.files[0]);
-
     };
 
     const handleAddTag = () => {
@@ -68,7 +72,7 @@ const NoteModal = ({
         }
 
         onSave({
-            id: note.id || null,
+            id: note?.id || null,
             content,
             file,
             projectId: selectedProject,
@@ -104,7 +108,7 @@ const NoteModal = ({
                 }}
             >
                 <Typography id="modal-title" variant="h6" component="h2">
-                    {note.id ? "Редактировать заметку" : "Добавить заметку"}
+                    {note?.id ? "Редактировать заметку" : "Добавить заметку"}
                 </Typography>
                 <FormControl fullWidth margin="normal">
                     <InputLabel id="project-select-label">Проект</InputLabel>
@@ -113,7 +117,7 @@ const NoteModal = ({
                         value={selectedProject}
                         onChange={(e) => setSelectedProject(e.target.value)}
                     >
-                        {projects?.map((project) => (
+                        {projects.map((project) => (
                             <MenuItem key={project.id} value={project.id}>
                                 {project.name}
                             </MenuItem>
@@ -142,7 +146,7 @@ const NoteModal = ({
                     </Button>
                 </Box>
                 <Box sx={{ marginTop: 2, display: "flex", flexWrap: "wrap", gap: 1 }}>
-                    {tags?.map((tag) => ( // Безопасный доступ к tags
+                    {tags.map((tag) => (
                         <Chip
                             key={tag}
                             label={tag}
