@@ -1,30 +1,49 @@
 import React, { useState } from "react";
 import { Box, Typography, Button, TextField } from "@mui/material";
+import './appStyle.css'; // Импортируем CSS-файл
+import DeleteIcon from '@mui/icons-material/Delete';
 
 const ProjectPanel = ({ projects, onSelect, onCreate, onDelete }) => {
     const [newProjectName, setNewProjectName] = useState("");
+    const [newProjectDescription, setNewProjectDescription] = useState("");
+
 
     const handleCreateProject = () => {
         if (!newProjectName.trim()) {
             alert("Название проекта не может быть пустым.");
             return;
         }
-        onCreate(newProjectName);
-        setNewProjectName("");
+        const newProject = {
+            name: newProjectName.trim(),
+            description: newProjectDescription.trim(),
+        };
+        onCreate(newProject); // Передаем объект с названием и описанием
+        setNewProjectName(""); // Очищаем поле после добавления
+        setNewProjectDescription(""); // Очищаем описание
+
+    };
+    const displayProjectDescription = (project) => {
+        return (
+            <Typography variant="body2" color="textSecondary" sx={{ marginTop: "2px" }}>
+                {project.description}
+            </Typography>
+        );
     };
 
     return (
+        <div className ="projpanel">
         <Box
             sx={{
                 width: "300px",
                 height: "100vh",
-                backgroundColor: "#ffffff",
+                backgroundColor: "#c5e6ff",
                 borderRight: "1px solid #e0e0e0",
                 overflowY: "auto",
                 padding: "16px",
+                opacity: 0.9,
             }}
         >
-            <Typography variant="h6" sx={{ marginBottom: "16px" }}>
+            <Typography variant="h6" sx={{ marginBottom: "12px" }}>
                 Проекты
             </Typography>
             {projects.map((project) => (
@@ -35,18 +54,23 @@ const ProjectPanel = ({ projects, onSelect, onCreate, onDelete }) => {
                         padding: "12px",
                         backgroundColor: project.color || "#f0f0f0",
                         borderRadius: "8px",
+
                         cursor: "pointer",
                         position: "relative",
                     }}
                 >
                     <Typography onClick={() => onSelect(project.id)}>{project.name}</Typography>
+                    <Typography variant="body2" color="textSecondary" sx={{ marginLeft: "8px" }}>
+                        {displayProjectDescription(project)}
+                    </Typography>
                     <Button
                         size="small"
-                        color="error"
+                        color={"#D6D4D4"}
+                        opacity={"0.5"}
                         sx={{ position: "absolute", right: 8, top: 8 }}
                         onClick={() => onDelete(project.id)}
                     >
-                        Удалить
+                        <DeleteIcon />
                     </Button>
                 </Box>
             ))}
@@ -57,10 +81,18 @@ const ProjectPanel = ({ projects, onSelect, onCreate, onDelete }) => {
                 placeholder="Название проекта"
                 sx={{ marginBottom: "8px" }}
             />
+            <TextField
+                fullWidth
+                value={newProjectDescription}
+                onChange={(e) => setNewProjectDescription(e.target.value)}
+                placeholder="Описание проекта"
+                sx={{ marginBottom: "8px" }}
+            />
             <Button variant="contained" fullWidth onClick={handleCreateProject}>
                 Добавить проект
             </Button>
         </Box>
+        </div>
     );
 };
 

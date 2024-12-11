@@ -31,11 +31,31 @@ export const fetchNotes = async (projectId) => {
     }
 };
 
+export const updateNote = async (note) => {
+        console.log("обновляем заметку: ",note );
+    try {
+
+        console.log("отправляем заметку на сервер: ", note);
+        const response = await api.post(`/notes/update`, note, {
+            headers: { "Content-Type": "application/json" },
+        });
+        return response.data; // Возвращаем данные созданной заметки
+    } catch (error) {
+        console.error("Ошибка при вызове API для обновления заметки:", error);
+        throw error;
+    }
+};
+
+
+///-----------------
 export const addNote = async (note,projectId) => {
+    console.log("новая заметка по проекту: ",projectId );
     console.log("добавляем заметку: ",note );
     try {
         console.log("uri: ", api.getUri(),"/notes/",projectId);
-        const response = await axios.post(`/notes/${projectId}`, note, {
+        console.log("по проекту: ", projectId);
+        console.log("отправляем заметку на сервер: ", note);
+        const response = await api.post(`/notes/${projectId}`, note, {
             headers: { "Content-Type": "application/json" },
         });
         return response.data; // Возвращаем данные созданной заметки

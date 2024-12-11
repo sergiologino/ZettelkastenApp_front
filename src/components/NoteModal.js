@@ -21,29 +21,34 @@ const NoteModal = ({
                        projects = [],
                        isGlobalAnalysisEnabled = false,
                        note = null, // Обрабатываем null корректно
+
                    }) => {
     const [content, setContent] = useState(note?.content || "");
     const [file, setFile] = useState(null);
-    const [selectedProject, setSelectedProject] = useState(note.projectId || "");
+    const [selectedProject, setSelectedProject] = useState(note?.projectId || "");
     const [individualAnalysisFlag, setIndividualAnalysisFlag] = useState(
         isGlobalAnalysisEnabled
     );
     const [tags, setTags] = useState(note?.tags || []);
     const [newTag, setNewTag] = useState("");
     console.log("note: ",note);
-    console.log("project: ",note.projectId);
+    console.log("project: ",note?.projectId);
+    console.log("on begin NoteModal selected project: ",selectedProject);
 
     useEffect(() => {
-        if (note) {
+        //console.log("note status in NoteModal: ",note);
+        if (open && note) {
+            console.log("Open note for edit");
             setContent(note.content || "");
             setSelectedProject(note.projectId || "");
             setTags(note.tags || []);
-        } else {
+        } else if (open){
+            console.log("Open new note");
             setContent("");
-            setSelectedProject("");
+            setSelectedProject(selectedProject||"");
             setTags([]);
         }
-    }, [note]);
+    }, [open,note]);
 
     const handleFileChange = (e) => {
         setFile(e.target.files[0]);
@@ -71,15 +76,18 @@ const NoteModal = ({
             return;
         }
 
+        //console.log("Данные для обновления заметки: ", note);
         onSave({
+            ...note,
             id: note?.id || null,
             content,
             file,
             projectId: selectedProject,
             individualAnalysisFlag,
-            tags,
-        });
+            tags
 
+        });
+        console.log("Данные для обновления заметки после: ", note);
         setContent("");
         setFile(null);
         setSelectedProject("");

@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from "react";
 import GraphBoard from "./components/GraphBoard";
 import ProjectPanel from "./components/ProjectPanel";
-import { fetchProjects, fetchNotes } from "./api/api";
+import {fetchProjects, fetchNotes, createProject, updateNote} from "./api/api";
 import { addNote } from "./api/api"; // Импорт функции создания заметки из api.js
 
 const App = () => {
   const [notes, setNotes] = useState([]);
   const [projects, setProjects] = useState([]);
   const [selectedProjectId, setSelectedProjectId] = useState(null);
+
+
 
   // Загрузка проектов
   useEffect(() => {
@@ -23,7 +25,15 @@ const App = () => {
     loadProjects();
   }, []);
 
-
+  const handleCreateProject = async (newProject) => {
+    try {
+      const createdProject = await createProject(newProject); // Вызов API для создания проекта
+      setProjects((prevProjects) => [...prevProjects, createdProject]); // Добавляем новый проект в состояние
+    } catch (error) {
+      console.error("Ошибка при создании проекта:", error);
+      alert("Не удалось создать проект. Проверьте соединение с сервером.");
+    }
+  };
 
   const handleProjectSelect = async (projectId) => {
     setSelectedProjectId(projectId); // Устанавливаем текущий проект
@@ -36,14 +46,23 @@ const App = () => {
     }
   };
 
-  const handleUpdateNote = (updatedNote) => {
-    setNotes((prevNotes) =>
-        prevNotes.map((note) => (note.id === updatedNote.id ? updatedNote : note))
-    );
-  };
-  const handleCreateNote = async (newNote,projectId) => {
+  const handleUpdateNote = async (updatedNote) => {
     try {
-      const response = await addNote(newNote,projectId); // Используем метод из api.js
+      console.log("------in App_js before send updatedNote: ",updatedNote);
+      const response = await updateNote(updatedNote);
+
+    setNotes((prevNotes) =>
+        prevNotes.map((note) => (note.id === updatedNote.id ? updatedNote : note)))
+    }catch (error){
+      console.error("Ошибка при обновлении заметки:", error);
+      alert("Не удалось обновить заметку. Проверьте соединение с сервером.");
+    }
+  };
+
+  const handleCreateNote = async (newNote,projectId) => {
+
+    try {
+      const response = await addNote(newNote,newNote.projectId); // Используем метод из api.js
       setNotes((prevNotes) => [...prevNotes, response]); // Обновляем список заметок
     } catch (error) {
       console.error("Ошибка при создании заметки:", error);
@@ -56,6 +75,7 @@ const App = () => {
         <ProjectPanel
             projects={projects}
             onSelect={handleProjectSelect}
+            onCreate={handleCreateProject}
         />
         {selectedProjectId ? (
             <GraphBoard
@@ -64,6 +84,8 @@ const App = () => {
                 projects={projects} // Передаём projects в GraphBoard
                 selectedProject={selectedProjectId}
                 onCreateNote={handleCreateNote}
+
+
            />
             ):(
             <div style={{ flex: 1, display: "flex", justifyContent: "center", alignItems: "center" }}>
