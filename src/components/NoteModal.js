@@ -76,18 +76,16 @@ const NoteModal = ({
             return;
         }
 
-        //console.log("Данные для обновления заметки: ", note);
-        onSave({
-            ...note,
-            id: note?.id || null,
+        const updatedNote = {
+            ...note, // Копируем все свойства из текущей заметки
             content,
             file,
             projectId: selectedProject,
             individualAnalysisFlag,
-            tags
+            tags,
+        };
 
-        });
-        console.log("Данные для обновления заметки после: ", note);
+        onSave(updatedNote); // Передаём обновлённые данные
         setContent("");
         setFile(null);
         setSelectedProject("");

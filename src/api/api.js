@@ -36,7 +36,7 @@ export const updateNote = async (note) => {
     try {
 
         console.log("отправляем заметку на сервер: ", note);
-        const response = await api.post(`/notes/update`, note, {
+        const response = await api.put(`/notes`, note, {
             headers: { "Content-Type": "application/json" },
         });
         return response.data; // Возвращаем данные созданной заметки
