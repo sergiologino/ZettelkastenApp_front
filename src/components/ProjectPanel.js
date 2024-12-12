@@ -3,7 +3,7 @@ import { Box, Typography, Button, TextField } from "@mui/material";
 import './appStyle.css'; // Импортируем CSS-файл
 import DeleteIcon from '@mui/icons-material/Delete';
 
-const ProjectPanel = ({ projects, onSelect, onCreate, onDelete }) => {
+const ProjectPanel = ({ projects, selectedProjectId, onSelect, onCreate, onDelete }) => {
     const [newProjectName, setNewProjectName] = useState("");
     const [newProjectDescription, setNewProjectDescription] = useState("");
 
@@ -52,9 +52,9 @@ const ProjectPanel = ({ projects, onSelect, onCreate, onDelete }) => {
                     sx={{
                         marginBottom: "12px",
                         padding: "12px",
-                        backgroundColor: project.color || "#f0f0f0",
+                        backgroundColor: project.id === selectedProjectId ? "#b3e5fc" : "#f0f0f0", // Выделяем выбранный проект
                         borderRadius: "8px",
-
+                        border: project.id === selectedProjectId ? "2px solid #0288d1" : "1px solid #e0e0e0", // Добавляем рамку для выбранного проекта
                         cursor: "pointer",
                         position: "relative",
                     }}

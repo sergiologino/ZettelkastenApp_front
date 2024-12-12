@@ -2,14 +2,26 @@ import React, { useState, useEffect } from "react";
 import ReactFlow, { MiniMap, Controls, Background } from "reactflow";
 import "reactflow/dist/style.css";
 import NoteModal from "./NoteModal";
+import {Checkbox, Switch} from "@mui/material";
+import {analyzeNotes} from "../api/api";
 
 const GraphBoard = ({ notes, setNotes, onUpdateNote, projects, onCreateNote, selectedProject }) => {
     const [nodes, setNodes] = useState([]);
     const [edges, setEdges] = useState([]);
     const [selectedNote, setSelectedNote] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedNoteIds, setSelectedNoteIds] = useState([])
+
+    const onNodeDragStart = (_, node) => {
+        setNodes((prevNodes) =>
+            prevNodes.map((n) =>
+                n.id === node.id ? { ...n, style: { ...n.style, opacity: 0.5 } } : n
+            )
+        );
+    };
 
     const onNodeDragStop = (_, node) => {
+
         const updatedNodes = nodes.map((n) =>
             n.id === node.id ? { ...n, position: node.position } : n
         );
@@ -32,6 +44,18 @@ const GraphBoard = ({ notes, setNotes, onUpdateNote, projects, onCreateNote, sel
             // Обновляем selectedNote для модального окна
             setSelectedNote(updatedNote);
         }
+        setNodes((prevNodes) =>
+            prevNodes.map((n) =>
+                n.id === node.id ? { ...n, style: { ...n.style, opacity: 1 } } : n
+            )
+        );
+    };
+    const handleNoteSelection = (event, noteId) => {
+        setSelectedNoteIds((prevIds) =>
+            event.target.checked
+                ? [...prevIds, noteId] // Добавляем ID, если чекбокс выбран
+                : prevIds.filter((id) => id !== noteId) // Убираем ID, если чекбокс снят
+        );
     };
 
     useEffect(() => {
@@ -41,18 +65,31 @@ const GraphBoard = ({ notes, setNotes, onUpdateNote, projects, onCreateNote, sel
                 id: note.id,
                 data: {
                     label: (
-                        <div>
+                        <div style={{
+                            resize: "both",
+                            overflow: "auto",
+                            minWidth: "100px",
+                            minHeight: "50px",
+                            maxWidth: "300px",
+                            maxHeight: "200px",
+                        }}>
+                            <Switch
+                                checked={selectedNoteIds.includes(note.id)}
+                                onChange={(e) => handleNoteSelection(e, note.id)}
+                                onClick={(e) => e.stopPropagation()} // Останавливаем распространение клика
+                                style={{ marginRight: "4px" }}
+                            />
                             <div>{note.content}</div>
-                            <div style={{ marginTop: 8 }}>
+                            <div style={{ marginTop: 8, display: "flex", flexWrap: "wrap", gap: "4px" }}>
                                 {note.tags?.map((tag) => (
                                     <span
                                         key={tag}
                                         style={{
-                                            fontSize: "0.8rem",
+                                            fontSize: "0.6rem",
                                             border: "1px solid #ccc",
                                             borderRadius: "4px",
-                                            padding: "2px 4px",
-                                            marginRight: "4px",
+                                            padding: "1px 2px",
+                                            marginRight: "2px",
                                             color: getColorForTag(tag),
                                         }}
                                     >
@@ -69,6 +106,7 @@ const GraphBoard = ({ notes, setNotes, onUpdateNote, projects, onCreateNote, sel
                     borderRadius: "8px",
                     padding: "8px",
                     border: "1px solid #ccc",
+                    cursor: "nwse-resize",
                 },
             }))
         );
@@ -117,7 +155,7 @@ const GraphBoard = ({ notes, setNotes, onUpdateNote, projects, onCreateNote, sel
 
     const getColorForTag = (tag) => {
         const hash = Array.from(tag).reduce((sum, char) => sum + char.charCodeAt(0), 0);
-        const colors = ["#FF5733", "#33FF57", "#3357FF", "#F333FF", "#FF5733"];
+        const colors = ["#FF5733", "#079c21", "#3357FF", "#F333FF", "#FF5733"];
         return colors[hash % colors.length];
     };
 
@@ -134,6 +172,19 @@ const GraphBoard = ({ notes, setNotes, onUpdateNote, projects, onCreateNote, sel
         }
         setIsModalOpen(false);
     };
+    const handleAnalyze = async () => {
+        try {
+            console.log("Отправляем на анализ:", selectedNoteIds);
+            const response = await analyzeNotes(selectedNoteIds); // Вызов API
+            console.log("Ответ сервера:", response);
+            alert("Заметки успешно отправлены на анализ!");
+        } catch (error) {
+            console.error("Ошибка при отправке на анализ:", error);
+            alert("Не удалось отправить заметки на анализ. Попробуйте ещё раз.");
+        } finally {
+            setSelectedNoteIds([]); // Сбрасываем выбор после отправки
+        }
+    };
 
     return (
         <div className="board" style={{ width: "100%", height: "100%" }}>
@@ -142,6 +193,7 @@ const GraphBoard = ({ notes, setNotes, onUpdateNote, projects, onCreateNote, sel
                 edges={edges}
                 fitView
                 onNodeClick={handleNodeClick}
+                onNodeDragStart={onNodeDragStart}
                 onNodeDragStop={onNodeDragStop}
             >
                 <MiniMap />
@@ -177,6 +229,24 @@ const GraphBoard = ({ notes, setNotes, onUpdateNote, projects, onCreateNote, sel
                     projects={projects}
                     selectedProject={selectedProject}
                 />
+            )}
+            {selectedNoteIds.length > 0 && (
+                <button
+                    onClick={handleAnalyze}
+                    style={{
+                        position: "absolute",
+                        bottom: "8px",
+                        left: "8px",
+                        padding: "5px 10px",
+                        backgroundColor: "#007bff",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: "1px",
+                        cursor: "pointer",
+                    }}
+                >
+                    Отправить на анализ
+                </button>
             )}
         </div>
     );

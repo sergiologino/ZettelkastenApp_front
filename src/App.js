@@ -77,6 +77,7 @@ const App = () => {
             projects={projects}
             onSelect={handleProjectSelect}
             onCreate={handleCreateProject}
+            selectedProjectId={selectedProjectId} // Передаем ID текущего проекта
         />
         {selectedProjectId ? (
             <GraphBoard
