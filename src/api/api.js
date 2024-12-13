@@ -8,7 +8,9 @@ import api from "./axiosConfig";
 console.log("api: ",api);
 // Получить список проектов
 export const fetchProjects = async () => {
-    const response = await api.get("/api/projects");
+    // eslint-disable-next-line no-template-curly-in-string
+    const response = await api.get('/projects');
+    console.log("uri: ", api.getUri() );
     console.log("Полученные проекты:", response.data);
     return response.data;
 };
@@ -16,23 +18,49 @@ export const fetchProjects = async () => {
 // Получить список заметок проекта
 export const fetchNotes = async (projectId) => {
     try {
-        const response = await api.get(`/api/projects/${projectId}/notes`);
+        // eslint-disable-next-line no-template-curly-in-string
+        console.log("id проекта: ", projectId);
+        const response = await api.get(`/projects/${projectId}/notes`);
+        console.log("uri: ", api.getUri() );
         console.log("список заметок проекта: ", response.data);
         return response.data;
-        console.log("список заметок проекта: ", )
+
     } catch (error) {
         console.error("Ошибка при загрузке заметок:", error.response?.data || error.message);
         throw error;
     }
 };
 
-export const addNote = async (note) => {
+export const updateNote = async (note) => {
+        console.log("обновляем заметку: ",note );
     try {
-        console.log("идем создавать заметку note: ",note)
-        const response = await api.post("/api/notes", note);
-        return response.data;
+
+        console.log("отправляем заметку на сервер: ", note);
+        const response = await api.put(`/notes`, note, {
+            headers: { "Content-Type": "application/json" },
+        });
+        return response.data; // Возвращаем данные созданной заметки
     } catch (error) {
-        console.error("Ошибка в API при добавлении заметки:", error.response?.data || error.message);
+        console.error("Ошибка при вызове API для обновления заметки:", error);
+        throw error;
+    }
+};
+
+
+///-----------------
+export const addNote = async (note,projectId) => {
+    console.log("новая заметка по проекту: ",projectId );
+    console.log("добавляем заметку: ",note );
+    try {
+        console.log("uri: ", api.getUri(),"/notes/",projectId);
+        console.log("по проекту: ", projectId);
+        console.log("отправляем заметку на сервер: ", note);
+        const response = await api.post(`/notes/${projectId}`, note, {
+            headers: { "Content-Type": "application/json" },
+        });
+        return response.data; // Возвращаем данные созданной заметки
+    } catch (error) {
+        console.error("Ошибка при вызове API для создания заметки:", error);
         throw error;
     }
 };
@@ -50,7 +78,8 @@ export const addNote = async (note) => {
 
 export const createProject = async (project) => {
     try {
-        const response = await api.post("/api/projects", project);
+        // eslint-disable-next-line no-template-curly-in-string
+        const response = await api.post('/projects', project);
         return response.data;
     } catch (error) {
         console.error("Ошибка при создании проекта:", error.response?.data || error.message);
@@ -69,8 +98,11 @@ export const deleteProject = async (projectId) => {
 
 // Отправить заметки на анализ
 export const analyzeNotes = async (noteIds) => {
-    const response = await api.put("/api/notes/analyze", { noteIds });
+    // eslint-disable-next-line no-template-curly-in-string
+    const response = await api.put('/notes/analyze', { noteIds });
     return response.data;
 };
+
+
 
 export default api;
