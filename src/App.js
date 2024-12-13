@@ -2,12 +2,14 @@ import React, { useState, useEffect } from "react";
 import GraphBoard from "./components/GraphBoard";
 import ProjectPanel from "./components/ProjectPanel";
 import {fetchProjects, fetchNotes, createProject, updateNote} from "./api/api";
-import { addNote } from "./api/api"; // Импорт функции создания заметки из api.js
+import { addNote } from "./api/api";
+import NoteModal from "./components/NoteModal"; // Импорт функции создания заметки из api.js
 
 const App = () => {
   const [notes, setNotes] = useState([]);
   const [projects, setProjects] = useState([]);
   const [selectedProjectId, setSelectedProjectId] = useState(null);
+  const [isAnalysisEnabled, setIsAnalysisEnabled] = useState(false); // Глобальный флаг анализа
 
 
 
@@ -61,6 +63,8 @@ const App = () => {
   };
 
   const handleCreateNote = async (newNote,projectId) => {
+    const analyze = newNote.individualAnalysisFlag ?? isAnalysisEnabled;
+    newNote.analyze=analyze;
 
     try {
       const response = await addNote(newNote,newNote.projectId); // Используем метод из api.js
@@ -78,14 +82,16 @@ const App = () => {
             onSelect={handleProjectSelect}
             onCreate={handleCreateProject}
             selectedProjectId={selectedProjectId} // Передаем ID текущего проекта
+            onSelectProject={handleProjectSelect} // Передаём функцию
         />
+
         {selectedProjectId ? (
             <GraphBoard
                 notes={notes}
                 setNotes={setNotes} // Передаём функцию обновления состояния
                 onUpdateNote={handleUpdateNote}
                 projects={projects} // Передаём projects в GraphBoard
-                selectedProject={selectedProjectId}
+                setSelectedProjectId={selectedProjectId}
                 onCreateNote={handleCreateNote}
 
 
@@ -95,6 +101,7 @@ const App = () => {
               <h3>Выберите проект, чтобы увидеть граф заметок</h3>
             </div>
         )}
+
       </div>
   );
 };

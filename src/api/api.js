@@ -64,17 +64,7 @@ export const addNote = async (note,projectId) => {
         throw error;
     }
 };
-// Добавить новую заметку
-// export const addNote = async (note) => {
-//     console.log("Отправляем заметку из api :", note);
-//     try {
-//         const response = await api.post("/notes", note);
-//         return response.data;
-//     } catch (error) {
-//         console.error("Ошибка в API при добавлении заметки:", error.response?.data || error.message);
-//         throw error;
-//     }
-// };
+
 
 export const createProject = async (project) => {
     try {

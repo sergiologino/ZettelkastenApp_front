@@ -18,6 +18,7 @@ import { AttachFile, Delete } from "@mui/icons-material"; // Иконки для
 
 const NoteModal = ({
                        open,
+                       selectedProjectId,
                        onClose,
                        onSave,
                        projects = [],
@@ -56,10 +57,11 @@ const NoteModal = ({
             setContent(note.content || "");
             setSelectedProject(note.projectId || "");
             setTags(note.tags || []);
+            console.log("+++полученная заметка:", note);
         } else if (open){
             // console.log("Open new note");
             setContent("");
-            setSelectedProject(selectedProject||"");
+            setSelectedProject(selectedProjectId ||"");
             setTags([]);
         }
     }, [open,note]);
@@ -119,7 +121,7 @@ const NoteModal = ({
     const handleFileDelete = (fileToDelete) => {
         setFiles((prevFiles) => prevFiles.filter((file) => file !== fileToDelete));
     };
-
+    // добавляем веб-ссылку с валидацией
     const handleAddLink = () => {
         if (!newLink.trim()) {
             alert("Введите ссылку.");
@@ -132,18 +134,19 @@ const NoteModal = ({
         setLinks((prevLinks) => [...prevLinks, newLink.trim()]);
         setNewLink("");
     };
-
+    // удаляем веб-ссылку
     const handleDeleteLink = (linkToDelete) => {
         setLinks((prevLinks) => prevLinks.filter((link) => link !== linkToDelete));
     };
 
+    // добавляем тэг
     const handleAddTag = () => {
         if (newTag.trim() && !tags.includes(newTag.trim())) {
             setTags([...tags, newTag.trim()]);
             setNewTag("");
         }
     };
-
+    // удаляем тэг
     const handleDeleteTag = (tagToDelete) => {
         setTags(tags.filter((tag) => tag !== tagToDelete));
     };
@@ -159,14 +162,17 @@ const NoteModal = ({
             return;
         }
 
-        const updatedNote = {
-            ...note, // Копируем все свойства из текущей заметки
-            content,
-            file,
-            projectId: selectedProject,
-            individualAnalysisFlag,
-            tags,
-        };
+            const updatedNote = {
+                ...note,
+                content,
+                projectId: selectedProject,
+                tags,
+                files,
+                links,
+                audioFiles, // Добавляем аудиофайлы
+            };
+
+        console.log("+++заметка на сервер:", updatedNote);
 
         onSave(updatedNote); // Передаём обновлённые данные
         setContent("");
@@ -189,27 +195,7 @@ const NoteModal = ({
         setAudioFiles((prev) => prev.filter((audio) => audio !== audioToDelete));
     };
 
-    // const handleSave = () => {
-    //     if (!content.trim()) {
-    //         alert("Текст заметки не может быть пустым.");
-    //         return;
-    //     }
-
-    //     const updatedNote = {
-    //         ...note,
-    //         content,
-    //         projectId: selectedProject,
-    //         tags,
-    //         files,
-    //         links,
-    //         audioFiles, // Добавляем аудиофайлы
-    //     };
-    //
-    //     onSave(updatedNote);
-    //     onClose();
-    // };
-
-    return (
+  return (
         <Modal
             open={open}
             onClose={onClose}
@@ -222,7 +208,9 @@ const NoteModal = ({
                     top: "50%",
                     left: "50%",
                     transform: "translate(-50%, -50%)",
-                    width: 400,
+                    width: "600px",
+                    maxHeight: "90vh", // Ограничиваем высоту, чтобы окно не выходило за пределы экрана
+                    overflowY: "auto", // Добавляем скролл, если содержимое превышает высоту
                     bgcolor: "background.paper",
                     boxShadow: 24,
                     p: 4,
@@ -408,7 +396,13 @@ const NoteModal = ({
                     control={
                         <Switch
                             checked={individualAnalysisFlag}
-                            onChange={(e) => setIndividualAnalysisFlag(e.target.checked)}
+                            onChange={(e) => {
+                                setIndividualAnalysisFlag(e.target.checked);
+                                onSave({
+                                    ...note,
+                                    individualAnalysisFlag: e.target.checked,
+                                });
+                            }}
                         />
                     }
                     label="Отправить на анализ"

@@ -5,7 +5,7 @@ import NoteModal from "./NoteModal";
 import {Checkbox, Switch} from "@mui/material";
 import {analyzeNotes} from "../api/api";
 
-const GraphBoard = ({ notes, setNotes, onUpdateNote, projects, onCreateNote, selectedProject }) => {
+const GraphBoard = ({ notes, setNotes, onUpdateNote, projects, onCreateNote, selectedProject, selectedProjectId }) => {
     const [nodes, setNodes] = useState([]);
     const [edges, setEdges] = useState([]);
     const [selectedNote, setSelectedNote] = useState(null);
@@ -50,13 +50,28 @@ const GraphBoard = ({ notes, setNotes, onUpdateNote, projects, onCreateNote, sel
             )
         );
     };
-    const handleNoteSelection = (event, noteId) => {
+    const handleNoteSelection = (event, noteId,isChecked) => {
+        setNotes((prevNotes) => {
+            const updatedNotes = prevNotes.map((note) =>
+                note.id === noteId ? { ...note, individualAnalysisFlag: isChecked } : note
+            );
+            console.log("Updated Notes:", updatedNotes);
+            return updatedNotes})
+
         setSelectedNoteIds((prevIds) =>
             event.target.checked
                 ? [...prevIds, noteId] // Добавляем ID, если чекбокс выбран
                 : prevIds.filter((id) => id !== noteId) // Убираем ID, если чекбокс снят
-        );
+        )
     };
+
+    // const handleAnalysisFlagChange = (noteId, isChecked) => {
+    //     setNotes((prevNotes) =>
+    //         prevNotes.map((note) =>
+    //             note.id === noteId ? { ...note, individualAnalysisFlag: isChecked } : note
+    //         )
+    //     );
+    // };
 
     useEffect(() => {
         // Обновляем узлы и связи при изменении заметок
@@ -70,17 +85,19 @@ const GraphBoard = ({ notes, setNotes, onUpdateNote, projects, onCreateNote, sel
                             overflow: "auto",
                             minWidth: "100px",
                             minHeight: "50px",
-                            maxWidth: "300px",
-                            maxHeight: "200px",
+                            maxWidth: "700px",
+                            maxHeight: "500px",
                         }}>
-                            <Switch
-                                checked={selectedNoteIds.includes(note.id)}
-                                onChange={(e) => handleNoteSelection(e, note.id)}
+                            <span style={{marginRight: "4px"}}>На анализ</span>
+                            <Checkbox
+                                size="small"
+                                checked={note.individualAnalysisFlag || false} // Убедитесь, что это значение актуально
+                                onChange={(e) => handleNoteSelection(e,note.id, e.target.checked)}
                                 onClick={(e) => e.stopPropagation()} // Останавливаем распространение клика
-                                style={{ marginRight: "4px" }}
+                                style={{marginRight: "4px"}}
                             />
                             <div>{note.content}</div>
-                            <div style={{ marginTop: 8, display: "flex", flexWrap: "wrap", gap: "4px" }}>
+                            <div style={{marginTop: 8, display: "flex", flexWrap: "wrap", gap: "4px"}}>
                                 {note.tags?.map((tag) => (
                                     <span
                                         key={tag}
@@ -100,7 +117,7 @@ const GraphBoard = ({ notes, setNotes, onUpdateNote, projects, onCreateNote, sel
                         </div>
                     ),
                 },
-                position: { x: note.x || index * 200, y: note.y || index * 100 },
+                position: {x: note.x || index * 200, y: note.y || index * 100},
                 style: {
                     background: "#fff",
                     borderRadius: "8px",
@@ -198,7 +215,7 @@ const GraphBoard = ({ notes, setNotes, onUpdateNote, projects, onCreateNote, sel
             >
                 <MiniMap />
                 <Controls />
-                <Background gap={16} size={0.5} color="#ddd" />
+                <Background gap={16} size={1.5} color="#fff" />
             </ReactFlow>
             <button
                 onClick={() => {
@@ -212,6 +229,7 @@ const GraphBoard = ({ notes, setNotes, onUpdateNote, projects, onCreateNote, sel
                     color: "#fff",
                     border: "none",
                     borderRadius: "50%",
+                    backgroundColor: "#48c1fb",
                     width: "56px",
                     height: "56px",
                     fontSize: "24px",
@@ -227,7 +245,8 @@ const GraphBoard = ({ notes, setNotes, onUpdateNote, projects, onCreateNote, sel
                     onSave={handleSaveNote}
                     note={selectedNote}
                     projects={projects}
-                    selectedProject={selectedProject}
+                    individualAnalysisFlag={selectedNote?.individualAnalysisFlag} // Передаём флаг
+                    selectedProjectId={selectedProjectId}
                 />
             )}
             {selectedNoteIds.length > 0 && (
