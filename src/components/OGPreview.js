@@ -10,6 +10,7 @@ const OGPreview = ({ url }) => {
             try {
                 const response = await fetch(`/api/get-og-data?url=${encodeURIComponent(url)}`);
                 const data = await response.json();
+                console.log("----ОТПРАВИЛИ ДАННЫЕ OPENGRAPH ", response);
                 setOgData(data);
             } catch (error) {
                 console.error("Ошибка при получении OG данных:", error);

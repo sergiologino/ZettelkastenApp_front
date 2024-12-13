@@ -166,6 +166,7 @@ const NoteModal = ({
             projectId: selectedProject,
             individualAnalysisFlag,
             tags,
+            urls,
         };
 
         onSave(updatedNote); // Передаём обновлённые данные

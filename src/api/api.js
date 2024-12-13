@@ -35,7 +35,7 @@ export const updateNote = async (note) => {
         console.log("обновляем заметку: ",note );
     try {
 
-        console.log("отправляем заметку на сервер: ", note);
+        console.log("отправляем измененную заметку на сервер: ", note);
         const response = await api.put(`/notes`, note, {
             headers: { "Content-Type": "application/json" },
         });
@@ -52,9 +52,7 @@ export const addNote = async (note,projectId) => {
     console.log("новая заметка по проекту: ",projectId );
     console.log("добавляем заметку: ",note );
     try {
-        console.log("uri: ", api.getUri(),"/notes/",projectId);
-        console.log("по проекту: ", projectId);
-        console.log("отправляем заметку на сервер: ", note);
+        console.log("отправляем новую заметку на сервер: ", note);
         const response = await api.post(`/notes/${projectId}`, note, {
             headers: { "Content-Type": "application/json" },
         });
@@ -64,17 +62,7 @@ export const addNote = async (note,projectId) => {
         throw error;
     }
 };
-// Добавить новую заметку
-// export const addNote = async (note) => {
-//     console.log("Отправляем заметку из api :", note);
-//     try {
-//         const response = await api.post("/notes", note);
-//         return response.data;
-//     } catch (error) {
-//         console.error("Ошибка в API при добавлении заметки:", error.response?.data || error.message);
-//         throw error;
-//     }
-// };
+
 
 export const createProject = async (project) => {
     try {
