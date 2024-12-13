@@ -36,8 +36,8 @@ const NoteModal = ({
     const [files, setFiles] = useState(note?.files || []); // Состояние для загруженных файлов
     const [newFile, setNewFile] = useState(null); // Временное состояние для выбранного файла
 
-    const [links, setLinks] = useState(note?.links || []); // Состояние для ссылок
-    const [newLink, setNewLink] = useState("");
+    const [urls, setUrls] = useState(note?.urls || []); // Состояние для ссылок
+    const [newUrl, setNewUrl] = useState("");
 
     const [audioFiles, setAudioFiles] = useState(note?.audioFiles || []); // Список аудиофайлов
     const [isRecording, setIsRecording] = useState(false); // Флаг записи
@@ -120,21 +120,21 @@ const NoteModal = ({
         setFiles((prevFiles) => prevFiles.filter((file) => file !== fileToDelete));
     };
 
-    const handleAddLink = () => {
-        if (!newLink.trim()) {
+    const handleAddUrl = () => {
+        if (!newUrl.trim()) {
             alert("Введите ссылку.");
             return;
         }
-        if (!/^https?:\/\/[^\s$.?#].[^\s]*$/.test(newLink.trim())) {
+        if (!/^https?:\/\/[^\s$.?#].[^\s]*$/.test(newUrl.trim())) {
             alert("Введите корректный URL.");
             return;
         }
-        setLinks((prevLinks) => [...prevLinks, newLink.trim()]);
-        setNewLink("");
+        setUrls((prevUrls) => [...prevUrls, newUrl.trim()]);
+        setNewUrl("");
     };
 
-    const handleDeleteLink = (linkToDelete) => {
-        setLinks((prevLinks) => prevLinks.filter((link) => link !== linkToDelete));
+    const handleDeleteUrl = (urlToDelete) => {
+        setUrls((prevUrls) => prevUrls.filter((url) => url !== urlToDelete));
     };
 
     const handleAddTag = () => {
@@ -189,25 +189,7 @@ const NoteModal = ({
         setAudioFiles((prev) => prev.filter((audio) => audio !== audioToDelete));
     };
 
-    // const handleSave = () => {
-    //     if (!content.trim()) {
-    //         alert("Текст заметки не может быть пустым.");
-    //         return;
-    //     }
 
-    //     const updatedNote = {
-    //         ...note,
-    //         content,
-    //         projectId: selectedProject,
-    //         tags,
-    //         files,
-    //         links,
-    //         audioFiles, // Добавляем аудиофайлы
-    //     };
-    //
-    //     onSave(updatedNote);
-    //     onClose();
-    // };
 
     return (
         <Modal
@@ -297,16 +279,16 @@ const NoteModal = ({
                             <TextField
                                 fullWidth
                                 label="Введите ссылку"
-                                value={newLink}
-                                onChange={(e) => setNewLink(e.target.value)}
+                                value={newUrl}
+                                onChange={(e) => setNewUrl(e.target.value)}
                                 sx={{ marginRight: "8px" }}
                             />
-                            <Button variant="contained" onClick={handleAddLink}>
+                            <Button variant="contained" onClick={handleAddUrl}>
                                 Добавить
                             </Button>
                         </Box>
                         <Box mt={2}>
-                            {links.map((link, index) => (
+                            {urls.map((Url, index) => (
                                 <Box
                                     key={index}
                                     display="flex"
@@ -317,16 +299,16 @@ const NoteModal = ({
                                     <Typography
                                         variant="body2"
                                         component="a"
-                                        href={link}
+                                        href={Url}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         sx={{ textDecoration: "none", color: "primary.main" }}
                                     >
-                                        {link}
+                                        {Url}
                                     </Typography>
                                     <IconButton
                                         color="error"
-                                        onClick={() => handleDeleteLink(link)}
+                                        onClick={() => handleDeleteUrl(Url)}
                                     >
                                         <Delete />
                                     </IconButton>

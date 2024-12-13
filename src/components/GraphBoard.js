@@ -4,6 +4,7 @@ import "reactflow/dist/style.css";
 import NoteModal from "./NoteModal";
 import {Checkbox, Switch} from "@mui/material";
 import {analyzeNotes} from "../api/api";
+import OGPreview from "./OGPreview";
 
 const GraphBoard = ({ notes, setNotes, onUpdateNote, projects, onCreateNote, selectedProject }) => {
     const [nodes, setNodes] = useState([]);
@@ -80,7 +81,15 @@ const GraphBoard = ({ notes, setNotes, onUpdateNote, projects, onCreateNote, sel
                                 style={{ marginRight: "4px" }}
                             />
                             <div>{note.content}</div>
+                            {note.links?.length > 0 && (
+                                <div style={{ marginTop: 8 }}>
+                                    {note.links.map((link, linkIndex) => (
+                                        <OGPreview key={linkIndex} link={link} />
+                                    ))}
+                                </div>
+                            )}
                             <div style={{ marginTop: 8, display: "flex", flexWrap: "wrap", gap: "4px" }}>
+
                                 {note.tags?.map((tag) => (
                                     <span
                                         key={tag}
