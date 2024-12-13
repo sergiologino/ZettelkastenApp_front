@@ -50,6 +50,7 @@ const NoteModal = ({
     // console.log("on begin NoteModal selected project: ",selectedProject);
 
     useEffect(() => {
+
         //console.log("note status in NoteModal: ",note);
         if (open && note) {
             // console.log("Open note for edit");
@@ -97,6 +98,7 @@ const NoteModal = ({
             setIsRecording(false);
         }
     };
+
 
 // Сохранение записанного аудио в список
     const saveRecordedAudio = () => {
@@ -189,25 +191,7 @@ const NoteModal = ({
         setAudioFiles((prev) => prev.filter((audio) => audio !== audioToDelete));
     };
 
-    // const handleSave = () => {
-    //     if (!content.trim()) {
-    //         alert("Текст заметки не может быть пустым.");
-    //         return;
-    //     }
 
-    //     const updatedNote = {
-    //         ...note,
-    //         content,
-    //         projectId: selectedProject,
-    //         tags,
-    //         files,
-    //         links,
-    //         audioFiles, // Добавляем аудиофайлы
-    //     };
-    //
-    //     onSave(updatedNote);
-    //     onClose();
-    // };
 
     return (
         <Modal

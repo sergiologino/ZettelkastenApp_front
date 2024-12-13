@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import GraphBoard from "./components/GraphBoard";
 import ProjectPanel from "./components/ProjectPanel";
+
 import {fetchProjects, fetchNotes, createProject, updateNote} from "./api/api";
 import { addNote } from "./api/api"; // Импорт функции создания заметки из api.js
+
 
 const App = () => {
   const [notes, setNotes] = useState([]);
@@ -72,6 +74,7 @@ const App = () => {
   };
 
   return (
+
       <div style={{ display: "flex", height: "100vh" }}>
         <ProjectPanel
             projects={projects}
@@ -79,6 +82,7 @@ const App = () => {
             onCreate={handleCreateProject}
             selectedProjectId={selectedProjectId} // Передаем ID текущего проекта
         />
+        <ReactFlowProvider>
         {selectedProjectId ? (
             <GraphBoard
                 notes={notes}
@@ -95,7 +99,9 @@ const App = () => {
               <h3>Выберите проект, чтобы увидеть граф заметок</h3>
             </div>
         )}
+      </ReactFlowProvider>
       </div>
+
   );
 };
 

@@ -5,12 +5,17 @@ import NoteModal from "./NoteModal";
 import {Checkbox, Switch} from "@mui/material";
 import {analyzeNotes} from "../api/api";
 
+
 const GraphBoard = ({ notes, setNotes, onUpdateNote, projects, onCreateNote, selectedProject }) => {
+
+
+
     const [nodes, setNodes] = useState([]);
     const [edges, setEdges] = useState([]);
     const [selectedNote, setSelectedNote] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedNoteIds, setSelectedNoteIds] = useState([])
+
 
     const onNodeDragStart = (_, node) => {
         setNodes((prevNodes) =>
@@ -22,10 +27,12 @@ const GraphBoard = ({ notes, setNotes, onUpdateNote, projects, onCreateNote, sel
 
     const onNodeDragStop = (_, node) => {
 
+
         const updatedNodes = nodes.map((n) =>
             n.id === node.id ? { ...n, position: node.position } : n
         );
         setNodes(updatedNodes);
+
 
         // Локальное обновление координат заметки
         const movedNote = notes.find((note) => note.id === node.id);
@@ -186,15 +193,18 @@ const GraphBoard = ({ notes, setNotes, onUpdateNote, projects, onCreateNote, sel
         }
     };
 
+
     return (
         <div className="board" style={{ width: "100%", height: "100%" }}>
             <ReactFlow
                 nodes={nodes}
                 edges={edges}
                 fitView
+
                 onNodeClick={handleNodeClick}
                 onNodeDragStart={onNodeDragStart}
                 onNodeDragStop={onNodeDragStop}
+
             >
                 <MiniMap />
                 <Controls />
@@ -226,8 +236,10 @@ const GraphBoard = ({ notes, setNotes, onUpdateNote, projects, onCreateNote, sel
                     onClose={() => setIsModalOpen(false)}
                     onSave={handleSaveNote}
                     note={selectedNote}
+
                     projects={projects}
                     selectedProject={selectedProject}
+
                 />
             )}
             {selectedNoteIds.length > 0 && (
@@ -251,4 +263,5 @@ const GraphBoard = ({ notes, setNotes, onUpdateNote, projects, onCreateNote, sel
         </div>
     );
 };
+
 export default GraphBoard;
