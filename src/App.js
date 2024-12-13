@@ -52,7 +52,8 @@ const App = () => {
       const response = await updateNote(updatedNote);
 
     setNotes((prevNotes) =>
-        prevNotes.map((note) => (note.id === updatedNote.id ? updatedNote : note)))
+        prevNotes.map((note) =>
+            (note.id === updatedNote.id ? updatedNote : note)))
     }catch (error){
       console.error("Ошибка при обновлении заметки:", error);
       alert("Не удалось обновить заметку. Проверьте соединение с сервером.");
@@ -76,10 +77,12 @@ const App = () => {
             projects={projects}
             onSelect={handleProjectSelect}
             onCreate={handleCreateProject}
+            selectedProjectId={selectedProjectId} // Передаем ID текущего проекта
         />
         {selectedProjectId ? (
             <GraphBoard
                 notes={notes}
+                setNotes={setNotes} // Передаём функцию обновления состояния
                 onUpdateNote={handleUpdateNote}
                 projects={projects} // Передаём projects в GraphBoard
                 selectedProject={selectedProjectId}
