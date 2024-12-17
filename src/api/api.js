@@ -20,9 +20,9 @@ export const fetchNotes = async (projectId) => {
     try {
         // eslint-disable-next-line no-template-curly-in-string
         console.log("id проекта: ", projectId);
-        const response = await api.get(`/projects/${projectId}/notes`);
+        const response = await api.get(`/notes/${projectId}/notes`);
         console.log("uri: ", api.getUri() );
-        console.log("список заметок проекта: ", response.data);
+        console.log("Получен список заметок проекта: ", response.data);
         return response.data;
 
     } catch (error) {
@@ -39,7 +39,8 @@ export const updateNote = async (note) => {
         const response = await api.put(`/notes`, note, {
             headers: { "Content-Type": "application/json" },
         });
-        return response.data; // Возвращаем данные созданной заметки
+        return response.data; // Возвращаем данные обновленной заметки
+
     } catch (error) {
         console.error("Ошибка при вызове API для обновления заметки:", error);
         throw error;
@@ -89,6 +90,31 @@ export const analyzeNotes = async (noteIds) => {
     // eslint-disable-next-line no-template-curly-in-string
     const response = await api.put('/notes/analyze', { noteIds });
     return response.data;
+};
+
+export const fetchOpenGraphData = async (url) => {
+    try {
+        const response = await api.get(`/notes/og-data`, {
+            params: { url },
+        });
+        return response.data; // Возвращаем данные OpenGraph
+    } catch (error) {
+        console.error("Ошибка при получении данных OpenGraph:", error);
+        throw error;
+    }
+};
+
+ export const fetchOpenGraphDataForNote = async (noteId, urls) => {
+    try {
+        const response = await api.post(`/notes/og-data`, {
+            noteId,
+            urls,
+        });
+        return response.data; // Массив OpenGraph данных
+    } catch (error) {
+        console.error("Ошибка при получении OpenGraph данных:", error);
+        throw error;
+    }
 };
 
 

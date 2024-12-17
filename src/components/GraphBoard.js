@@ -5,13 +5,15 @@ import NoteModal from "./NoteModal";
 import {Checkbox, Switch} from "@mui/material";
 import {analyzeNotes} from "../api/api";
 import OGPreview from "./OGPreview";
+import { fetchOpenGraphDataForNote } from "../api/api";
 
 const GraphBoard = ({ notes, setNotes, onUpdateNote, projects, onCreateNote, selectedProject }) => {
     const [nodes, setNodes] = useState([]);
     const [edges, setEdges] = useState([]);
     const [selectedNote, setSelectedNote] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [selectedNoteIds, setSelectedNoteIds] = useState([])
+    const [selectedNoteIds, setSelectedNoteIds] = useState([]);
+    const [openGraphData, setOpenGraphData] = useState({});
 
     const onNodeDragStart = (_, node) => {
         setNodes((prevNodes) =>
@@ -67,12 +69,13 @@ const GraphBoard = ({ notes, setNotes, onUpdateNote, projects, onCreateNote, sel
                 data: {
                     label: (
                         <div style={{
-                            resize: "both",
-                            overflow: "auto",
-                            minWidth: "100px",
-                            minHeight: "50px",
-                            maxWidth: "300px",
-                            maxHeight: "200px",
+                            display: "flex",
+                            flexDirection: "column",
+                            justifyContent: "center",
+                            alignItems: "center",
+                            height: "100%", // Растягиваем содержимое
+                            textAlign: "center", // Центрируем текст
+                            fontSize: "0.9rem", // Пропорциональный размер текста
                         }}>
                             <Switch
                                 checked={selectedNoteIds.includes(note.id)}
@@ -83,9 +86,10 @@ const GraphBoard = ({ notes, setNotes, onUpdateNote, projects, onCreateNote, sel
                             <div>{note.content}</div>
                             {note.links?.length > 0 && (
                                 <div style={{ marginTop: 8 }}>
-                                    {note.links.map((link, linkIndex) => (
-                                        <OGPreview key={linkIndex} link={link} />
+                                    {openGraphData[note.id]?.map((ogData, index) => (
+                                        <OGPreview key={index} ogData={ogData} />
                                     ))}
+
                                 </div>
                             )}
                             <div style={{ marginTop: 8, display: "flex", flexWrap: "wrap", gap: "4px" }}>
@@ -112,15 +116,44 @@ const GraphBoard = ({ notes, setNotes, onUpdateNote, projects, onCreateNote, sel
                 position: { x: note.x || index * 200, y: note.y || index * 100 },
                 style: {
                     background: "#fff",
-                    borderRadius: "8px",
-                    padding: "8px",
+                    borderRadius: "8px", // Оставляем радиус для эстетики
+                    padding: "16px", // Увеличиваем внутренний отступ
+                    width: "200px", // Было 100px, увеличено на 50%
+                    height: "150px", // Сделали квадратной, аналогично ширине
                     border: "1px solid #ccc",
-                    cursor: "nwse-resize",
+                    fontSize: "1rem", // Увеличиваем шрифт, чтобы соответствовать размеру
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    boxSizing: "border-box",
                 },
             }))
         );
 
         setEdges(getEdges(notes));
+    }, [notes]);
+
+    useEffect(() => {
+        const loadOpenGraphData = async () => {
+            const newOpenGraphData = {};
+
+            for (const note of notes) {
+                if (note.urls?.length) {
+                    try {
+                        const ogData = await fetchOpenGraphDataForNote(note.id, note.urls);
+                        newOpenGraphData[note.id] = ogData; // Сохраняем данные для каждой заметки
+                    } catch (error) {
+                        console.error(`Ошибка загрузки OpenGraph данных для заметки ${note.id}:`, error);
+                    }
+                }
+            }
+
+            setOpenGraphData(newOpenGraphData);
+        };
+
+        if (notes.length > 0) {
+            loadOpenGraphData();
+        }
     }, [notes]);
 
     const getEdges = (notes) => {
@@ -224,6 +257,7 @@ const GraphBoard = ({ notes, setNotes, onUpdateNote, projects, onCreateNote, sel
                     width: "56px",
                     height: "56px",
                     fontSize: "24px",
+                    backgroundColor: "#0000CD",
                     cursor: "pointer",
                 }}
             >
@@ -244,13 +278,14 @@ const GraphBoard = ({ notes, setNotes, onUpdateNote, projects, onCreateNote, sel
                     onClick={handleAnalyze}
                     style={{
                         position: "absolute",
-                        bottom: "8px",
-                        left: "8px",
-                        padding: "5px 10px",
+                        bottom: "16px", // Перенос вниз
+                        right: "16px", // Перенос вправо
+                        padding: "5px 8px", // Было больше
                         backgroundColor: "#007bff",
                         color: "#fff",
+                        fontSize: "0.8rem", // Уменьшение текста
                         border: "none",
-                        borderRadius: "1px",
+                        borderRadius: "4px", // Сделаем углы чуть более острыми
                         cursor: "pointer",
                     }}
                 >

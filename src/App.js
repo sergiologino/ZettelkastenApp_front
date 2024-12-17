@@ -50,10 +50,14 @@ const App = () => {
     try {
       console.log("------in App_js before send updatedNote: ",updatedNote);
       const response = await updateNote(updatedNote);
+      console.log("Ура! Получена ОБНОВЛЕННАЯ заметка с сервера: ", response );
 
     setNotes((prevNotes) =>
         prevNotes.map((note) =>
-            (note.id === updatedNote.id ? updatedNote : note)))
+                      (note.id === updatedNote.id ? updatedNote : note)
+                      )
+
+            )
     }catch (error){
       console.error("Ошибка при обновлении заметки:", error);
       alert("Не удалось обновить заметку. Проверьте соединение с сервером.");
@@ -63,8 +67,10 @@ const App = () => {
   const handleCreateNote = async (newNote,projectId) => {
 
     try {
-      const response = await addNote(newNote,newNote.projectId); // Используем метод из api.js
+      const response = await addNote(newNote,newNote.projectId);
       setNotes((prevNotes) => [...prevNotes, response]); // Обновляем список заметок
+      console.log("Ура! Получена НОВАЯ заметка с сервера: ", response );
+
     } catch (error) {
       console.error("Ошибка при создании заметки:", error);
       alert("Не удалось создать заметку. Проверьте соединение с сервером.");

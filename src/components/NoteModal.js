@@ -14,6 +14,7 @@ import {
     Chip, IconButton,
 } from "@mui/material";
 import { AttachFile, Delete } from "@mui/icons-material"; // Иконки для загрузки и удаления файлов
+import OGPreview from "./OGPreview";
 
 
 const NoteModal = ({
@@ -43,6 +44,7 @@ const NoteModal = ({
     const [isRecording, setIsRecording] = useState(false); // Флаг записи
     const [mediaRecorder, setMediaRecorder] = useState(null); // MediaRecorder
     const [recordedAudio, setRecordedAudio] = useState(null); // Временное аудио
+    const [openGraphData, setOpenGraphData] = useState({});
 
 
     // console.log("note: ",note);
@@ -164,6 +166,8 @@ const NoteModal = ({
             content,
             file,
             projectId: selectedProject,
+            audioFiles: audioFiles,
+            files: files,
             individualAnalysisFlag,
             tags,
             urls,
@@ -289,32 +293,42 @@ const NoteModal = ({
                             </Button>
                         </Box>
                         <Box mt={2}>
-                            {urls.map((Url, index) => (
-                                <Box
-                                    key={index}
-                                    display="flex"
-                                    justifyContent="space-between"
-                                    alignItems="center"
-                                    mb={1}
-                                >
-                                    <Typography
-                                        variant="body2"
-                                        component="a"
-                                        href={Url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        sx={{ textDecoration: "none", color: "primary.main" }}
-                                    >
-                                        {Url}
-                                    </Typography>
-                                    <IconButton
-                                        color="error"
-                                        onClick={() => handleDeleteUrl(Url)}
-                                    >
-                                        <Delete />
-                                    </IconButton>
+                            {/*{urls.map((Url, index) => (*/}
+                            {/*    <Box*/}
+                            {/*        key={index}*/}
+                            {/*        display="flex"*/}
+                            {/*        justifyContent="space-between"*/}
+                            {/*        alignItems="center"*/}
+                            {/*        mb={1}*/}
+                            {/*    >*/}
+                            {/*        <Typography*/}
+                            {/*            variant="body2"*/}
+                            {/*            component="a"*/}
+                            {/*            href={Url}*/}
+                            {/*            target="_blank"*/}
+                            {/*            rel="noopener noreferrer"*/}
+                            {/*            sx={{ textDecoration: "none", color: "primary.main" }}*/}
+                            {/*        >*/}
+                            {/*            {Url}*/}
+                            {/*        </Typography>*/}
+                            {/*        <IconButton*/}
+                            {/*            color="error"*/}
+                            {/*            onClick={() => handleDeleteUrl(Url)}*/}
+                            {/*        >*/}
+                            {/*            <Delete />*/}
+                            {/*        </IconButton>*/}
+
+                            {/*    </Box>*/}
+                            {/*))}*/}
+                        <Typography variant="subtitle1">Ссылки с OpenGraph данными:</Typography>
+                        {urls.map((url, index) => {
+                            const ogData = openGraphData[note?.id]?.find((data) => data.url === url);
+                            return (
+                                <Box key={index} mt={1}>
+                                    <OGPreview ogData={ogData || { url }} />
                                 </Box>
-                            ))}
+                            );
+                        })}
                         </Box>
                     </Box>
                     <Box mt={2}>

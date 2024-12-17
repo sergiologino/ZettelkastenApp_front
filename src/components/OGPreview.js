@@ -1,63 +1,33 @@
-import React, { useState, useEffect } from "react";
-
-const OGPreview = ({ url }) => {
-    const [ogData, setOgData] = useState(null);
-    const [isExpanded, setIsExpanded] = useState(false);
-
-    useEffect(() => {
-        // Запрос для получения данных Open Graph
-        const fetchOGData = async () => {
-            try {
-                const response = await fetch(`/api/get-og-data?url=${encodeURIComponent(url)}`);
-                const data = await response.json();
-                console.log("----ОТПРАВИЛИ ДАННЫЕ OPENGRAPH ", response);
-                setOgData(data);
-            } catch (error) {
-                console.error("Ошибка при получении OG данных:", error);
-            }
-        };
-
-        fetchOGData();
-    }, [url]);
-
+const OGPreview = ({ ogData }) => {
     return (
         <div style={{ marginTop: "8px", border: "1px solid #ccc", borderRadius: "4px", padding: "8px" }}>
             {ogData ? (
                 <>
-                    <div
-                        style={{
-                            display: "flex",
-                            alignItems: "center",
-                            cursor: "pointer",
-                        }}
-                        onClick={() => setIsExpanded(!isExpanded)}
-                    >
+                    <div style={{ display: "flex", alignItems: "center" }}>
                         <img
                             src={ogData.image || ""}
                             alt=""
                             style={{
-                                width: "50px",
-                                height: "50px",
+                                width: "40px",
+                                height: "40px",
                                 marginRight: "8px",
                                 objectFit: "cover",
                             }}
                         />
                         <div>
-                            <div style={{ fontWeight: "bold" }}>{ogData.title}</div>
-                            <div style={{ fontSize: "0.8rem", color: "#666" }}>{ogData.site_name}</div>
+                            <div style={{ fontWeight: "bold", fontSize: "0.9rem" }}>{ogData.title}</div> {/* Шрифт уменьшен */}
+                            <div style={{ fontSize: "0.7rem", color: "#666" }}>{ogData.site_name}</div> {/* Было 0.8rem */}
                         </div>
                     </div>
-                    {isExpanded && (
-                        <div style={{ marginTop: "8px", fontSize: "0.9rem" }}>
-                            <p>{ogData.description}</p>
-                            <a href={url} target="_blank" rel="noopener noreferrer">
-                                Перейти на сайт
-                            </a>
-                        </div>
-                    )}
+                    <div style={{ marginTop: "8px", fontSize: "0.9rem" }}>
+                        <p>{ogData.description}</p>
+                        <a href={ogData.url} target="_blank" rel="noopener noreferrer">
+                            Перейти на сайт
+                        </a>
+                    </div>
                 </>
             ) : (
-                <p>Загрузка...</p>
+                <p>Данные OpenGraph недоступны.</p>
             )}
         </div>
     );
