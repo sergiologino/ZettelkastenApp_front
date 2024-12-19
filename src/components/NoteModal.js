@@ -13,6 +13,7 @@ import {
     FormControlLabel,
     Chip, IconButton,
 } from "@mui/material";
+import { Save, Close, Add } from "@mui/icons-material";
 import { AttachFile, Delete } from "@mui/icons-material"; // Иконки для загрузки и удаления файлов
 import OGPreview from "./OGPreview";
 
@@ -209,29 +210,24 @@ const NoteModal = ({
             aria-labelledby="modal-title"
             aria-describedby="modal-description"
         >
-            {/* Фиксированный заголовок */}
             <Box
                 sx={{
-                    position: "sticky",
-                    top: 0,
-                    backgroundColor: "background.paper",
-                    zIndex: 10,
-                    padding: "16px",
-                    borderBottom: "1px solid #e0e0e0",
+                    position: "absolute",
+                    top: "50%",
+                    left: "50%",
+                    transform: "translate(-50%, -50%)",
+                    width: "900px", // Увеличена ширина
+                    height: "900px", // Высота модального окна
+                    overflowY: "auto", // Вертикальный скроллинг
+                    bgcolor: "background.paper",
+                    boxShadow: 24,
+                    p: 4,
+                    borderRadius: 2,
                 }}
             >
                 <Typography id="modal-title" variant="h6" component="h2">
                     {note?.id ? "Редактировать заметку" : "Добавить заметку"}
                 </Typography>
-            </Box>
-            {/* Содержимое с прокруткой */}
-            <Box
-                sx={{
-                    flex: 1, // Занимает оставшееся место
-                    overflowY: "auto",
-                    padding: "16px",
-                }}
-            >
                 <FormControl fullWidth margin="normal">
                     <InputLabel id="project-select-label">Проект</InputLabel>
                     <Select
@@ -272,7 +268,7 @@ const NoteModal = ({
                         />
                     </Button>
                     <Box mt={2}>
-                        {files.map((file, index) => (
+                        {files?.map((file, index) => (
                             <Box
                                 key={index}
                                 display="flex"
@@ -398,24 +394,45 @@ const NoteModal = ({
                     label="Отправить на анализ"
                     sx={{ marginTop: "16px" }}
                 />
-            </Box>
-            <Box
-                sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    borderTop: "1px solid #e0e0e0",
-                    padding: "16px",
-                }}
-            >
-                <Button onClick={onClose} color="secondary">
-                    Отмена
-                </Button>
-                <Button onClick={handleSave} variant="contained" color="primary">
-                    Сохранить
-                </Button>
+                <Box
+                    sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        borderTop: "1px solid #e0e0e0",
+                        padding: "16px",
+                    }}
+                >
+                    <Button
+                        onClick={onClose}
+                        variant="outlined"
+                        color="secondary"
+                        sx={{
+                            width: "48%", // Задаём ширину
+                            borderRadius: "8px", // Скругляем углы
+                            border: "2px solid #f50057", // Яркая граница
+                            padding: "12px", // Увеличиваем отступы
+                            fontSize: "1rem", // Размер шрифта
+                        }}
+                    >
+                        Отмена
+                    </Button>
+                    <Button
+                        onClick={handleSave}
+                        variant="contained"
+                        color="primary"
+                        sx={{
+                            width: "48%", // Задаём ширину
+                            borderRadius: "8px", // Скругляем углы
+                            padding: "12px", // Увеличиваем отступы
+                            fontSize: "1rem", // Размер шрифта
+                        }}
+                    >
+                        Сохранить
+                    </Button>
+                </Box>
             </Box>
         </Modal>
-    )
+    );
 };
 
 export default NoteModal;
