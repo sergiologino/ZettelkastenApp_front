@@ -16,6 +16,7 @@ import {
 import { Save, Close, Add } from "@mui/icons-material";
 import { AttachFile, Delete } from "@mui/icons-material"; // Иконки для загрузки и удаления файлов
 import OGPreview from "./OGPreview";
+import {uploadAudioFiles, uploadFiles} from "../api/api";
 
 
 const NoteModal = ({
@@ -151,7 +152,7 @@ const NoteModal = ({
         setTags(tags.filter((tag) => tag !== tagToDelete));
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
         if (!content.trim()) {
             alert("Текст заметки не может быть пустым.");
             return;
@@ -162,31 +163,54 @@ const NoteModal = ({
             return;
         }
 
-        const updatedNote = {
-            ...note, // Копируем все свойства из текущей заметки
-            content,
-            file,
-            projectId: selectedProject,
-            audioFiles: audioFiles.map((audio) => ({
-                url: audio.url,
-                name: audio.name,
-            })), // Добавляем аудиофайлы
-            files: files.map((file) => ({
-                name: file.name,
-                url: URL.createObjectURL(file), // Временно создаём ссылку
-            })), // Добавляем файлы
-            individualAnalysisFlag,
-            tags,
-            urls,
-        };
+        try {
+            // Создаем или обновляем заметку
+            const updatedNote = {
+                ...note, // Копируем все свойства из текущей заметки
+                content,
+                file,
+                projectId: selectedProject,
+                audioFiles: audioFiles.map((audio) => ({
+                    url: audio.url,
+                    name: audio.name,
+                })), // Добавляем аудиофайлы
+                files: files.map((file) => ({
+                    name: file.name,
+                    url: URL.createObjectURL(file), // Временно создаём ссылку
+                })), // Добавляем файлы
+                individualAnalysisFlag,
+                tags,
+                urls,
+            };
 
-        onSave(updatedNote); // Передаём обновлённые данные
-        setContent("");
-        setFile(null);
-        setSelectedProject("");
-        setIndividualAnalysisFlag(isGlobalAnalysisEnabled);
-        onClose();
+
+            const savedNote = await onSave(updatedNote);
+
+            // Отправляем файлы
+            if (files.length > 0) {
+                const formData = new FormData();
+                files.forEach((file) => formData.append("files", file));
+
+                await uploadFiles(savedNote.id, formData); // Передаём ID заметки и файлы
+            }
+
+            // Отправляем аудиофайлы
+            if (audioFiles.length > 0) {
+                const formData = new FormData();
+                audioFiles.forEach((audio) => formData.append("audioFiles", audio.blob));
+
+                await uploadAudioFiles(savedNote.id, formData); // Передаём ID заметки и аудио
+            }
+
+            alert("Заметка успешно сохранена!");
+            onClose();
+
+        } catch (error) {
+            console.error("Ошибка при сохранении заметки:", error);
+            alert("Не удалось сохранить заметку. Проверьте соединение с сервером.");
+        }
     };
+
 
     const handleAudioFileChange = (e) => {
         const file = e.target.files[0];

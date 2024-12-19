@@ -117,6 +117,41 @@ export const fetchOpenGraphData = async (url) => {
     }
 };
 
+export const updateNoteCoordinates = async (noteId, x, y) => {
+    try {
+        const response = await api.put(`/notes/${noteId}/coordinates`, { x, y });
+        console.log(`Координаты для заметки ${noteId} обновлены на сервере:`, response.data);
+        return response.data;
+    } catch (error) {
+        console.error(`Ошибка при обновлении координат для заметки ${noteId}:`, error);
+        throw error;
+    }
+};
+
+export const uploadFiles = async (noteId, formData) => {
+    try {
+        const response = await api.post(`/notes/${noteId}/files`, formData, {
+            headers: { "Content-Type": "multipart/form-data" },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Ошибка при загрузке файлов:", error);
+        throw error;
+    }
+};
+
+export const uploadAudioFiles = async (noteId, formData) => {
+    try {
+        const response = await api.post(`/notes/${noteId}/audioFiles`, formData, {
+            headers: { "Content-Type": "multipart/form-data" },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Ошибка при загрузке аудиофайлов:", error);
+        throw error;
+    }
+};
+
 
 
 export default api;

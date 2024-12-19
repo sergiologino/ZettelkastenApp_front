@@ -3,7 +3,7 @@ import ReactFlow, { MiniMap, Controls, Background } from "reactflow";
 import "reactflow/dist/style.css";
 import NoteModal from "./NoteModal";
 import {Checkbox, Switch} from "@mui/material";
-import {analyzeNotes} from "../api/api";
+import {analyzeNotes, updateNoteCoordinates} from "../api/api";
 import OGPreview from "./OGPreview";
 import { fetchOpenGraphDataForNote } from "../api/api";
 
@@ -23,10 +23,10 @@ const GraphBoard = ({ notes, setNotes, onUpdateNote, projects, onCreateNote, sel
         );
     };
 
-    const onNodeDragStop = (_, node) => {
+    const onNodeDragStop = async (_, node) => {
 
         const updatedNodes = nodes.map((n) =>
-            n.id === node.id ? { ...n, position: node.position } : n
+            n.id === node.id ? {...n, position: node.position} : n
         );
         setNodes(updatedNodes);
 
@@ -39,17 +39,24 @@ const GraphBoard = ({ notes, setNotes, onUpdateNote, projects, onCreateNote, sel
                 y: Math.round(node.position.y),
             };
 
-            // Обновляем состояние notes локально
-            setNotes((prevNotes) =>
-                prevNotes.map((note) => (note.id === updatedNote.id ? updatedNote : note))
-            );
+            try {
+                // Отправляем новые координаты на сервер
+                await updateNoteCoordinates(updatedNote.id, updatedNote.x, updatedNote.y);
+
+                // Обновляем состояние notes локально
+                setNotes((prevNotes) =>
+                    prevNotes.map((note) => (note.id === updatedNote.id ? updatedNote : note))
+                );
+            } catch (error) {
+                console.error("Ошибка при обновлении координат на сервере:", error);
+            }
 
             // Обновляем selectedNote для модального окна
             setSelectedNote(updatedNote);
         }
         setNodes((prevNodes) =>
             prevNodes.map((n) =>
-                n.id === node.id ? { ...n, style: { ...n.style, opacity: 1 } } : n
+                n.id === node.id ? {...n, style: {...n.style, opacity: 1}} : n
             )
         );
     };
@@ -77,11 +84,7 @@ const GraphBoard = ({ notes, setNotes, onUpdateNote, projects, onCreateNote, sel
                             textAlign: "center", // Центрируем текст
                             fontSize: "0.9rem", // Пропорциональный размер текста
                         }}>
-                            {/*<Switch*/}
-                            {/*    checked={selectedNoteIds.includes(note.id)}*/}
-                            {/*    onChange={(e) => handleNoteSelection(e, note.id)}*/}
-                            {/*    onClick={(e) => e.stopPropagation()} // Останавливаем распространение клика*/}
-                            {/*    style={{ marginRight: "4px" }}*/}
+
                             {/*/>*/}
                             <div>{note.content}</div>
                             {note.links?.length > 0 && (
@@ -210,19 +213,31 @@ const GraphBoard = ({ notes, setNotes, onUpdateNote, projects, onCreateNote, sel
         return colors[hash % colors.length];
     };
 
-    const handleSaveNote = (updatedNote) => {
+    const handleSaveNote = async (updatedNote) => {
         if (updatedNote.id) {
-            // Локально обновляем заметку, серверный запрос будет сделан вручную
-            setNotes((prevNotes) =>
-                prevNotes.map((note) => note.id === updatedNote.id ? updatedNote : note));
-            onUpdateNote(updatedNote)
-
+            // Обновляем заметку
+            const savedNote = await onUpdateNote(updatedNote);
+            return savedNote;
         } else {
-            // Создание новой заметки
-            onCreateNote(updatedNote, selectedProject);
+            // Создаём новую заметку
+            const savedNote = await onCreateNote(updatedNote, selectedProject);
+            return savedNote;
         }
-        setIsModalOpen(false);
     };
+
+    // const handleSaveNote = (updatedNote) => {
+    //     if (updatedNote.id) {
+    //         // Локально обновляем заметку, серверный запрос будет сделан вручную
+    //         setNotes((prevNotes) =>
+    //             prevNotes.map((note) => note.id === updatedNote.id ? updatedNote : note));
+    //         onUpdateNote(updatedNote)
+    //
+    //     } else {
+    //         // Создание новой заметки
+    //         onCreateNote(updatedNote, selectedProject);
+    //     }
+    //     setIsModalOpen(false);
+    // };
     const handleAnalyze = async () => {
         try {
             console.log("Отправляем на анализ:", selectedNoteIds);
