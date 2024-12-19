@@ -50,3 +50,18 @@
             #ddd 100%
     );
 }
+
+.projpanel {
+    position: relative;
+}
+
+.resizer {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 5px;
+    height: 100%;
+    background: #ccc;
+    cursor: col-resize;
+    z-index: 2;
+}
