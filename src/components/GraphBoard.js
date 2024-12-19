@@ -77,12 +77,12 @@ const GraphBoard = ({ notes, setNotes, onUpdateNote, projects, onCreateNote, sel
                             textAlign: "center", // Центрируем текст
                             fontSize: "0.9rem", // Пропорциональный размер текста
                         }}>
-                            <Switch
-                                checked={selectedNoteIds.includes(note.id)}
-                                onChange={(e) => handleNoteSelection(e, note.id)}
-                                onClick={(e) => e.stopPropagation()} // Останавливаем распространение клика
-                                style={{ marginRight: "4px" }}
-                            />
+                            {/*<Switch*/}
+                            {/*    checked={selectedNoteIds.includes(note.id)}*/}
+                            {/*    onChange={(e) => handleNoteSelection(e, note.id)}*/}
+                            {/*    onClick={(e) => e.stopPropagation()} // Останавливаем распространение клика*/}
+                            {/*    style={{ marginRight: "4px" }}*/}
+                            {/*/>*/}
                             <div>{note.content}</div>
                             {note.links?.length > 0 && (
                                 <div style={{ marginTop: 8 }}>
@@ -100,15 +100,24 @@ const GraphBoard = ({ notes, setNotes, onUpdateNote, projects, onCreateNote, sel
                                         style={{
                                             fontSize: "0.6rem",
                                             border: "1px solid #ccc",
-                                            borderRadius: "4px",
-                                            padding: "1px 2px",
-                                            marginRight: "2px",
+                                            borderRadius: "1px",
+                                            padding: "1px 1px",
+                                            marginRight: "1px",
+                                            marginBottom: "1px",
                                             color: getColorForTag(tag),
                                         }}
                                     >
                                         {tag}
                                     </span>
                                 ))}
+                            </div>
+                            <div style={{ marginTop: 4, display: "flex"}}>
+                                <Switch
+                                    checked={selectedNoteIds.includes(note.id)}
+                                    onChange={(e) => handleNoteSelection(e, note.id)}
+                                    onClick={(e) => e.stopPropagation()} // Останавливаем распространение клика
+                                    // style={{ marginRight: "2px",marginTop: "4px" }}
+                                />
                             </div>
                         </div>
                     ),
@@ -117,13 +126,13 @@ const GraphBoard = ({ notes, setNotes, onUpdateNote, projects, onCreateNote, sel
                 style: {
                     background: "#fff",
                     borderRadius: "8px", // Оставляем радиус для эстетики
-                    padding: "16px", // Увеличиваем внутренний отступ
-                    width: "200px", // Было 100px, увеличено на 50%
+                    padding: "2px", // Увеличиваем внутренний отступ
+                    width: "250px", // Было 100px, увеличено на 50%
                     height: "150px", // Сделали квадратной, аналогично ширине
                     border: "1px solid #ccc",
                     fontSize: "1rem", // Увеличиваем шрифт, чтобы соответствовать размеру
                     display: "flex",
-                    alignItems: "center",
+                    alignItems: "stretch",
                     justifyContent: "center",
                     boxSizing: "border-box",
                 },
