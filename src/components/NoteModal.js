@@ -166,8 +166,14 @@ const NoteModal = ({
             content,
             file,
             projectId: selectedProject,
-            audioFiles: audioFiles,
-            files: files,
+            audioFiles: audioFiles.map((audio) => ({
+                url: audio.url,
+                name: audio.name,
+            })), // Добавляем аудиофайлы
+            files: files.map((file) => ({
+                name: file.name,
+                url: URL.createObjectURL(file), // Временно создаём ссылку
+            })), // Добавляем файлы
             individualAnalysisFlag,
             tags,
             urls,
@@ -203,22 +209,29 @@ const NoteModal = ({
             aria-labelledby="modal-title"
             aria-describedby="modal-description"
         >
+            {/* Фиксированный заголовок */}
             <Box
                 sx={{
-                    position: "absolute",
-                    top: "50%",
-                    left: "50%",
-                    transform: "translate(-50%, -50%)",
-                    width: 400,
-                    bgcolor: "background.paper",
-                    boxShadow: 24,
-                    p: 4,
-                    borderRadius: 2,
+                    position: "sticky",
+                    top: 0,
+                    backgroundColor: "background.paper",
+                    zIndex: 10,
+                    padding: "16px",
+                    borderBottom: "1px solid #e0e0e0",
                 }}
             >
                 <Typography id="modal-title" variant="h6" component="h2">
                     {note?.id ? "Редактировать заметку" : "Добавить заметку"}
                 </Typography>
+            </Box>
+            {/* Содержимое с прокруткой */}
+            <Box
+                sx={{
+                    flex: 1, // Занимает оставшееся место
+                    overflowY: "auto",
+                    padding: "16px",
+                }}
+            >
                 <FormControl fullWidth margin="normal">
                     <InputLabel id="project-select-label">Проект</InputLabel>
                     <Select
@@ -293,32 +306,6 @@ const NoteModal = ({
                             </Button>
                         </Box>
                         <Box mt={2}>
-                            {/*{urls.map((Url, index) => (*/}
-                            {/*    <Box*/}
-                            {/*        key={index}*/}
-                            {/*        display="flex"*/}
-                            {/*        justifyContent="space-between"*/}
-                            {/*        alignItems="center"*/}
-                            {/*        mb={1}*/}
-                            {/*    >*/}
-                            {/*        <Typography*/}
-                            {/*            variant="body2"*/}
-                            {/*            component="a"*/}
-                            {/*            href={Url}*/}
-                            {/*            target="_blank"*/}
-                            {/*            rel="noopener noreferrer"*/}
-                            {/*            sx={{ textDecoration: "none", color: "primary.main" }}*/}
-                            {/*        >*/}
-                            {/*            {Url}*/}
-                            {/*        </Typography>*/}
-                            {/*        <IconButton*/}
-                            {/*            color="error"*/}
-                            {/*            onClick={() => handleDeleteUrl(Url)}*/}
-                            {/*        >*/}
-                            {/*            <Delete />*/}
-                            {/*        </IconButton>*/}
-
-                            {/*    </Box>*/}
                             {/*))}*/}
                         <Typography variant="subtitle1">Ссылки с OpenGraph данными:</Typography>
                         {urls.map((url, index) => {
@@ -411,17 +398,24 @@ const NoteModal = ({
                     label="Отправить на анализ"
                     sx={{ marginTop: "16px" }}
                 />
-                <Box mt={2} display="flex" justifyContent="space-between">
-                    <Button onClick={onClose} color="secondary">
-                        Отмена
-                    </Button>
-                    <Button onClick={handleSave} variant="contained" color="primary">
-                        Сохранить
-                    </Button>
-                </Box>
+            </Box>
+            <Box
+                sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    borderTop: "1px solid #e0e0e0",
+                    padding: "16px",
+                }}
+            >
+                <Button onClick={onClose} color="secondary">
+                    Отмена
+                </Button>
+                <Button onClick={handleSave} variant="contained" color="primary">
+                    Сохранить
+                </Button>
             </Box>
         </Modal>
-    );
+    )
 };
 
 export default NoteModal;
