@@ -1,7 +1,9 @@
 import React, { useState } from "react";
-import { Box, Typography, Button, TextField } from "@mui/material";
+import { Box, Typography, Button, TextField, Tabs, Tab } from "@mui/material";
 import "./appStyle.css";
 import DeleteIcon from "@mui/icons-material/Delete";
+
+
 
 const ProjectPanel = ({
                           projects = [],
@@ -9,10 +11,16 @@ const ProjectPanel = ({
                           onSelect,
                           onCreate,
                           onDelete,
+                          tags = [], // Список уникальных тегов
+                          onTagSelect, // Функция для обработки выбранных тегов
+                          activeTab, // Текущий активный таб
+                          onTabChange, // Функция переключения табов
                       }) => {
+    console.log("onTabChange передан в ProjectPanel:", onTabChange);
     const [newProjectName, setNewProjectName] = useState("");
     const [newProjectDescription, setNewProjectDescription] = useState("");
     const [panelWidth, setPanelWidth] = useState(25); // Процент ширины панели
+    const [selectedTab, setSelectedTab] = useState(0); // Текущий активный таб
 
     const handleCreateProject = () => {
         if (!newProjectName.trim()) {
@@ -33,7 +41,9 @@ const ProjectPanel = ({
         setPanelWidth(newWidth);
     };
 
-    console.log("Рендер панели проектов, проекты:", projects);
+    const handleTabChange = (event, newValue) => {
+        setSelectedTab(newValue);
+    };
 
     return (
         <div
@@ -48,6 +58,27 @@ const ProjectPanel = ({
                 position: "relative",
             }}
         >
+            {/* Добавление табов */}
+            <Tabs
+                value={activeTab}
+                onChange={(e, newValue) => {
+                    if (typeof onTabChange === "function") {
+                        onTabChange(newValue);
+                    } else {
+                        console.error("onTabChange не является функцией");
+                    }
+                console.log("onTabChange вызван с аргументом:", newValue);
+                onTabChange(newValue);
+            }}
+
+                variant="fullWidth"
+                sx={{ borderBottom: "1px solid #e0e0e0", backgroundColor: "#fff" }}
+            >
+                <Tab label="Проекты" />
+                <Tab label="Теги" />
+            </Tabs>
+
+            {/* Контент табов */}
             <Box
                 sx={{
                     flex: 1,
@@ -55,69 +86,109 @@ const ProjectPanel = ({
                     padding: "16px",
                 }}
             >
-                <Typography variant="h6" sx={{ marginBottom: "12px" }}>
-                    Проекты
-                </Typography>
-                {projects.length > 0 ? (
-                    projects.map((project) => (
+                {selectedTab === 0 && (
+                    <>
+                        <Typography variant="h6" sx={{ marginBottom: "12px" }}>
+                            Проекты
+                        </Typography>
+                        {projects.length > 0 ? (
+                            projects.map((project) => (
+                                <Box
+                                    key={project.id}
+                                    sx={{
+                                        marginBottom: "12px",
+                                        padding: "12px",
+                                        backgroundColor:
+                                            project.id === selectedProjectId
+                                                ? "#b3e5fc"
+                                                : "#f0f0f0",
+                                        borderRadius: "8px",
+                                        border:
+                                            project.id === selectedProjectId
+                                                ? "2px solid #0288d1"
+                                                : "1px solid #e0e0e0",
+                                        cursor: "pointer",
+                                        position: "relative",
+                                    }}
+                                >
+                                    <Typography onClick={() => onSelect(project.id)}>
+                                        {project.name}
+                                    </Typography>
+                                    <Typography
+                                        variant="body2"
+                                        color="textSecondary"
+                                        sx={{ marginLeft: "8px" }}
+                                    >
+                                        {project.description}
+                                    </Typography>
+                                    <Button
+                                        size="small"
+                                        sx={{ position: "absolute", right: 8, top: 8 }}
+                                        onClick={() => onDelete(project.id)}
+                                    >
+                                        <DeleteIcon />
+                                    </Button>
+                                </Box>
+                            ))
+                        ) : (
+                            <Typography variant="body2" color="textSecondary">
+                                Нет проектов для отображения.
+                            </Typography>
+                        )}
+                        <TextField
+                            fullWidth
+                            value={newProjectName}
+                            onChange={(e) => setNewProjectName(e.target.value)}
+                            placeholder="Название проекта"
+                            sx={{ marginBottom: "8px" }}
+                        />
+                        <TextField
+                            fullWidth
+                            value={newProjectDescription}
+                            onChange={(e) => setNewProjectDescription(e.target.value)}
+                            placeholder="Описание проекта"
+                            sx={{ marginBottom: "8px" }}
+                        />
+                        <Button variant="contained" fullWidth onClick={handleCreateProject}>
+                            Добавить проект
+                        </Button>
+                    </>
+                )}
+
+                {selectedTab === 1 && (
+                    <>
+                        <Typography variant="h6" sx={{ marginBottom: "12px" }}>
+                            Теги
+                        </Typography>
                         <Box
-                            key={project.id}
                             sx={{
-                                marginBottom: "12px",
-                                padding: "12px",
-                                backgroundColor:
-                                    project.id === selectedProjectId ? "#b3e5fc" : "#f0f0f0",
-                                borderRadius: "8px",
-                                border:
-                                    project.id === selectedProjectId
-                                        ? "2px solid #0288d1"
-                                        : "1px solid #e0e0e0",
-                                cursor: "pointer",
-                                position: "relative",
+                                display: "flex",
+                                flexWrap: "wrap",
+                                gap: "8px",
                             }}
                         >
-                            <Typography onClick={() => onSelect(project.id)}>
-                                {project.name}
-                            </Typography>
-                            <Typography
-                                variant="body2"
-                                color="textSecondary"
-                                sx={{ marginLeft: "8px" }}
-                            >
-                                {project.description}
-                            </Typography>
-                            <Button
-                                size="small"
-                                sx={{ position: "absolute", right: 8, top: 8 }}
-                                onClick={() => onDelete(project.id)}
-                            >
-                                <DeleteIcon />
-                            </Button>
+                            {tags.map((tag) => (
+                                <Button
+                                    key={tag}
+                                    variant="outlined"
+                                    onClick={() => onTagSelect(tag)}
+                                    sx={{
+                                        border: "1px solid",
+                                        borderRadius: "4px",
+                                        padding: "4px 8px",
+                                        fontSize: "0.8rem",
+                                        color: "#333",
+                                    }}
+                                >
+                                    {tag}
+                                </Button>
+                            ))}
                         </Box>
-                    ))
-                ) : (
-                    <Typography variant="body2" color="textSecondary">
-                        Нет проектов для отображения.
-                    </Typography>
+                    </>
                 )}
-                <TextField
-                    fullWidth
-                    value={newProjectName}
-                    onChange={(e) => setNewProjectName(e.target.value)}
-                    placeholder="Название проекта"
-                    sx={{ marginBottom: "8px" }}
-                />
-                <TextField
-                    fullWidth
-                    value={newProjectDescription}
-                    onChange={(e) => setNewProjectDescription(e.target.value)}
-                    placeholder="Описание проекта"
-                    sx={{ marginBottom: "8px" }}
-                />
-                <Button variant="contained" fullWidth onClick={handleCreateProject}>
-                    Добавить проект
-                </Button>
             </Box>
+
+            {/* Разделитель для изменения ширины панели */}
             <div
                 className="resizer"
                 onMouseDown={(e) => {

@@ -6,6 +6,7 @@ import {Checkbox, Switch} from "@mui/material";
 import {analyzeNotes, updateNoteCoordinates} from "../api/api";
 import OGPreview from "./OGPreview";
 import { fetchOpenGraphDataForNote } from "../api/api";
+import ProjectPanel from "./ProjectPanel";
 
 const GraphBoard = ({ notes, setNotes, onUpdateNote, projects, onCreateNote, selectedProject }) => {
     const [nodes, setNodes] = useState([]);
@@ -14,6 +15,11 @@ const GraphBoard = ({ notes, setNotes, onUpdateNote, projects, onCreateNote, sel
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedNoteIds, setSelectedNoteIds] = useState([]);
     const [openGraphData, setOpenGraphData] = useState({});
+    const [filteredNotes, setFilteredNotes] = useState(notes); // Видимые заметки
+    const [selectedProjectId, setSelectedProjectId] = useState(null); // Активный проект
+    const [activeTab, setActiveTab] = useState(0); // Активный таб
+    const [selectedTags, setSelectedTags] = useState([]); // Выбранные теги
+
 
     const onNodeDragStart = (_, node) => {
         setNodes((prevNodes) =>
@@ -67,6 +73,28 @@ const GraphBoard = ({ notes, setNotes, onUpdateNote, projects, onCreateNote, sel
                 : prevIds.filter((id) => id !== noteId) // Убираем ID, если чекбокс снят
         );
     };
+
+    useEffect(() => {
+        if (activeTab === 0) {
+            // Таб с проектами
+            if (selectedProjectId) {
+                setFilteredNotes(notes.filter((note) => note.projectId === selectedProjectId));
+            } else {
+                setFilteredNotes([]); // Если проект не выбран
+            }
+        } else if (activeTab === 1) {
+            // Таб с тегами
+            if (selectedTags.length > 0) {
+                setFilteredNotes(
+                    notes.filter((note) =>
+                        note.tags.some((tag) => selectedTags.includes(tag))
+                    )
+                );
+            } else {
+                setFilteredNotes([]); // Если ни один тег не выбран
+            }
+        }
+    }, [activeTab, selectedProjectId, selectedTags, notes]);
 
     useEffect(() => {
         // Обновляем узлы и связи при изменении заметок
@@ -225,19 +253,7 @@ const GraphBoard = ({ notes, setNotes, onUpdateNote, projects, onCreateNote, sel
         }
     };
 
-    // const handleSaveNote = (updatedNote) => {
-    //     if (updatedNote.id) {
-    //         // Локально обновляем заметку, серверный запрос будет сделан вручную
-    //         setNotes((prevNotes) =>
-    //             prevNotes.map((note) => note.id === updatedNote.id ? updatedNote : note));
-    //         onUpdateNote(updatedNote)
-    //
-    //     } else {
-    //         // Создание новой заметки
-    //         onCreateNote(updatedNote, selectedProject);
-    //     }
-    //     setIsModalOpen(false);
-    // };
+
     const handleAnalyze = async () => {
         try {
             console.log("Отправляем на анализ:", selectedNoteIds);
@@ -252,15 +268,86 @@ const GraphBoard = ({ notes, setNotes, onUpdateNote, projects, onCreateNote, sel
         }
     };
 
+    // Выбор проекта
+    const handleSelectProject = (projectId) => {
+        console.log("Выбран проект:", projectId);
+        setSelectedProjectId(projectId);
+        const filtered = notes.filter((note) => note.projectId === projectId);
+        console.log("Заметки для выбранного проекта:", filtered);
+        setFilteredNotes(filtered);
+
+    };
+
+    // Выбор тега
+    const handleSelectTag = (tag) => {
+        setSelectedTags((prevTags) =>
+            prevTags.includes(tag)
+                ? prevTags.filter((t) => t !== tag) // Убираем тег, если он уже выбран
+                : [...prevTags, tag] // Добавляем новый тег
+        );
+    };
+
+    // Переключение табов
+    const handleTabChange = (newTab) => {
+        console.log("handleTabChange вызван с табом:", newTab);
+        if (newTab === 0) {
+            // Возврат на таб с проектами
+
+
+            if (selectedProjectId) {
+                console.log("Фильтрация заметок по проекту:", selectedProjectId);
+                const filtered = notes.filter((note) => note.projectId === selectedProjectId);
+                console.log("Заметки для выбранного проекта:", filtered);
+            }
+        } else if (newTab === 1) {
+
+            // Переключение на таб с тегами
+            console.log("Скрытие заметок (таб 'Теги')");
+            setSelectedTags([]); // Сбрасываем выбранные теги
+            setFilteredNotes([]); // Скрываем заметки
+        }
+        setActiveTab(newTab);
+        console.log("Состояние activeTab обновлено:", newTab);
+    };
+
+
+
     return (
         <div className="board" style={{ width: "100%", height: "100%" }}>
+            <ProjectPanel
+                projects={projects}
+                selectedProjectId={selectedProjectId}
+                onSelect={handleSelectProject}
+                tags={[...new Set(notes.flatMap((note) => note.tags))]} // Уникальные теги
+                onTagSelect={handleSelectTag}
+                activeTab={activeTab}
+                onTabChange={handleTabChange}
+
+            />
+
             <ReactFlow
-                nodes={nodes}
-                edges={edges}
+                nodes={filteredNotes.map(
+                    (note) =>
+                        (
+                    {
+                    id: note.id,
+                    data: { label: note.content },
+                    position: { x: note.x || 0, y: note.y || 0 },
+                    }
+
+                        )
+                )
+
+            }
+                edges={[]} // Связи можно добавить по аналогии
                 fitView
-                onNodeClick={handleNodeClick}
-                onNodeDragStart={onNodeDragStart}
-                onNodeDragStop={onNodeDragStop}
+                style={{ flex: 1 }}
+                // nodes={nodes}
+                // edges={edges}
+                // fitView
+                // onNodeClick={handleNodeClick}
+                // onNodeDragStart={onNodeDragStart}
+                // onNodeDragStop={onNodeDragStop}
             >
                 <MiniMap />
                 <Controls />
