@@ -8,6 +8,8 @@ const App = () => {
   const [notes, setNotes] = useState([]);
   const [projects, setProjects] = useState([]);
   const [selectedProjectId, setSelectedProjectId] = useState(null);
+  const [activeTab, setActiveTab] = useState(0); // 0 — таб "Проекты", 1 — таб "Теги"
+  const [filteredNotes, setFilteredNotes] = useState([]); // Список заметок для отображения
 
 
 
@@ -24,6 +26,21 @@ const App = () => {
 
     loadProjects();
   }, []);
+
+  useEffect(() => {
+    if (activeTab === 0) {
+      // Таб "Проекты"
+      if (selectedProjectId) {
+        const filtered = notes.filter((note) => note.projectId === selectedProjectId);
+        setFilteredNotes(filtered);
+      } else {
+        setFilteredNotes([]); // Если проект не выбран
+      }
+    } else if (activeTab === 1) {
+      // Таб "Теги"
+      setFilteredNotes([]); // На табе "Теги" изначально скрываем заметки
+    }
+  }, [activeTab, selectedProjectId, notes]);
 
   const handleCreateProject = async (newProject) => {
     try {
@@ -83,19 +100,21 @@ const App = () => {
             projects={projects}
             onSelect={handleProjectSelect}
             onCreate={handleCreateProject}
-            selectedProjectId={selectedProjectId} // Передаем ID текущего проекта
+            selectedProjectId={selectedProjectId}
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
         />
         {selectedProjectId ? (
             <GraphBoard
-                notes={notes}
-                setNotes={setNotes} // Передаём функцию обновления состояния
+                notes={filteredNotes} // Передаём отфильтрованные заметки
+                setNotes={setNotes}
                 onUpdateNote={handleUpdateNote}
-                projects={projects} // Передаём projects в GraphBoard
+                projects={projects}
                 selectedProject={selectedProjectId}
-                onCreateNote={handleCreateNote}
-
-
-           />
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                setFilteredNotes={setFilteredNotes} // Передаём функцию для обновления
+            />
             ):(
             <div style={{ flex: 1, display: "flex", justifyContent: "center", alignItems: "center" }}>
               <h3>Выберите проект, чтобы увидеть граф заметок</h3>

@@ -61,16 +61,7 @@ const ProjectPanel = ({
             {/* Добавление табов */}
             <Tabs
                 value={activeTab}
-                onChange={(e, newValue) => {
-                    if (typeof onTabChange === "function") {
-                        onTabChange(newValue);
-                    } else {
-                        console.error("onTabChange не является функцией");
-                    }
-                console.log("onTabChange вызван с аргументом:", newValue);
-                onTabChange(newValue);
-            }}
-
+                onChange={(e, newValue) => onTabChange(newValue)}
                 variant="fullWidth"
                 sx={{ borderBottom: "1px solid #e0e0e0", backgroundColor: "#fff" }}
             >

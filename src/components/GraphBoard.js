@@ -8,16 +8,27 @@ import OGPreview from "./OGPreview";
 import { fetchOpenGraphDataForNote } from "../api/api";
 import ProjectPanel from "./ProjectPanel";
 
-const GraphBoard = ({ notes, setNotes, onUpdateNote, projects, onCreateNote, selectedProject }) => {
+const GraphBoard = ({
+                        notes, // Список отфильтрованных заметок
+                        setNotes,
+                        onUpdateNote,
+                        projects,
+                        onCreateNote,
+                        selectedProject,
+                        activeTab,
+                        setActiveTab,
+                        filteredNotes,
+                        setFilteredNotes, // Функция обновления
+}) => {
     const [nodes, setNodes] = useState([]);
     const [edges, setEdges] = useState([]);
     const [selectedNote, setSelectedNote] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedNoteIds, setSelectedNoteIds] = useState([]);
     const [openGraphData, setOpenGraphData] = useState({});
-    const [filteredNotes, setFilteredNotes] = useState(notes); // Видимые заметки
+    //const [filteredNotes, setFilteredNotes] = useState(notes); // Видимые заметки
     const [selectedProjectId, setSelectedProjectId] = useState(null); // Активный проект
-    const [activeTab, setActiveTab] = useState(0); // Активный таб
+    //const [activeTab, setActiveTab] = useState(0); // Активный таб
     const [selectedTags, setSelectedTags] = useState([]); // Выбранные теги
 
 
@@ -73,6 +84,21 @@ const GraphBoard = ({ notes, setNotes, onUpdateNote, projects, onCreateNote, sel
                 : prevIds.filter((id) => id !== noteId) // Убираем ID, если чекбокс снят
         );
     };
+
+
+    useEffect(() => {
+        if (activeTab === 1) {
+            // Логика для таба "Теги"
+            setFilteredNotes([]); // Скрываем заметки, если ни один тег не выбран
+        }
+    }, [activeTab, setFilteredNotes]);
+
+    useEffect(() => {
+        if (selectedProjectId) {
+            const filtered = notes.filter((note) => note.projectId === selectedProjectId);
+            setFilteredNotes(filtered);
+        }
+    }, [selectedProjectId, notes]);
 
     useEffect(() => {
         if (activeTab === 0) {
@@ -314,40 +340,23 @@ const GraphBoard = ({ notes, setNotes, onUpdateNote, projects, onCreateNote, sel
 
     return (
         <div className="board" style={{ width: "100%", height: "100%" }}>
-            <ProjectPanel
-                projects={projects}
-                selectedProjectId={selectedProjectId}
-                onSelect={handleSelectProject}
-                tags={[...new Set(notes.flatMap((note) => note.tags))]} // Уникальные теги
-                onTagSelect={handleSelectTag}
-                activeTab={activeTab}
-                onTabChange={handleTabChange}
-
-            />
-
             <ReactFlow
                 nodes={filteredNotes.map(
                     (note) =>
-                        (
-                    {
-                    id: note.id,
-                    data: { label: note.content },
-                    position: { x: note.x || 0, y: note.y || 0 },
-                    }
+                    (
+                        {
+                        id: note.id,
+                        data: { label: note.content },
+                        position: { x: note.x || 0, y: note.y || 0 },
+                        }
 
-                        )
+                    )
                 )
 
             }
                 edges={[]} // Связи можно добавить по аналогии
                 fitView
                 style={{ flex: 1 }}
-                // nodes={nodes}
-                // edges={edges}
-                // fitView
-                // onNodeClick={handleNodeClick}
-                // onNodeDragStart={onNodeDragStart}
-                // onNodeDragStop={onNodeDragStop}
             >
                 <MiniMap />
                 <Controls />
