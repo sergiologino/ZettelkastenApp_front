@@ -32,13 +32,14 @@ const App = () => {
       // Таб "Проекты"
       if (selectedProjectId) {
         const filtered = notes.filter((note) => note.projectId === selectedProjectId);
-        setFilteredNotes(filtered);
+        // console.log("filtered notes in App_js: ",filtered);
+        setFilteredNotes(filtered); // Обновляем заметки для проекта
       } else {
-        setFilteredNotes([]); // Если проект не выбран
+        setFilteredNotes([]); // Очищаем, если проект не выбран
       }
     } else if (activeTab === 1) {
       // Таб "Теги"
-      setFilteredNotes([]); // На табе "Теги" изначально скрываем заметки
+      setFilteredNotes(notes); // На табе "Теги" очищаем доску
     }
   }, [activeTab, selectedProjectId, notes]);
 
@@ -57,6 +58,8 @@ const App = () => {
     try {
       const loadedNotes = await fetchNotes(projectId);
       setNotes(loadedNotes); // Загружаем заметки проекта
+      setFilteredNotes(loadedNotes); // Устанавливаем filteredNotes сразу после загрузки
+      //console.log("notes in handleProjectSelect: ",loadedNotes);
     } catch (error) {
       console.error("Ошибка при загрузке заметок:", error);
       alert("Не удалось загрузить заметки. Проверьте соединение с сервером.");
@@ -65,7 +68,7 @@ const App = () => {
 
   const handleUpdateNote = async (updatedNote) => {
     try {
-      console.log("------in App_js before send updatedNote: ",updatedNote);
+      // console.log("------in App_js before send updatedNote: ",updatedNote);
       const response = await updateNote(updatedNote);
       console.log("Ура! Получена ОБНОВЛЕННАЯ заметка с сервера: ", response );
 
@@ -86,7 +89,7 @@ const App = () => {
     try {
       const response = await addNote(newNote,newNote.projectId);
       setNotes((prevNotes) => [...prevNotes, response]); // Обновляем список заметок
-      console.log("Ура! Получена НОВАЯ заметка с сервера: ", response );
+      //console.log("Ура! Получена НОВАЯ заметка с сервера: ", response );
 
     } catch (error) {
       console.error("Ошибка при создании заметки:", error);
@@ -106,7 +109,8 @@ const App = () => {
         />
         {selectedProjectId ? (
             <GraphBoard
-                notes={filteredNotes} // Передаём отфильтрованные заметки
+                filteredNotes={filteredNotes}
+                notes={notes} // Передаём отфильтрованные заметки
                 setNotes={setNotes}
                 onUpdateNote={handleUpdateNote}
                 projects={projects}

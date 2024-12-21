@@ -6,7 +6,7 @@ import {Checkbox, Switch} from "@mui/material";
 import {analyzeNotes, updateNoteCoordinates} from "../api/api";
 import OGPreview from "./OGPreview";
 import { fetchOpenGraphDataForNote } from "../api/api";
-import ProjectPanel from "./ProjectPanel";
+
 
 const GraphBoard = ({
                         notes, // Список отфильтрованных заметок
@@ -15,20 +15,19 @@ const GraphBoard = ({
                         projects,
                         onCreateNote,
                         selectedProject,
-                        activeTab,
-                        setActiveTab,
                         filteredNotes,
                         setFilteredNotes, // Функция обновления
 }) => {
+    // console.log(" start GraphBoard, filteredNotes: ", filteredNotes);
+    // console.log(" start GraphBoard, notes: ", notes);
     const [nodes, setNodes] = useState([]);
     const [edges, setEdges] = useState([]);
     const [selectedNote, setSelectedNote] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedNoteIds, setSelectedNoteIds] = useState([]);
     const [openGraphData, setOpenGraphData] = useState({});
-    //const [filteredNotes, setFilteredNotes] = useState(notes); // Видимые заметки
     const [selectedProjectId, setSelectedProjectId] = useState(null); // Активный проект
-    //const [activeTab, setActiveTab] = useState(0); // Активный таб
+    const [activeTab, setActiveTab] = useState(0); // Активный таб
     const [selectedTags, setSelectedTags] = useState([]); // Выбранные теги
 
 
@@ -77,52 +76,40 @@ const GraphBoard = ({
             )
         );
     };
-    const handleNoteSelection = (event, noteId) => {
+
+    const handleNoteSelection = (event, noteId,isChecked) => {
+        setNotes((prevNotes) => {
+            const updatedNotes = prevNotes.map((note) =>
+                note.id === noteId ? { ...note, individualAnalysisFlag: isChecked } : note
+            );
+            console.log("Updated Notes:", updatedNotes);
+            return updatedNotes})
+
         setSelectedNoteIds((prevIds) =>
             event.target.checked
                 ? [...prevIds, noteId] // Добавляем ID, если чекбокс выбран
                 : prevIds.filter((id) => id !== noteId) // Убираем ID, если чекбокс снят
-        );
+        )
     };
 
 
     useEffect(() => {
-        if (activeTab === 1) {
-            // Логика для таба "Теги"
-            setFilteredNotes([]); // Скрываем заметки, если ни один тег не выбран
-        }
-    }, [activeTab, setFilteredNotes]);
-
-    useEffect(() => {
         if (selectedProjectId) {
-            const filtered = notes.filter((note) => note.projectId === selectedProjectId);
+            const filtered = filteredNotes.filter((note) => note.projectId === selectedProjectId);
+            //console.log("in useeffect GraphBoard filtered: ",filtered);
             setFilteredNotes(filtered);
         }
     }, [selectedProjectId, notes]);
 
-    useEffect(() => {
-        if (activeTab === 0) {
-            // Таб с проектами
-            if (selectedProjectId) {
-                setFilteredNotes(notes.filter((note) => note.projectId === selectedProjectId));
-            } else {
-                setFilteredNotes([]); // Если проект не выбран
-            }
-        } else if (activeTab === 1) {
-            // Таб с тегами
-            if (selectedTags.length > 0) {
-                setFilteredNotes(
-                    notes.filter((note) =>
-                        note.tags.some((tag) => selectedTags.includes(tag))
-                    )
-                );
-            } else {
-                setFilteredNotes([]); // Если ни один тег не выбран
-            }
-        }
-    }, [activeTab, selectedProjectId, selectedTags, notes]);
+    const handleAnalysisFlagChange = (noteId, isChecked) => {
+        setNotes((prevNotes) =>
+            prevNotes.map((note) =>
+                note.id === noteId ? { ...note, individualAnalysisFlag: isChecked } : note
+            )
+        );
+    };
 
-    useEffect(() => {
+   useEffect(() => {
         // Обновляем узлы и связи при изменении заметок
         setNodes(
             notes.map((note, index) => ({
@@ -130,6 +117,12 @@ const GraphBoard = ({
                 data: {
                     label: (
                         <div style={{
+                            resize: "both",
+                            overflow: "auto",
+                            minWidth: "100px",
+                            minHeight: "50px",
+                            maxWidth: "700px",
+                            maxHeight: "500px",
                             display: "flex",
                             flexDirection: "column",
                             justifyContent: "center",
@@ -141,7 +134,7 @@ const GraphBoard = ({
 
                             {/*/>*/}
                             <div>{note.content}</div>
-                            {note.links?.length > 0 && (
+                            {note.urls?.length > 0 && (
                                 <div style={{ marginTop: 8 }}>
                                     {openGraphData[note.id]?.map((ogData, index) => (
                                         <OGPreview key={index} ogData={ogData} />
@@ -150,7 +143,6 @@ const GraphBoard = ({
                                 </div>
                             )}
                             <div style={{ marginTop: 8, display: "flex", flexWrap: "wrap", gap: "4px" }}>
-
                                 {note.tags?.map((tag) => (
                                     <span
                                         key={tag}
@@ -184,10 +176,10 @@ const GraphBoard = ({
                     background: "#fff",
                     borderRadius: "8px", // Оставляем радиус для эстетики
                     padding: "2px", // Увеличиваем внутренний отступ
-                    width: "250px", // Было 100px, увеличено на 50%
+                    width: "150px", // Было 100px, увеличено на 50%
                     height: "150px", // Сделали квадратной, аналогично ширине
                     border: "1px solid #ccc",
-                    fontSize: "1rem", // Увеличиваем шрифт, чтобы соответствовать размеру
+                    fontSize: "0.3rem", // Увеличиваем шрифт, чтобы соответствовать размеру
                     display: "flex",
                     alignItems: "stretch",
                     justifyContent: "center",
@@ -199,13 +191,15 @@ const GraphBoard = ({
         setEdges(getEdges(notes));
     }, [notes]);
 
-    useEffect(() => {
+
+   useEffect(() => {
         const loadOpenGraphData = async () => {
             const newOpenGraphData = {};
 
             for (const note of notes) {
                 if (note.urls?.length) {
                     try {
+                        console.log("получаем OpenGraphData для каждой заметки")
                         const ogData = await fetchOpenGraphDataForNote(note.id, note.urls);
                         newOpenGraphData[note.id] = ogData; // Сохраняем данные для каждой заметки
                     } catch (error) {
@@ -220,7 +214,7 @@ const GraphBoard = ({
         if (notes.length > 0) {
             loadOpenGraphData();
         }
-    }, [notes]);
+    }, [filteredNotes]);
 
     const getEdges = (notes) => {
         const edges = [];
@@ -295,45 +289,44 @@ const GraphBoard = ({
     };
 
     // Выбор проекта
-    const handleSelectProject = (projectId) => {
-        console.log("Выбран проект:", projectId);
-        setSelectedProjectId(projectId);
-        const filtered = notes.filter((note) => note.projectId === projectId);
-        console.log("Заметки для выбранного проекта:", filtered);
-        setFilteredNotes(filtered);
-
-    };
+    // const handleSelectProject = (projectId) => {
+    //     console.log("Выбран проект:", projectId);
+    //     setSelectedProjectId(projectId);
+    //     const filtered = notes.filter((note) => note.projectId === projectId);
+    //     console.log("Заметки для выбранного проекта:", filtered);
+    //     setFilteredNotes(filtered);
+    //
+    // };
 
     // Выбор тега
     const handleSelectTag = (tag) => {
-        setSelectedTags((prevTags) =>
-            prevTags.includes(tag)
-                ? prevTags.filter((t) => t !== tag) // Убираем тег, если он уже выбран
-                : [...prevTags, tag] // Добавляем новый тег
+        const updatedTags = selectedTags.includes(tag)
+            ? selectedTags.filter((t) => t !== tag)
+            : [...selectedTags, tag];
+        setSelectedTags(updatedTags);
+
+        const filteredByTags = notes.filter((note) =>
+            updatedTags.some((selectedTag) => note.tags.includes(selectedTag))
         );
+        setFilteredNotes(filteredByTags);
     };
 
     // Переключение табов
     const handleTabChange = (newTab) => {
-        console.log("handleTabChange вызван с табом:", newTab);
+        setActiveTab(newTab);
         if (newTab === 0) {
-            // Возврат на таб с проектами
-
-
             if (selectedProjectId) {
-                console.log("Фильтрация заметок по проекту:", selectedProjectId);
-                const filtered = notes.filter((note) => note.projectId === selectedProjectId);
-                console.log("Заметки для выбранного проекта:", filtered);
+                const filtered = filteredNotes?.filter((note) => note.projectId === selectedProjectId);
+                setFilteredNotes(filtered);
+            } else {
+
+                setFilteredNotes([]);
             }
         } else if (newTab === 1) {
 
-            // Переключение на таб с тегами
-            console.log("Скрытие заметок (таб 'Теги')");
-            setSelectedTags([]); // Сбрасываем выбранные теги
-            setFilteredNotes([]); // Скрываем заметки
+            setFilteredNotes([]); // Очистка доски при переключении на теги
+            setSelectedTags([]);  // Сброс выбранных тегов
         }
-        setActiveTab(newTab);
-        console.log("Состояние activeTab обновлено:", newTab);
     };
 
 
@@ -341,21 +334,12 @@ const GraphBoard = ({
     return (
         <div className="board" style={{ width: "100%", height: "100%" }}>
             <ReactFlow
-                nodes={filteredNotes.map(
-                    (note) =>
-                    (
-                        {
-                        id: note.id,
-                        data: { label: note.content },
-                        position: { x: note.x || 0, y: note.y || 0 },
-                        }
-
-                    )
-                )
-
-            }
-                edges={[]} // Связи можно добавить по аналогии
+                nodes={nodes}
+                edges={edges} // Пока без связей
                 fitView
+                onNodeClick={handleNodeClick}
+                onNodeDragStart={onNodeDragStart}
+                onNodeDragStop={onNodeDragStop}
                 style={{ flex: 1 }}
             >
                 <MiniMap />
@@ -405,6 +389,7 @@ const GraphBoard = ({
                         color: "#fff",
                         fontSize: "0.8rem", // Уменьшение текста
                         border: "none",
+
                         borderRadius: "4px", // Сделаем углы чуть более острыми
                         cursor: "pointer",
                     }}

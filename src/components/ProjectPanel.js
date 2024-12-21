@@ -16,7 +16,7 @@ const ProjectPanel = ({
                           activeTab, // Текущий активный таб
                           onTabChange, // Функция переключения табов
                       }) => {
-    console.log("onTabChange передан в ProjectPanel:", onTabChange);
+    //console.log("onTabChange передан в ProjectPanel:", onTabChange);
     const [newProjectName, setNewProjectName] = useState("");
     const [newProjectDescription, setNewProjectDescription] = useState("");
     const [panelWidth, setPanelWidth] = useState(25); // Процент ширины панели
@@ -27,9 +27,15 @@ const ProjectPanel = ({
             alert("Название проекта не может быть пустым.");
             return;
         }
+
+        // Генерация текущей даты в формате "yyyy-mm-dd hh:mm"
+        const now = new Date();
+        const formattedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+
         const newProject = {
             name: newProjectName.trim(),
             description: newProjectDescription.trim(),
+            createdAt: formattedDate, // Добавляем дату создания
         };
         onCreate(newProject);
         setNewProjectName("");
@@ -112,6 +118,13 @@ const ProjectPanel = ({
                                     >
                                         {project.description}
                                     </Typography>
+                                    <Typography
+                                        variant="body2"
+                                        color="textSecondary"
+                                        sx={{ position: "absolute", top: "12px", right: "12px", fontSize: "0.8rem", color: "#666" }}
+                                    >
+                                        {project.createdAt} {/* Отображаем дату */}
+                                    </Typography>
                                     <Button
                                         size="small"
                                         sx={{ position: "absolute", right: 8, top: 8 }}
@@ -158,7 +171,7 @@ const ProjectPanel = ({
                                 gap: "8px",
                             }}
                         >
-                            {tags.map((tag) => (
+                            {tags?.map((tag) => (
                                 <Button
                                     key={tag}
                                     variant="outlined"

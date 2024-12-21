@@ -2,16 +2,13 @@ import axios from "axios";
 import api from "./axiosConfig";
 
 
-// const api = axios.create({
-//     baseURL: "http://localhost:8080/api", // Замените на ваш URL бэкенда
-// });
-console.log("api: ",api);
+
 // Получить список проектов
 export const fetchProjects = async () => {
     // eslint-disable-next-line no-template-curly-in-string
     const response = await api.get('/projects');
-    console.log("uri: ", api.getUri() );
-    console.log("Полученные проекты:", response.data);
+
+    //console.log("Полученные проекты:", response.data);
     return response.data;
 };
 
@@ -19,10 +16,9 @@ export const fetchProjects = async () => {
 export const fetchNotes = async (projectId) => {
     try {
         // eslint-disable-next-line no-template-curly-in-string
-        console.log("id проекта: ", projectId);
+
         const response = await api.get(`/notes/${projectId}/notes`);
-        console.log("uri: ", api.getUri() );
-        console.log("Получен список заметок проекта: ", response.data);
+
         return response.data;
 
     } catch (error) {
@@ -32,10 +28,10 @@ export const fetchNotes = async (projectId) => {
 };
 
 export const updateNote = async (note) => {
-        console.log("обновляем заметку: ",note );
+
     try {
 
-        console.log("отправляем измененную заметку на сервер: ", note);
+        //console.log("отправляем измененную заметку на сервер: ", note);
         const response = await api.put(`/notes`, note, {
             headers: { "Content-Type": "application/json" },
         });
@@ -50,10 +46,9 @@ export const updateNote = async (note) => {
 
 ///-----------------
 export const addNote = async (note,projectId) => {
-    console.log("новая заметка по проекту: ",projectId );
-    console.log("добавляем заметку: ",note );
+
     try {
-        console.log("отправляем новую заметку на сервер: ", note);
+        //console.log("отправляем новую заметку на сервер: ", note);
         const response = await api.post(`/notes/${projectId}`, note, {
             headers: { "Content-Type": "application/json" },
         });
@@ -118,6 +113,7 @@ export const fetchOpenGraphData = async (url) => {
 };
 
 export const updateNoteCoordinates = async (noteId, x, y) => {
+    console.log(`отправка координат на сервер`);
     try {
         const response = await api.put(`/notes/${noteId}/coordinates`, { x, y });
         console.log(`Координаты для заметки ${noteId} обновлены на сервере:`, response.data);
@@ -133,7 +129,9 @@ export const uploadFiles = async (noteId, formData) => {
         const response = await api.post(`/notes/${noteId}/files`, formData, {
             headers: { "Content-Type": "multipart/form-data" },
         });
+        console.log(`файлы для заметки ${noteId} обновлены на сервере:`, response.data);
         return response.data;
+
     } catch (error) {
         console.error("Ошибка при загрузке файлов:", error);
         throw error;
@@ -145,6 +143,7 @@ export const uploadAudioFiles = async (noteId, formData) => {
         const response = await api.post(`/notes/${noteId}/audioFiles`, formData, {
             headers: { "Content-Type": "multipart/form-data" },
         });
+        console.log(`АудиоЗаписи для заметки ${noteId} обновлены на сервере:`, response.data);
         return response.data;
     } catch (error) {
         console.error("Ошибка при загрузке аудиофайлов:", error);

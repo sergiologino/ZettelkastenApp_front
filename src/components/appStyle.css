@@ -1,22 +1,22 @@
 .board {
-    background-color: #e0b88e; /* Светло-коричневый цвет */
-    background-image: linear-gradient(to bottom, #e0b88e, #e0b88e); /* Почти прозрачный фон */
+    background-color: #c8ece0; /* Светло-коричневый цвет */
+    background-image: linear-gradient(to bottom, #99af5, #99af5); /* Почти прозрачный фон */
     background-size: cover;
     background-position: center;
 }
 
 .grid {
-    position: absolute;
+    position: static;
     width: 100%;
     height: 100%;
     background: #000; /* Цвет сетки */
     transform: scale(1);
-    z-index: 1;
+    z-index: auto;
 }
 
 .projpanel {
     background-color: #cafced; /* Светло-салатовый цвет */
-    background-image: linear-gradient(to bottom, #e0b88e, #e0b88e); /* Почти прозрачный фон */
+    background-image: linear-gradient(to bottom, #b99af5, #b99af5); /* Почти прозрачный фон */
     background-size: cover;
     background-position: center;
 }
@@ -29,8 +29,8 @@
     position: absolute;
     width: 100%;
     height: 100%;
-    background: #ddd; /* Цвет сетки */
-    transform: scale(1);
+    background: #079c21; /* Цвет сетки */
+    transform: scale(10);
     z-index: 1;
     /* Добавляем свойство для отображения сетки в виде точек */
     background-size: 20px 20px;

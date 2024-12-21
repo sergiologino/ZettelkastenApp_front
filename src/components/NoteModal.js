@@ -26,11 +26,12 @@ const NoteModal = ({
                        projects = [],
                        isGlobalAnalysisEnabled = false,
                        note = null, // Обрабатываем null корректно
+                       selectedProject,
 
                    }) => {
     const [content, setContent] = useState(note?.content || "");
     const [file, setFile] = useState(null);
-    const [selectedProject, setSelectedProject] = useState(note?.projectId || "");
+    const [selectedProjectModal, setSelectedProject] = useState(note?.projectId || selectedProject || null);
     const [individualAnalysisFlag, setIndividualAnalysisFlag] = useState(
         isGlobalAnalysisEnabled
     );
@@ -241,7 +242,7 @@ const NoteModal = ({
                     left: "50%",
                     transform: "translate(-50%, -50%)",
                     width: "900px", // Увеличена ширина
-                    height: "900px", // Высота модального окна
+                    height: "600px", // Высота модального окна
                     overflowY: "auto", // Вертикальный скроллинг
                     bgcolor: "background.paper",
                     boxShadow: 24,
@@ -256,7 +257,7 @@ const NoteModal = ({
                     <InputLabel id="project-select-label">Проект</InputLabel>
                     <Select
                         labelId="project-select-label"
-                        value={selectedProject}
+                        value={selectedProjectModal}
                         onChange={(e) => setSelectedProject(e.target.value)}
                     >
                         {projects.map((project) => (
