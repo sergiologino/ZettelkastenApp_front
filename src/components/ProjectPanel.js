@@ -83,7 +83,7 @@ const ProjectPanel = ({
                     padding: "16px",
                 }}
             >
-                {selectedTab === 0 && (
+                {activeTab  === 0 && (
                     <>
                         <Typography variant="h6" sx={{ marginBottom: "12px" }}>
                             Проекты

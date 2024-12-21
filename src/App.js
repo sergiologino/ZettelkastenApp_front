@@ -10,6 +10,8 @@ const App = () => {
   const [selectedProjectId, setSelectedProjectId] = useState(null);
   const [activeTab, setActiveTab] = useState(0); // 0 — таб "Проекты", 1 — таб "Теги"
   const [filteredNotes, setFilteredNotes] = useState([]); // Список заметок для отображения
+  const [tags, setTags] = useState([]); // Добавлено состояние для тегов
+  const [selectedTags, setSelectedTags] = useState([]); // Выбранные теги
 
 
 
@@ -26,6 +28,32 @@ const App = () => {
 
     loadProjects();
   }, []);
+
+  useEffect(() => {
+    if (activeTab === 1) {
+      const uniqueTags = Array.from(new Set(notes.flatMap((note) => note.tags || [])));
+      setTags(uniqueTags);
+      setFilteredNotes(notes); // Отображаем все заметки при переключении на таб "Теги"
+    }
+  }, [activeTab, notes]);
+
+  const handleTagSelect = (tag) => {
+    const updatedTags = selectedTags.includes(tag)
+        ? selectedTags.filter((t) => t !== tag)
+        : [...selectedTags, tag];
+
+    setSelectedTags(updatedTags);
+
+    if (updatedTags.length > 0) {
+      const filtered = notes.filter((note) =>
+          updatedTags.some((selectedTag) => note.tags.includes(selectedTag))
+      );
+      setFilteredNotes(filtered);
+    } else {
+      setFilteredNotes(notes);
+    }
+  };
+
 
   useEffect(() => {
     if (activeTab === 0) {
@@ -103,14 +131,16 @@ const App = () => {
             projects={projects}
             onSelect={handleProjectSelect}
             onCreate={handleCreateProject}
+            onTagSelect={handleTagSelect}
             selectedProjectId={selectedProjectId}
             activeTab={activeTab}
             onTabChange={setActiveTab}
+            tags={tags} // Передача уникальных тегов
         />
         {selectedProjectId ? (
             <GraphBoard
                 filteredNotes={filteredNotes}
-                notes={notes} // Передаём отфильтрованные заметки
+                notes={filteredNotes} // Передаём отфильтрованные заметки
                 setNotes={setNotes}
                 onUpdateNote={handleUpdateNote}
                 projects={projects}
@@ -118,12 +148,17 @@ const App = () => {
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
                 setFilteredNotes={setFilteredNotes} // Передаём функцию для обновления
+
             />
+
             ):(
             <div style={{ flex: 1, display: "flex", justifyContent: "center", alignItems: "center" }}>
               <h3>Выберите проект, чтобы увидеть граф заметок</h3>
+
             </div>
+
         )}
+
       </div>
   );
 };

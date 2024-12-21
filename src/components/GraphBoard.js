@@ -324,10 +324,19 @@ const GraphBoard = ({
             }
         } else if (newTab === 1) {
 
-            setFilteredNotes([]); // Очистка доски при переключении на теги
-            setSelectedTags([]);  // Сброс выбранных тегов
+            // setFilteredNotes([]); // Очистка доски при переключении на теги
+            // setSelectedTags([]);  // Сброс выбранных тегов
         }
     };
+
+    useEffect(() => {
+        if (activeTab === 1) {
+            const filteredByTags = notes.filter((note) =>
+                selectedTags.some((selectedTag) => note.tags.includes(selectedTag))
+            );
+            setFilteredNotes(filteredByTags.length > 0 ? filteredByTags : notes);
+        }
+    }, [selectedTags, activeTab]);
 
 
 
