@@ -268,6 +268,7 @@ const GraphBoard = ({
             return savedNote;
         } else {
             // Создаём новую заметку
+
             const savedNote = await onCreateNote(updatedNote, selectedProject);
             return savedNote;
         }

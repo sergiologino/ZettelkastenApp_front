@@ -87,17 +87,17 @@ export const analyzeNotes = async (noteIds) => {
     return response.data;
 };
 
-export const fetchOpenGraphData = async (url) => {
-    try {
-        const response = await api.get(`/notes/og-data`, {
-            params: { url },
-        });
-        return response.data; // Возвращаем данные OpenGraph
-    } catch (error) {
-        console.error("Ошибка при получении данных OpenGraph:", error);
-        throw error;
-    }
-};
+// export const fetchOpenGraphData = async (url) => {
+//     try {
+//         const response = await api.get(`/notes/og-data`, {
+//             params: { url },
+//         });
+//         return response.data; // Возвращаем данные OpenGraph
+//     } catch (error) {
+//         console.error("Ошибка при получении данных OpenGraph:", error);
+//         throw error;
+//     }
+// };
 
  export const fetchOpenGraphDataForNote = async (noteId, urls) => {
     try {
@@ -140,7 +140,10 @@ export const uploadFiles = async (noteId, formData) => {
 
 export const uploadAudioFiles = async (noteId, formData) => {
     try {
-        const response = await api.post(`/notes/${noteId}/audioFiles`, formData, {
+        formData.forEach((value, key) => {
+            console.log(key, value);
+        });
+        const response = await api.post(`/notes/${noteId}/audios`, formData, {
             headers: { "Content-Type": "multipart/form-data" },
         });
         console.log(`АудиоЗаписи для заметки ${noteId} обновлены на сервере:`, response.data);

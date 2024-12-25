@@ -83,12 +83,12 @@ const ProjectPanel = ({
                     padding: "16px",
                 }}
             >
-                {activeTab  === 0 && (
+                {selectedTab === 0 && (
                     <>
                         <Typography variant="h6" sx={{ marginBottom: "12px" }}>
                             Проекты
                         </Typography>
-                        {projects.length > 0 ? (
+                        {projects?.length > 0 ? (
                             projects.map((project) => (
                                 <Box
                                     key={project.id}

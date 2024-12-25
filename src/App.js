@@ -96,16 +96,14 @@ const App = () => {
 
   const handleUpdateNote = async (updatedNote) => {
     try {
-      // console.log("------in App_js before send updatedNote: ",updatedNote);
+
       const response = await updateNote(updatedNote);
-      console.log("Ура! Получена ОБНОВЛЕННАЯ заметка с сервера: ", response );
 
-    setNotes((prevNotes) =>
-        prevNotes.map((note) =>
-                      (note.id === updatedNote.id ? updatedNote : note)
-                      )
+      setNotes((prevNotes) =>
+          prevNotes.map((note) =>
+                        (note.id === updatedNote.id ? updatedNote : note)));
+      return response;
 
-            )
     }catch (error){
       console.error("Ошибка при обновлении заметки:", error);
       alert("Не удалось обновить заметку. Проверьте соединение с сервером.");
@@ -117,10 +115,11 @@ const App = () => {
     try {
       const response = await addNote(newNote,newNote.projectId);
       setNotes((prevNotes) => [...prevNotes, response]); // Обновляем список заметок
-      //console.log("Ура! Получена НОВАЯ заметка с сервера: ", response );
+      console.log("Ура! Получена НОВАЯ заметка с сервера: ", response );
+      return response;
 
     } catch (error) {
-      console.error("Ошибка при создании заметки:", error);
+      console.error("Ошибка при создании заметки (App.js): ", error);
       alert("Не удалось создать заметку. Проверьте соединение с сервером.");
     }
   };
@@ -142,6 +141,7 @@ const App = () => {
                 filteredNotes={filteredNotes}
                 notes={filteredNotes} // Передаём отфильтрованные заметки
                 setNotes={setNotes}
+                onCreateNote={handleCreateNote} // Здесь должно передаваться onCreateNote
                 onUpdateNote={handleUpdateNote}
                 projects={projects}
                 selectedProject={selectedProjectId}

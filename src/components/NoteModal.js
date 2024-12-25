@@ -43,7 +43,7 @@ const NoteModal = ({
     const [urls, setUrls] = useState(note?.urls || []); // Состояние для ссылок
     const [newUrl, setNewUrl] = useState("");
 
-    const [audioFiles, setAudioFiles] = useState(note?.audioFiles || []); // Список аудиофайлов
+    const [audios, setAudioFiles] = useState(note?.audioFiles || []); // Список аудиофайлов
     const [isRecording, setIsRecording] = useState(false); // Флаг записи
     const [mediaRecorder, setMediaRecorder] = useState(null); // MediaRecorder
     const [recordedAudio, setRecordedAudio] = useState(null); // Временное аудио
@@ -171,7 +171,7 @@ const NoteModal = ({
                 content,
                 file,
                 projectId: selectedProject,
-                audioFiles: audioFiles.map((audio) => ({
+                audioFiles: audios.map((audio) => ({
                     url: audio.url,
                     name: audio.name,
                 })), // Добавляем аудиофайлы
@@ -185,6 +185,7 @@ const NoteModal = ({
             };
 
 
+            console.log("Сохраняем заметку из NoteModal handleSave 188 : ",updatedNote);
             const savedNote = await onSave(updatedNote);
 
             // Отправляем файлы
@@ -196,9 +197,9 @@ const NoteModal = ({
             }
 
             // Отправляем аудиофайлы
-            if (audioFiles.length > 0) {
+            if (audios.length > 0) {
                 const formData = new FormData();
-                audioFiles.forEach((audio) => formData.append("audioFiles", audio.blob));
+                audios.forEach((audio) => formData.append("audios", audio.blob));
 
                 await uploadAudioFiles(savedNote.id, formData); // Передаём ID заметки и аудио
             }
@@ -301,7 +302,7 @@ const NoteModal = ({
                                 alignItems="center"
                                 mb={1}
                             >
-                                <Typography variant="body2">{file.name}</Typography>
+                                <Typography variant="body2">{file.fileName}</Typography>
                                 <IconButton
                                     color="error"
                                     onClick={() => handleFileDelete(file)}
@@ -365,7 +366,7 @@ const NoteModal = ({
                             </Button>
                         </Box>
                         <Box mt={2}>
-                            {audioFiles.map((audio, index) => (
+                            {audios.map((audio, index) => (
                                 <Box
                                     key={index}
                                     display="flex"
@@ -374,7 +375,7 @@ const NoteModal = ({
                                     mb={1}
                                 >
                                     <audio controls src={audio.url} style={{ width: "70%" }} />
-                                    <Typography variant="body2">{audio.name}</Typography>
+                                    <Typography variant="body2">{audio.audioName}</Typography>
                                     <IconButton
                                         color="error"
                                         onClick={() => handleAudioDelete(audio)}
