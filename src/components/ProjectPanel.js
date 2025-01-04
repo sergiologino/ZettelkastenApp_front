@@ -51,6 +51,21 @@ const ProjectPanel = ({
         setSelectedTab(newValue);
     };
 
+    useEffect(() => {
+        if (activeTab === 1) { // Если выбрана вкладка "Теги"
+            const loadTags = async () => {
+                try {
+                    const tags = await fetchAllTags();
+                    onTagChange(tags); // Передаем уникальные теги в родительский компонент
+                } catch (error) {
+                    console.error("Ошибка при загрузке тегов:", error);
+                }
+            };
+            loadTags();
+        }
+    }, [activeTab]);
+
+
     return (
         <div
             className="projpanel"

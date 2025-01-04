@@ -109,7 +109,17 @@ const GraphBoard = ({
         );
     };
 
-   useEffect(() => {
+    useEffect(() => {
+        setNodes(filteredNotes.map((note, index) => ({
+            id: note.id,
+            data: { label: note.content },
+            position: { x: note.x || index * 100, y: note.y || index * 50 },
+            style: { background: '#fff', border: '1px solid #ccc' },
+        })));
+    }, [filteredNotes]);
+
+
+    useEffect(() => {
         // Обновляем узлы и связи при изменении заметок
         setNodes(
             notes.map((note, index) => ({
