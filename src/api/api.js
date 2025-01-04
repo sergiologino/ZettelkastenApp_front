@@ -151,6 +151,40 @@ export const uploadAudioFiles = async (noteId, formData) => {
     }
 };
 
+// Получение всех заметок
+export const fetchAllNotes = async () => {
+    try {
+        const response = await api.get('/notes');
+        return response.data;
+    } catch (error) {
+        console.error('Ошибка при загрузке всех заметок:', error);
+        throw error;
+    }
+};
+
+// Получение заметок по массиву тегов
+export const fetchNotesByTags = async (tags) => {
+    try {
+        const response = await api.post('/notes/by-tags', { tags });
+        return response.data;
+    } catch (error) {
+        console.error('Ошибка при загрузке заметок по тегам:', error);
+        throw error;
+    }
+};
+
+// Получение всех тегов
+export const fetchAllTags = async () => {
+    try {
+        const response = await api.get('/tags');
+        return response.data;
+    } catch (error) {
+        console.error('Ошибка при загрузке тегов:', error);
+        throw error;
+    }
+};
+
+
 
 
 export default api;

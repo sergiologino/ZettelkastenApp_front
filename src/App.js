@@ -27,6 +27,38 @@ const App = () => {
     loadProjects();
   }, []);
 
+  //Получение всех заметок при переключении на вкладку "Теги"
+  useEffect(() => {
+    if (activeTab === 1) {
+      const loadAllNotes = async () => {
+        try {
+          const notes = await fetchAllNotes();
+          setNotes(notes);
+        } catch (error) {
+          console.error("Ошибка при загрузке всех заметок:", error);
+        }
+      };
+      loadAllNotes();
+    }
+  }, [activeTab]);
+
+//Получение заметок по выбранным тегам
+  useEffect(() => {
+    if (selectedTags.length > 0) {
+      const loadNotesByTags = async () => {
+        try {
+          const filteredNotes = await fetchNotesByTags(selectedTags);
+          setFilteredNotes(filteredNotes);
+        } catch (error) {
+          console.error("Ошибка при фильтрации заметок по тегам:", error);
+        }
+      };
+      loadNotesByTags();
+    }
+  }, [selectedTags]);
+
+
+
   useEffect(() => {
     if (activeTab === 0) {
       // Таб "Проекты"
