@@ -29,6 +29,7 @@ const GraphBoard = ({
     const [selectedProjectId, setSelectedProjectId] = useState(null); // Активный проект
     const [activeTab, setActiveTab] = useState(0); // Активный таб
     const [selectedTags, setSelectedTags] = useState([]); // Выбранные теги
+    // console.log("Selected notes: ",notes);
 
 
     const onNodeDragStart = (_, node) => {
@@ -69,6 +70,7 @@ const GraphBoard = ({
 
             // Обновляем selectedNote для модального окна
             setSelectedNote(updatedNote);
+            console.log("заметка для модалки: ", updatedNote);
         }
         setNodes((prevNodes) =>
             prevNodes.map((n) =>
@@ -93,13 +95,15 @@ const GraphBoard = ({
     };
 
 
-    useEffect(() => {
-        if (selectedProjectId) {
-            const filtered = filteredNotes.filter((note) => note.projectId === selectedProjectId);
-            //console.log("in useeffect GraphBoard filtered: ",filtered);
-            setFilteredNotes(filtered);
-        }
-    }, [selectedProjectId, notes]);
+    // useEffect(() => {
+    //     if (selectedProjectId) {
+    //         const filtered = filteredNotes.filter((note) => note.projectId === selectedProjectId);
+    //         console.log("in useeffect GraphBoard filtered: ",filtered);
+    //         setFilteredNotes(filtered);
+    //         console.log("Notes of selected project: ",filtered);
+    //     }
+    //
+    // }, [selectedProjectId, notes]);
 
     const handleAnalysisFlagChange = (noteId, isChecked) => {
         setNotes((prevNotes) =>
@@ -110,9 +114,10 @@ const GraphBoard = ({
     };
 
     useEffect(() => {
-        setNodes(filteredNotes.map((note, index) => ({
+        console.log("Заметки для отображения в GraphBoard:", filteredNotes);
+        setNodes((filteredNotes || []).map((note, index) => ({
             id: note.id,
-            data: { label: note.content },
+            data: { label: note.content || "Нет содержания" },
             position: { x: note.x || index * 100, y: note.y || index * 50 },
             style: { background: '#fff', border: '1px solid #ccc' },
         })));
@@ -335,8 +340,8 @@ const GraphBoard = ({
             }
         } else if (newTab === 1) {
 
-            // setFilteredNotes([]); // Очистка доски при переключении на теги
-            // setSelectedTags([]);  // Сброс выбранных тегов
+            setFilteredNotes([]); // Очистка доски при переключении на теги
+            setSelectedTags([]);  // Сброс выбранных тегов
         }
     };
 
@@ -352,7 +357,8 @@ const GraphBoard = ({
 
 
     return (
-        <div className="board" style={{ width: "100%", height: "100%" }}>
+
+        <div className="board" style={{width: "100%", height: "100%"}}>
             <ReactFlow
                 nodes={nodes}
                 edges={edges} // Пока без связей
@@ -360,11 +366,11 @@ const GraphBoard = ({
                 onNodeClick={handleNodeClick}
                 onNodeDragStart={onNodeDragStart}
                 onNodeDragStop={onNodeDragStop}
-                style={{ flex: 1 }}
+                style={{flex: 1}}
             >
-                <MiniMap />
-                <Controls />
-                <Background gap={16} size={0.5} color="#ddd" />
+                <MiniMap/>
+                <Controls/>
+                <Background gap={16} size={0.5} color="#ddd"/>
             </ReactFlow>
             <button
                 onClick={() => {
@@ -392,7 +398,7 @@ const GraphBoard = ({
                     open={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
                     onSave={handleSaveNote}
-                    note={selectedNote}
+                    note={selectedNote || {}}
                     projects={projects}
                     selectedProject={selectedProject}
                 />

@@ -168,10 +168,18 @@ export const fetchAllNotes = async () => {
 // Получение заметок по массиву тегов
 export const fetchNotesByTags = async (tags) => {
     try {
-        const response = await api.post('/notes/by-tags', { tags });
+        console.log("1. Исходное значение tags: ", tags);
+        const params = new URLSearchParams();
+        tags.forEach((tag) => params.append("tags", tag)); // Форматируем в tags=tag1&tags=tag2
+        console.log("2. значение tags после преобразования: ", tags);
+
+        const response = await api.get('/notes/tags/search', {
+            params,
+        });
+        console.log("3. Ответ с заметками: ", response.data);
         return response.data;
     } catch (error) {
-        console.error('Ошибка при загрузке заметок по тегам:', error);
+        console.error("Ошибка при загрузке заметок по тегам:", error);
         throw error;
     }
 };
@@ -180,6 +188,7 @@ export const fetchNotesByTags = async (tags) => {
 export const fetchAllTags = async () => {
     try {
         const response = await api.get('/tags');
+        console.log(" tags from back: ", response.data);
         return response.data;
     } catch (error) {
         console.error('Ошибка при загрузке тегов:', error);

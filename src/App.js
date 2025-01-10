@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import GraphBoard from "./components/GraphBoard";
 import ProjectPanel from "./components/ProjectPanel";
-import {fetchProjects, fetchNotes, createProject, updateNote} from "./api/api";
+import {fetchProjects, fetchNotes, createProject, updateNote, fetchAllNotes, fetchNotesByTags} from "./api/api";
 import { addNote } from "./api/api"; // Импорт функции создания заметки из api.js
 
 const App = () => {
@@ -49,6 +49,7 @@ const App = () => {
     if (selectedTags.length > 0) {
       const loadNotesByTags = async () => {
         try {
+          // console.log("Передаем на бэк выбранные тэги: ", selectedTags);
           const filteredNotes = await fetchNotesByTags(selectedTags);
           setFilteredNotes(filteredNotes);
         } catch (error) {
@@ -56,6 +57,8 @@ const App = () => {
         }
       };
       loadNotesByTags();
+    } else {
+      setFilteredNotes(notes); // Если теги не выбраны, показываем все заметки
     }
   }, [selectedTags]);
 
@@ -81,6 +84,7 @@ const App = () => {
           updatedTags.some((selectedTag) => note.tags.includes(selectedTag))
       );
       setFilteredNotes(filtered);
+
     } else {
       setFilteredNotes(notes);
     }
@@ -92,13 +96,16 @@ const App = () => {
       // Таб "Проекты"
       if (selectedProjectId) {
         const filtered = notes.filter((note) => note.projectId === selectedProjectId);
-        // console.log("filtered notes in App_js: ",filtered);
+        console.log("Filtered notes for project: ",filtered);
         setFilteredNotes(filtered); // Обновляем заметки для проекта
+        console.log("notes in filtered: ",filtered);
       } else {
+        console.log("No project selected");
         setFilteredNotes([]); // Очищаем, если проект не выбран
       }
     } else if (activeTab === 1) {
       // Таб "Теги"
+      // console.log("Switching to tags tab, resetting filteredNotes");
       setFilteredNotes(notes); // На табе "Теги" очищаем доску
     }
   }, [activeTab, selectedProjectId, notes]);
@@ -119,7 +126,7 @@ const App = () => {
       const loadedNotes = await fetchNotes(projectId);
       setNotes(loadedNotes); // Загружаем заметки проекта
       setFilteredNotes(loadedNotes); // Устанавливаем filteredNotes сразу после загрузки
-      //console.log("notes in handleProjectSelect: ",loadedNotes);
+      console.log("notes in handleProjectSelect: ",loadedNotes);
     } catch (error) {
       console.error("Ошибка при загрузке заметок:", error);
       alert("Не удалось загрузить заметки. Проверьте соединение с сервером.");
@@ -167,20 +174,31 @@ const App = () => {
             activeTab={activeTab}
             onTabChange={setActiveTab}
             tags={tags} // Передача уникальных тегов
+            selectedTags={selectedTags} // Передача выбранных тегов
         />
         {selectedProjectId ? (
+            // <GraphBoard
+            //     filteredNotes={filteredNotes}
+            //     notes={filteredNotes} // Передаём отфильтрованные заметки
+            //     setNotes={setNotes}
+            //     onCreateNote={handleCreateNote} // Здесь должно передаваться onCreateNote
+            //     onUpdateNote={handleUpdateNote}
+            //     projects={projects}
+            //     selectedProject={selectedProjectId}
+            //     activeTab={activeTab}
+            //     setActiveTab={setActiveTab}
+            //     setFilteredNotes={setFilteredNotes} // Передаём функцию для обновления
+            //
+            // />
             <GraphBoard
-                filteredNotes={filteredNotes}
-                notes={filteredNotes} // Передаём отфильтрованные заметки
+                notes={filteredNotes || []} // передаётся пустой массив, если заметок не найдено (filteredNotes undefined)
                 setNotes={setNotes}
-                onCreateNote={handleCreateNote} // Здесь должно передаваться onCreateNote
                 onUpdateNote={handleUpdateNote}
                 projects={projects}
                 selectedProject={selectedProjectId}
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
-                setFilteredNotes={setFilteredNotes} // Передаём функцию для обновления
-
+                filteredNotes={filteredNotes || []} // Для обновления фильтрации
             />
 
             ):(

@@ -16,9 +16,10 @@
 
 .projpanel {
     background-color: #cafced; /* Светло-салатовый цвет */
-    background-image: linear-gradient(to bottom, #b99af5, #b99af5); /* Почти прозрачный фон */
+    background-image: linear-gradient(to bottom, #a899cc, #e9e3f3); /* Почти прозрачный фон */
     background-size: cover;
     background-position: center;
+    position: relative;
 }
 .modal-scrollable {
     overflow-y: auto;
@@ -51,10 +52,6 @@
     );
 }
 
-.projpanel {
-    position: relative;
-}
-
 .resizer {
     position: absolute;
     top: 0;
@@ -64,4 +61,26 @@
     background: #ccc;
     cursor: col-resize;
     z-index: 2;
+}
+
+.multi-line-fade {
+    height: 5lh;
+    overflow-y: hidden;
+    mask-image:
+            linear-gradient(black, black),
+            linear-gradient(to right, transparent 80%, black 90%);
+    mask-position:
+            0 0,
+            bottom right;
+    mask-size:
+            auto,
+            100% 1lh;
+    mask-repeat: no-repeat;
+    mask-composite: exclude;
+    border: 2px solid #ccc;
+}
+.fixed-element {
+    position: fixed;
+    max-height: 100vh;
+    overflow-y: auto;
 }

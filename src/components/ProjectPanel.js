@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, {useEffect, useState} from "react";
 import { Box, Typography, Button, TextField, Tabs, Tab } from "@mui/material";
 import "./appStyle.css";
 import DeleteIcon from "@mui/icons-material/Delete";
+import {fetchAllTags} from "../api/api";
 
 
 
@@ -10,17 +11,34 @@ const ProjectPanel = ({
                           selectedProjectId,
                           onSelect,
                           onCreate,
+                          onTagChange,
                           onDelete,
                           tags = [], // Список уникальных тегов
                           onTagSelect, // Функция для обработки выбранных тегов
                           activeTab, // Текущий активный таб
                           onTabChange, // Функция переключения табов
+                          selectedTags, // Передача выбранных тегов
                       }) => {
     //console.log("onTabChange передан в ProjectPanel:", onTabChange);
     const [newProjectName, setNewProjectName] = useState("");
     const [newProjectDescription, setNewProjectDescription] = useState("");
     const [panelWidth, setPanelWidth] = useState(25); // Процент ширины панели
     const [selectedTab, setSelectedTab] = useState(0); // Текущий активный таб
+
+    useEffect(() => {
+        if (activeTab === 1) { // Если выбрана вкладка "Теги"
+            const loadTags = async () => {
+                try {
+                    const tags = await fetchAllTags();
+                    onTagChange(tags); // Передаем уникальные теги в родительский компонент
+                } catch (error) {
+                    console.error("Ошибка при загрузке тегов:", error);
+                }
+            };
+            loadTags();
+        }
+    }, [activeTab, onTagChange]);
+
 
     const handleCreateProject = () => {
         if (!newProjectName.trim()) {
@@ -42,6 +60,12 @@ const ProjectPanel = ({
         setNewProjectDescription("");
     };
 
+    const getColorForTag = (tag) => {
+        const hash = Array.from(tag).reduce((sum, char) => sum + char.charCodeAt(0), 0);
+        const colors = ["#FF5733", "#079c21", "#3357FF", "#F333FF", "#FF5733"];
+        return colors[hash % colors.length];
+    };
+
     const handleResize = (e) => {
         const newWidth = Math.max(5, Math.min(25, (e.clientX / window.innerWidth) * 100));
         setPanelWidth(newWidth);
@@ -50,20 +74,6 @@ const ProjectPanel = ({
     const handleTabChange = (event, newValue) => {
         setSelectedTab(newValue);
     };
-
-    useEffect(() => {
-        if (activeTab === 1) { // Если выбрана вкладка "Теги"
-            const loadTags = async () => {
-                try {
-                    const tags = await fetchAllTags();
-                    onTagChange(tags); // Передаем уникальные теги в родительский компонент
-                } catch (error) {
-                    console.error("Ошибка при загрузке тегов:", error);
-                }
-            };
-            loadTags();
-        }
-    }, [activeTab]);
 
 
     return (
@@ -82,7 +92,7 @@ const ProjectPanel = ({
             {/* Добавление табов */}
             <Tabs
                 value={activeTab}
-                onChange={(e, newValue) => onTabChange(newValue)}
+                onChange={(e, newValue) => onTabChange(newValue)} // Используем onTabChange из пропсов
                 variant="fullWidth"
                 sx={{ borderBottom: "1px solid #e0e0e0", backgroundColor: "#fff" }}
             >
@@ -98,7 +108,7 @@ const ProjectPanel = ({
                     padding: "16px",
                 }}
             >
-                {selectedTab === 0 && (
+                {activeTab === 0 && (
                     <>
                         <Typography variant="h6" sx={{ marginBottom: "12px" }}>
                             Проекты
@@ -174,7 +184,7 @@ const ProjectPanel = ({
                     </>
                 )}
 
-                {selectedTab === 1 && (
+                {activeTab === 1 && (
                     <>
                         <Typography variant="h6" sx={{ marginBottom: "12px" }}>
                             Теги
@@ -186,22 +196,30 @@ const ProjectPanel = ({
                                 gap: "8px",
                             }}
                         >
-                            {tags?.map((tag) => (
-                                <Button
-                                    key={tag}
-                                    variant="outlined"
-                                    onClick={() => onTagSelect(tag)}
-                                    sx={{
-                                        border: "1px solid",
-                                        borderRadius: "4px",
-                                        padding: "4px 8px",
-                                        fontSize: "0.8rem",
-                                        color: "#333",
-                                    }}
-                                >
-                                    {tag}
-                                </Button>
-                            ))}
+                            {tags?.map((tag) => {
+                                const isSelected = selectedTags.includes(tag); // Проверяем, выбран ли тэг
+                                return (
+                                    <Button
+                                        key={tag}
+                                        variant="outlined"
+                                        onClick={() => onTagSelect(tag)} // Выбор тега
+                                        sx={{
+                                            border: isSelected ? "2px solid" : "1px solid", // Жирная граница для выбранных тегов
+                                            borderColor: getColorForTag(tag), // Цвет границы совпадает с цветом тэга
+                                            backgroundColor: isSelected ? `${getColorForTag(tag)}30` : "transparent", // Прозрачная заливка для выбранных
+                                            borderRadius: "4px",
+                                            padding: "4px 8px",
+                                            fontSize: "0.8rem",
+                                            color: "#333",
+                                            "&:hover": {
+                                                backgroundColor: `${getColorForTag(tag)}20`, // Лёгкая заливка при наведении
+                                            },
+                                        }}
+                                    >
+                                        {tag}
+                                    </Button>
+                                );
+                            })}
                         </Box>
                     </>
                 )}
