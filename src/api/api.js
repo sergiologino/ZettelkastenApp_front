@@ -2,16 +2,13 @@ import axios from "axios";
 import api from "./axiosConfig";
 
 
-// const api = axios.create({
-//     baseURL: "http://localhost:8080/api", // Замените на ваш URL бэкенда
-// });
-console.log("api: ",api);
+
 // Получить список проектов
 export const fetchProjects = async () => {
     // eslint-disable-next-line no-template-curly-in-string
     const response = await api.get('/projects');
-    console.log("uri: ", api.getUri() );
-    console.log("Полученные проекты:", response.data);
+
+    //console.log("Полученные проекты:", response.data);
     return response.data;
 };
 
@@ -19,10 +16,9 @@ export const fetchProjects = async () => {
 export const fetchNotes = async (projectId) => {
     try {
         // eslint-disable-next-line no-template-curly-in-string
-        console.log("id проекта: ", projectId);
-        const response = await api.get(`/projects/${projectId}/notes`);
-        console.log("uri: ", api.getUri() );
-        console.log("список заметок проекта: ", response.data);
+
+        const response = await api.get(`/notes/${projectId}/notes`);
+
         return response.data;
 
     } catch (error) {
@@ -32,14 +28,15 @@ export const fetchNotes = async (projectId) => {
 };
 
 export const updateNote = async (note) => {
-        console.log("обновляем заметку: ",note );
+
     try {
 
-        console.log("отправляем заметку на сервер: ", note);
+        //console.log("отправляем измененную заметку на сервер: ", note);
         const response = await api.put(`/notes`, note, {
             headers: { "Content-Type": "application/json" },
         });
-        return response.data; // Возвращаем данные созданной заметки
+        return response.data; // Возвращаем данные обновленной заметки
+
     } catch (error) {
         console.error("Ошибка при вызове API для обновления заметки:", error);
         throw error;
@@ -49,12 +46,9 @@ export const updateNote = async (note) => {
 
 ///-----------------
 export const addNote = async (note,projectId) => {
-    console.log("новая заметка по проекту: ",projectId );
-    console.log("добавляем заметку: ",note );
+
     try {
-        console.log("uri: ", api.getUri(),"/notes/",projectId);
-        console.log("по проекту: ", projectId);
-        console.log("отправляем заметку на сервер: ", note);
+        //console.log("отправляем новую заметку на сервер: ", note);
         const response = await api.post(`/notes/${projectId}`, note, {
             headers: { "Content-Type": "application/json" },
         });
@@ -64,17 +58,7 @@ export const addNote = async (note,projectId) => {
         throw error;
     }
 };
-// Добавить новую заметку
-// export const addNote = async (note) => {
-//     console.log("Отправляем заметку из api :", note);
-//     try {
-//         const response = await api.post("/notes", note);
-//         return response.data;
-//     } catch (error) {
-//         console.error("Ошибка в API при добавлении заметки:", error.response?.data || error.message);
-//         throw error;
-//     }
-// };
+
 
 export const createProject = async (project) => {
     try {
@@ -102,6 +86,116 @@ export const analyzeNotes = async (noteIds) => {
     const response = await api.put('/notes/analyze', { noteIds });
     return response.data;
 };
+
+// export const fetchOpenGraphData = async (url) => {
+//     try {
+//         const response = await api.get(`/notes/og-data`, {
+//             params: { url },
+//         });
+//         return response.data; // Возвращаем данные OpenGraph
+//     } catch (error) {
+//         console.error("Ошибка при получении данных OpenGraph:", error);
+//         throw error;
+//     }
+// };
+
+ export const fetchOpenGraphDataForNote = async (noteId, urls) => {
+    try {
+        const response = await api.post(`/notes/og-data`, {
+            noteId,
+            urls,
+        });
+        return response.data; // Массив OpenGraph данных
+    } catch (error) {
+        console.error("Ошибка при получении OpenGraph данных:", error);
+        throw error;
+    }
+};
+
+export const updateNoteCoordinates = async (noteId, x, y) => {
+    console.log(`отправка координат на сервер`);
+    try {
+        const response = await api.put(`/notes/${noteId}/coordinates`, { x, y });
+        console.log(`Координаты для заметки ${noteId} обновлены на сервере:`, response.data);
+        return response.data;
+    } catch (error) {
+        console.error(`Ошибка при обновлении координат для заметки ${noteId}:`, error);
+        throw error;
+    }
+};
+
+export const uploadFiles = async (noteId, formData) => {
+    try {
+        const response = await api.post(`/notes/${noteId}/files`, formData, {
+            headers: { "Content-Type": "multipart/form-data" },
+        });
+        console.log(`файлы для заметки ${noteId} обновлены на сервере:`, response.data);
+        return response.data;
+
+    } catch (error) {
+        console.error("Ошибка при загрузке файлов:", error);
+        throw error;
+    }
+};
+
+export const uploadAudioFiles = async (noteId, formData) => {
+    try {
+        formData.forEach((value, key) => {
+            console.log(key, value);
+        });
+        const response = await api.post(`/notes/${noteId}/audios`, formData, {
+            headers: { "Content-Type": "multipart/form-data" },
+        });
+        console.log(`АудиоЗаписи для заметки ${noteId} обновлены на сервере:`, response.data);
+        return response.data;
+    } catch (error) {
+        console.error("Ошибка при загрузке аудиофайлов:", error);
+        throw error;
+    }
+};
+
+// Получение всех заметок
+export const fetchAllNotes = async () => {
+    try {
+        const response = await api.get('/notes');
+        return response.data;
+    } catch (error) {
+        console.error('Ошибка при загрузке всех заметок:', error);
+        throw error;
+    }
+};
+
+// Получение заметок по массиву тегов
+export const fetchNotesByTags = async (tags) => {
+    try {
+        console.log("1. Исходное значение tags: ", tags);
+        const params = new URLSearchParams();
+        tags.forEach((tag) => params.append("tags", tag)); // Форматируем в tags=tag1&tags=tag2
+        console.log("2. значение tags после преобразования: ", tags);
+
+        const response = await api.get('/notes/tags/search', {
+            params,
+        });
+        console.log("3. Ответ с заметками: ", response.data);
+        return response.data;
+    } catch (error) {
+        console.error("Ошибка при загрузке заметок по тегам:", error);
+        throw error;
+    }
+};
+
+// Получение всех тегов
+export const fetchAllTags = async () => {
+    try {
+        const response = await api.get('/tags');
+        console.log(" tags from back: ", response.data);
+        return response.data;
+    } catch (error) {
+        console.error('Ошибка при загрузке тегов:', error);
+        throw error;
+    }
+};
+
 
 
 
