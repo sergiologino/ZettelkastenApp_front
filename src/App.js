@@ -4,6 +4,7 @@ import ProjectPanel from "./components/ProjectPanel";
 import {fetchProjects, fetchNotes, createProject, updateNote, fetchAllNotes, fetchNotesByTags} from "./api/api";
 import { addNote } from "./api/api"; // Импорт функции создания заметки из api.js
 
+
 const App = () => {
   const [notes, setNotes] = useState([]);
   const [projects, setProjects] = useState([]);
@@ -164,6 +165,7 @@ const App = () => {
   };
 
   return (
+
       <div style={{ display: "flex", height: "100vh" }}>
         <ProjectPanel
             projects={projects}
@@ -176,6 +178,7 @@ const App = () => {
             tags={tags} // Передача уникальных тегов
             selectedTags={selectedTags} // Передача выбранных тегов
         />
+        <ReactFlowProvider>
         {selectedProjectId ? (
             // <GraphBoard
             //     filteredNotes={filteredNotes}
@@ -209,7 +212,9 @@ const App = () => {
 
         )}
 
+      </ReactFlowProvider>
       </div>
+
   );
 };
 

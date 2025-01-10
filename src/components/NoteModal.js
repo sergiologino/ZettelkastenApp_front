@@ -58,6 +58,7 @@ const NoteModal = ({
      console.log("Заметка с доски, note: ",note);
 
     useEffect(() => {
+
         //console.log("note status in NoteModal: ",note);
         if (open && note) {
             console.log("EXISTING projectId в Select:", note?.projectId, "selectedProject:", selectedProject);
@@ -110,6 +111,7 @@ const NoteModal = ({
             setIsRecording(false);
         }
     };
+
 
 // Сохранение записанного аудио в список
     const saveRecordedAudio = () => {
@@ -232,6 +234,7 @@ const NoteModal = ({
     const handleAudioDelete = (audioToDelete) => {
         setAudioFiles((prev) => prev.filter((audio) => audio !== audioToDelete));
     };
+
     return (
         <Modal
             open={open}

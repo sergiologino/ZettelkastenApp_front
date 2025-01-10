@@ -8,6 +8,7 @@ import OGPreview from "./OGPreview";
 import { fetchOpenGraphDataForNote } from "../api/api";
 
 
+
 const GraphBoard = ({
                         notes, // Список отфильтрованных заметок
                         setNotes,
@@ -20,6 +21,7 @@ const GraphBoard = ({
 }) => {
     // console.log(" start GraphBoard, filteredNotes: ", filteredNotes);
     // console.log(" start GraphBoard, notes: ", notes);
+
     const [nodes, setNodes] = useState([]);
     const [edges, setEdges] = useState([]);
     const [selectedNote, setSelectedNote] = useState(null);
@@ -32,6 +34,7 @@ const GraphBoard = ({
     // console.log("Selected notes: ",notes);
 
 
+
     const onNodeDragStart = (_, node) => {
         setNodes((prevNodes) =>
             prevNodes.map((n) =>
@@ -42,10 +45,12 @@ const GraphBoard = ({
 
     const onNodeDragStop = async (_, node) => {
 
+
         const updatedNodes = nodes.map((n) =>
             n.id === node.id ? {...n, position: node.position} : n
         );
         setNodes(updatedNodes);
+
 
         // Локальное обновление координат заметки
         const movedNote = notes.find((note) => note.id === node.id);
@@ -304,6 +309,7 @@ const GraphBoard = ({
         }
     };
 
+
     // Выбор проекта
     // const handleSelectProject = (projectId) => {
     //     console.log("Выбран проект:", projectId);
@@ -356,6 +362,7 @@ const GraphBoard = ({
 
 
 
+
     return (
 
         <div className="board" style={{width: "100%", height: "100%"}}>
@@ -363,10 +370,12 @@ const GraphBoard = ({
                 nodes={nodes}
                 edges={edges} // Пока без связей
                 fitView
+
                 onNodeClick={handleNodeClick}
                 onNodeDragStart={onNodeDragStart}
                 onNodeDragStop={onNodeDragStop}
                 style={{flex: 1}}
+
             >
                 <MiniMap/>
                 <Controls/>
@@ -401,6 +410,7 @@ const GraphBoard = ({
                     note={selectedNote || {}}
                     projects={projects}
                     selectedProject={selectedProject}
+
                 />
             )}
             {selectedNoteIds.length > 0 && (
@@ -426,4 +436,5 @@ const GraphBoard = ({
         </div>
     );
 };
+
 export default GraphBoard;
