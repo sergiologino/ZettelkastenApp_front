@@ -187,7 +187,7 @@ export const fetchNotesByTags = async (tags) => {
 // Получение всех тегов
 export const fetchAllTags = async () => {
     try {
-        const response = await api.get('/tags');
+        const response = await api.get('/notes/tags');
         console.log(" tags from back: ", response.data);
         return response.data;
     } catch (error) {

@@ -37,7 +37,8 @@ const ProjectPanel = ({
             };
             loadTags();
         }
-    }, [activeTab, onTagChange]);
+    }, [activeTab]);
+
 
 
     const handleCreateProject = () => {

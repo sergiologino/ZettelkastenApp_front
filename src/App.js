@@ -73,6 +73,11 @@ const App = () => {
     }
   }, [activeTab, notes]);
 
+  const handleTagChange = React.useCallback((tags) => {
+    setTags(tags); // Обновляем состояние тегов
+  }, []);
+
+
   const handleTagSelect = (tag) => {
     const updatedTags = selectedTags.includes(tag)
         ? selectedTags.filter((t) => t !== tag)
@@ -177,8 +182,9 @@ const App = () => {
             onTabChange={setActiveTab}
             tags={tags} // Передача уникальных тегов
             selectedTags={selectedTags} // Передача выбранных тегов
+            onTagChange={handleTagChange}
         />
-        <ReactFlowProvider>
+        {/*<ReactFlowProvider>*/}
         {selectedProjectId ? (
             // <GraphBoard
             //     filteredNotes={filteredNotes}
@@ -212,7 +218,7 @@ const App = () => {
 
         )}
 
-      </ReactFlowProvider>
+      {/*</ReactFlowProvider>*/}
       </div>
 
   );
