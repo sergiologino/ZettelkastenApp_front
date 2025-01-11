@@ -55,7 +55,8 @@ const NoteModal = ({
     const [openGraphData, setOpenGraphData] = useState({});
 
 
-     console.log("Заметка с доски, note: ",note);
+    console.log("Заметка с доски, note: ",note);
+    console.log("OpenGraphData in NoteModal:", openGraphData);
 
     useEffect(() => {
 
@@ -67,6 +68,7 @@ const NoteModal = ({
             setTags(note.tags || []);
             setAudioFiles(note.audios || []);
             setFiles(note.files || []);
+            setOpenGraphData(note.openGraphData || {}); // Устанавливаем OpenGraph данные
 
         } else if (open){
             console.log("CREATE projectId в Select:", note?.projectId, "selectedProject:", selectedProject);
@@ -74,6 +76,7 @@ const NoteModal = ({
             setContent("");
             setSelectedProject(selectedProject||"");
             setTags([]);
+            setOpenGraphData({}); // Очищаем OpenGraph данные
 
         }
     }, [open,note]);
@@ -235,6 +238,7 @@ const NoteModal = ({
         setAudioFiles((prev) => prev.filter((audio) => audio !== audioToDelete));
     };
 
+
     return (
         <Modal
             open={open}
@@ -361,12 +365,21 @@ const NoteModal = ({
                                                         >
                                                             <Typography variant="body2">{file.fileName}</Typography>
                                                             <Typography variant="body2">{file.filePath}</Typography>
+                                                            <Button
+                                                                variant="outlined"
+                                                                size="small"
+                                                                href={file.url}
+                                                                download={file.name}
+                                                            >
+                                                                Скачать
+                                                            </Button>
                                                             <IconButton
                                                                 color="error"
                                                                 onClick={() => handleFileDelete(file)}
                                                             >
                                                                 <Delete />
                                                             </IconButton>
+
                                                         </Box>
                                                     ))}
                                                 </Box>
@@ -386,27 +399,27 @@ const NoteModal = ({
                                                         </Button>
                                                     </Box>
                                                     <Box mt={2}>
-                                                        {/*))}*/}
-                                                        <Typography variant="subtitle1">Ссылки с OpenGraph данными:</Typography>
-                                                        {urls.map((url, index) => {
-                                                            console.log("Current URL:", url); // Логирование URL
-                                                            console.log("Note ID:", note?.id); // Логирование note ID
-                                                            console.log("OpenGraphData for Note ID:", openGraphData[note?.id]); // Логирование OpenGraph данных
-
-                                                            const ogData = note?.id && Array.isArray(openGraphData[note?.id])
-                                                                ? openGraphData[note.id].find((data) => data.url === url)
-                                                                : null;
-
-                                                            return (
+                                                        <Typography variant="subtitle1">OpenGraph данные:</Typography>
+                                                        {Object.keys(openGraphData).length > 0 ? (
+                                                            Object.entries(openGraphData).map(([url, ogData], index) => (
                                                                 <Box key={index} mt={1}>
                                                                     {ogData ? (
-                                                                        <OGPreview ogData={ogData} />
+                                                                        <OGPreview
+                                                                            ogData={{
+                                                                                title: ogData.title || "Без названия",
+                                                                                description: ogData.description || "Описание отсутствует",
+                                                                                image: ogData.image || "",
+                                                                                url: ogData.url || url, // Используем URL из ключа
+                                                                            }}
+                                                                        />
                                                                     ) : (
                                                                         <Typography variant="body2">Нет данных для URL: {url}</Typography>
                                                                     )}
                                                                 </Box>
-                                                            );
-                                                        })}
+                                                            ))
+                                                        ) : (
+                                                            <Typography variant="body2">Нет OpenGraph данных</Typography>
+                                                        )}
                                                     </Box>
                                                 </Box>
                                                 <Box mt={2}>
@@ -499,3 +512,282 @@ const NoteModal = ({
     );
 };
 export default NoteModal;
+
+// return (
+//     <Modal
+//         open={open}
+//         onClose={onClose}
+//         aria-labelledby="modal-title"
+//         aria-describedby="modal-description"
+//     >
+//         <React.Fragment>
+//             <Box
+//                 sx={{
+//                     position: "absolute",
+//                     top: "50%",
+//                     left: "50%",
+//                     transform: "translate(-50%, -50%)",
+//                     width: "900px",
+//                     height: "600px",
+//                     bgcolor: "background.paper",
+//                     boxShadow: 24,
+//                     display: "flex",
+//                     flexDirection: "column",
+//                     overflow: "hidden",
+//                     borderRadius: "8px",
+//                 }}
+//             >
+//                 {/* Вкладки */}
+//                 <Tabs
+//                     value={activeTab}
+//                     onChange={(e, newValue) => setActiveTab(newValue)}
+//                     centered
+//                     sx={{ borderBottom: "1px solid #e0e0e0" }}
+//                 >
+//                     <Tab label="Основное" />
+//                     <Tab label="Вложения" />
+//                 </Tabs>
+//
+//                 {/* Содержимое вкладок */}
+//                 <Box
+//                     sx={{
+//                         flex: 1,
+//                         overflowY: "auto",
+//                         padding: 2,
+//                     }}
+//                 >
+//                     {activeTab === 0 && (
+//                         <Box>
+//                             <FormControl fullWidth margin="normal">
+//                                 <InputLabel id="project-select-label">Проект</InputLabel>
+//                                 <Select
+//                                     labelId="project-select-label"
+//                                     value={note?.projectId || selectedProject || ""}
+//                                     onChange={(e) => setSelectedProject(e.target.value)}
+//                                 >
+//                                     {projects.map((project) => (
+//                                         <MenuItem key={project.id} value={project.id}>
+//                                             {project.name}
+//                                         </MenuItem>
+//                                     ))}
+//                                 </Select>
+//                             </FormControl>
+//                             <TextField
+//                                 fullWidth
+//                                 margin="normal"
+//                                 label="Текст заметки"
+//                                 multiline
+//                                 rows={3}
+//                                 value={content}
+//                                 onChange={(e) => setContent(e.target.value)}
+//                             />
+//                             <Box>
+//                                 <TextField
+//                                     label="Добавить тег"
+//                                     value={newTag}
+//                                     onChange={(e) => setNewTag(e.target.value)}
+//                                     onKeyDown={(e) => e.key === "Enter" && handleAddTag()}
+//                                     sx={{ marginRight: 2 }}
+//                                 />
+//                                 <Button variant="contained" onClick={handleAddTag}>
+//                                     Добавить
+//                                 </Button>
+//                             </Box>
+//                             <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 2 }}>
+//                                 {tags.map((tag) => (
+//                                     <Chip
+//                                         key={tag}
+//                                         label={tag}
+//                                         onDelete={() => handleDeleteTag(tag)}
+//                                         color="primary"
+//                                         variant="outlined"
+//                                     />
+//                                 ))}
+//                             </Box>
+//                         </Box>
+//                     )}
+//
+//                     {activeTab === 1 && (
+//                         <Box>
+//                             <Typography variant="h6">Вложения</Typography>
+//
+//                             {/* Список файлов */}
+//                             {/* Список файлов */}
+//                             <Box mt={2} sx={{ maxHeight: "200px", overflowY: "auto" }}>
+//                                 <Typography variant="subtitle1">Файлы:</Typography>
+//                                 <Button
+//                                     variant="outlined"
+//                                     component="label"
+//                                     startIcon={<AttachFile />}
+//                                     sx={{ marginTop: "8px" }}
+//                                 >
+//                                     Загрузить файл
+//                                     <input
+//                                         type="file"
+//                                         hidden
+//                                         onChange={handleFileChange}
+//                                     />
+//                                 </Button>
+//                                 <Box mt={2}>
+//                                     {files.length > 0 ? (
+//                                         files.map((file, index) => (
+//                                             <Box
+//                                                 key={index}
+//                                                 display="flex"
+//                                                 justifyContent="space-between"
+//                                                 alignItems="center"
+//                                                 mb={1}
+//                                             >
+//                                                 <Typography variant="body2">{file.name}</Typography>
+//                                                 <Button
+//                                                     variant="outlined"
+//                                                     size="small"
+//                                                     href={file.url}
+//                                                     download={file.name}
+//                                                 >
+//                                                     Скачать
+//                                                 </Button>
+//                                                 <IconButton
+//                                                     color="error"
+//                                                     onClick={() => handleFileDelete(file)}
+//                                                 >
+//                                                     <Delete />
+//                                                 </IconButton>
+//                                             </Box>
+//                                         ))
+//                                     ) : (
+//                                         <Typography variant="body2" color="textSecondary">
+//                                             Нет загруженных файлов.
+//                                         </Typography>
+//                                     )}
+//                                 </Box>
+//                             </Box>
+//                                 {/* Работа с ссылками */}
+//                                 <Box mt={2}>
+//                                     <Typography variant="subtitle1">Ссылки:</Typography>
+//                                     <Box display="flex" mt={1}>
+//                                         <TextField
+//                                             fullWidth
+//                                             label="Введите ссылку"
+//                                             value={newUrl}
+//                                             onChange={(e) => setNewUrl(e.target.value)}
+//                                             sx={{ marginRight: "8px" }}
+//                                         />
+//                                         <Button variant="contained" onClick={handleAddUrl}>
+//                                             Добавить
+//                                         </Button>
+//                                     </Box>
+//                                     <Box mt={2}>
+//                                         <Typography variant="subtitle1">OpenGraph данные:</Typography>
+//                                         {Object.keys(openGraphData).length > 0 ? (
+//                                             Object.entries(openGraphData).map(([url, ogData], index) => (
+//                                                 <Box key={index} mt={1}>
+//                                                     {ogData ? (
+//                                                         <OGPreview
+//                                                             ogData={{
+//                                                                 title: ogData.title || "Без названия",
+//                                                                 description: ogData.description || "Описание отсутствует",
+//                                                                 image: ogData.image || "",
+//                                                                 url: ogData.url || url, // Используем URL из ключа
+//                                                             }}
+//                                                         />
+//                                                     ) : (
+//                                                         <Typography variant="body2">Нет данных для URL: {url}</Typography>
+//                                                     )}
+//                                                 </Box>
+//                                             ))
+//                                         ) : (
+//                                             <Typography variant="body2">Нет OpenGraph данных</Typography>
+//                                         )}
+//                                     </Box>
+//                                 </Box>
+//                             {/* Список аудио */}
+//                             <Box mt={2} sx={{ maxHeight: "200px", overflowY: "auto" }}>
+//                                 <Typography variant="subtitle1">Аудиофайлы:</Typography>
+//                                 <Box display="flex" gap={2} mt={1}>
+//                                     <Button
+//                                         variant="contained"
+//                                         color={isRecording ? "error" : "primary"}
+//                                         onClick={isRecording ? stopRecording : startRecording}
+//                                     >
+//                                         {isRecording ? "Остановить запись" : "Записать аудио"}
+//                                     </Button>
+//                                     <Button variant="outlined" component="label">
+//                                         Загрузить аудио
+//                                         <input
+//                                             type="file"
+//                                             hidden
+//                                             accept="audio/*"
+//                                             onChange={handleAudioFileChange}
+//                                         />
+//                                     </Button>
+//                                 </Box>
+//                                 <Box mt={2}>
+//                                     {audios.length > 0 ? (
+//                                         audios.map((audio, index) => (
+//                                             <Box
+//                                                 key={index}
+//                                                 display="flex"
+//                                                 justifyContent="space-between"
+//                                                 alignItems="center"
+//                                                 mb={1}
+//                                             >
+//                                                 <audio controls src={audio.url} style={{ width: "60%" }} />
+//                                                 <Button
+//                                                     variant="outlined"
+//                                                     size="small"
+//                                                     href={audio.url}
+//                                                     download={audio.name}
+//                                                 >
+//                                                     Скачать
+//                                                 </Button>
+//                                                 <IconButton
+//                                                     color="error"
+//                                                     onClick={() => handleAudioDelete(audio)}
+//                                                 >
+//                                                     <Delete />
+//                                                 </IconButton>
+//                                             </Box>
+//                                         ))
+//                                     ) : (
+//                                         <Typography variant="body2" color="textSecondary">
+//                                             Нет загруженных аудиофайлов.
+//                                         </Typography>
+//                                     )}
+//                                 </Box>
+//                             </Box>
+//                         </Box>
+//                     )}
+//                 </Box>
+//
+//                  {/* Кнопки внизу */}
+//                 <Box
+//                     sx={{
+//                         display: "flex",
+//                         justifyContent: "space-between",
+//                         padding: "16px",
+//                         borderTop: "1px solid #e0e0e0",
+//                         backgroundColor: "background.paper",
+//                     }}
+//                 >
+//                     <Button
+//                         variant="outlined"
+//                         color="secondary"
+//                         onClick={onClose}
+//                         sx={{ width: "48%" }}
+//                     >
+//                         Отмена
+//                     </Button>
+//                     <Button
+//                         variant="contained"
+//                         color="primary"
+//                         onClick={handleSave}
+//                         sx={{ width: "48%" }}
+//                     >
+//                         Сохранить
+//                     </Button>
+//                 </Box>
+//             </Box>
+//         </React.Fragment>
+//     </Modal>
+// )
