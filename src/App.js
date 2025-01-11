@@ -183,6 +183,7 @@ const App = () => {
             tags={tags} // Передача уникальных тегов
             selectedTags={selectedTags} // Передача выбранных тегов
             onTagChange={handleTagChange}
+
         />
         {/*<ReactFlowProvider>*/}
         {selectedProjectId ? (
@@ -208,6 +209,8 @@ const App = () => {
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
                 filteredNotes={filteredNotes || []} // Для обновления фильтрации
+                onCreateNote={handleCreateNote}
+                setFilteredNotes={setFilteredNotes} // Передаём функцию для обновления
             />
 
             ):(
