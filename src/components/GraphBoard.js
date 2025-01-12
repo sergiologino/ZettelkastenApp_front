@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import ReactFlow, { MiniMap, Controls, Background } from "reactflow";
+import { applyNodeChanges } from "reactflow";
 import { Handle } from "reactflow";
 import "reactflow/dist/style.css";
 import NoteModal from "./NoteModal";
@@ -35,24 +36,23 @@ const GraphBoard = ({
     // console.log("Selected notes: ",notes);
 
     const resizableStyle = {
-        resize: "both",
-        overflow: "hidden",
-        minWidth: "100px",
-        minHeight: "50px",
-        maxWidth: "500px",
-        maxHeight: "300px",
-        width: "100%", // Размер контента синхронизирован
-        height: "100%",
         display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-        alignItems: "center",
-        textAlign: "center",
+        flexDirection: "column", // Выстраиваем элементы в колонку
+        justifyContent: "space-between", // Оставляем место между элементами
+        alignItems: "center", // Центруем элементы по горизонтали
+        width: "100%",
+        height: "100%",
+        padding: "8px", // Добавляем отступы
+        boxSizing: "border-box", // Учитываем padding в размерах
+        overflow: "hidden", // Скрываем выходящий контент
     };
 
 
 
     const onNodeDragStart = (_, node) => {
+        if (node.style.cursor === "nwse-resize") {
+            return; // Прерываем обработку, если пользователь тянет за область изменения размера
+        }
         setNodes((prevNodes) =>
             prevNodes.map((n) =>
                 n.id === node.id ? { ...n, style: { ...n.style, opacity: 0.5 } } : n
@@ -116,28 +116,105 @@ const GraphBoard = ({
         )
     };
 
-    const onNodeResizeStop = (_, node) => {
-        setNodes((prevNodes) =>
-            prevNodes.map((n) =>
-                n.id === node.id
-                    ? { ...n, style: { ...n.style, width: node.style.width, height: node.style.height } }
-                    : n
-            )
-        );
-
-        // Синхронизация с сервером
-        const updatedNote = {
-            ...notes.find((note) => note.id === node.id),
-            width: parseInt(node.style.width, 10),
-            height: parseInt(node.style.height, 10),
-        };
-
-        try {
-            onUpdateNote(updatedNote); // Сохранение изменений на сервере
-        } catch (error) {
-            console.error("Ошибка при обновлении размера ноды:", error);
+    const onNodeResizeStart = (event, node) => {
+        // Проверяем, началось ли изменение через псевдоэлемент
+        if (event.target.classList.contains("node") || event.target.matches(".node::after")) {
+            event.stopPropagation(); // Останавливаем перемещение ноды
         }
     };
+
+    const onNodeResizeStop = (_, node) => {
+        const resizedNodes = nodes.map((n) => {
+            if (n.id === node.id) {
+                // Обновляем размеры стиля и позиции ноды
+                return {
+                    ...n,
+                    style: {
+                        ...n.style,
+                        width: `${node.style.width}px`,
+                        height: `${node.style.height}px`,
+                    },
+                    data: {
+                        ...n.data, // Оставляем данные без изменений
+                    },
+                };
+            }
+            return n;
+        });
+
+        setNodes(resizedNodes); // Обновляем состояние нод
+
+        // Находим соответствующую заметку
+        const resizedNote = notes.find((note) => note.id === node.id);
+        if (resizedNote) {
+            const updatedNote = {
+                ...resizedNote,
+                width: parseInt(node.style.width, 10),
+                height: parseInt(node.style.height, 10),
+            };
+
+            // Сохраняем изменения на сервере
+            onUpdateNote(updatedNote)
+                .then(() => console.log("Размер заметки успешно обновлён"))
+                .catch((error) => console.error("Ошибка при обновлении размера заметки:", error));
+        }
+    };
+
+    const handleResizeStart = (event, nodeId) => {
+        event.stopPropagation(); // Предотвращаем перетаскивание
+        const node = nodes.find((n) => n.id === nodeId);
+
+        if (!node) return;
+
+        const startX = event.clientX;
+        const startY = event.clientY;
+        const startWidth = parseInt(node.style.width, 10) || 150;
+        const startHeight = parseInt(node.style.height, 10) || 150;
+
+        const handleMouseMove = (e) => {
+            const newWidth = Math.max(50, startWidth + e.clientX - startX);
+            const newHeight = Math.max(50, startHeight + e.clientY - startY);
+
+            setNodes((prevNodes) =>
+                prevNodes.map((n) =>
+                    n.id === nodeId
+                        ? {
+                            ...n,
+                            style: {
+                                ...n.style,
+                                width: `${newWidth}px`,
+                                height: `${newHeight}px`,
+                            },
+                        }
+                        : n
+                )
+            );
+        };
+
+        const handleMouseUp = () => {
+            document.removeEventListener("mousemove", handleMouseMove);
+            document.removeEventListener("mouseup", handleMouseUp);
+
+            // Сохраняем изменения на сервере
+            const updatedNode = nodes.find((n) => n.id === nodeId);
+            if (updatedNode) {
+                const updatedNote = {
+                    ...notes.find((note) => note.id === nodeId),
+                    width: parseInt(updatedNode.style.width, 10),
+                    height: parseInt(updatedNode.style.height, 10),
+                };
+                onUpdateNote(updatedNote).catch((err) =>
+                    console.error("Ошибка сохранения размера ноды:", err)
+                );
+            }
+        };
+
+        document.addEventListener("mousemove", handleMouseMove);
+        document.addEventListener("mouseup", handleMouseUp);
+    };
+
+
+
 
     const handleAnalysisFlagChange = (noteId, isChecked) => {
         setNotes((prevNotes) =>
@@ -159,73 +236,99 @@ const GraphBoard = ({
 
 
     useEffect(() => {
-        // Обновляем узлы и связи при изменении заметок
         setNodes(
             notes?.map((note, index) => ({
                 id: note.id,
                 data: {
                     label: (
-                        <div style={resizableStyle}>
+                        <div
+                            style={{
+                                ...resizableStyle,
+                                position: "relative",
+                            }}
+                            className="node"
+                            onMouseDown={(e) => e.stopPropagation()} // Остановка событий перетаскивания для всей ноды
+                        >
+                            {/* Контент */}
                             <div>{note.content}</div>
-                            {note.urls?.length > 0 && (
-                                <div style={{ marginTop: 8 }}>
-                                    {openGraphData[note.id]?.map((ogData, index) => (
-                                        <OGPreview key={index} ogData={ogData} />
-                                    ))}
 
-                                </div>
-                            )}
-                            <div style={{ marginTop: 8, display: "flex", flexWrap: "wrap", gap: "4px" }}>
+                            {/* Теги */}
+                            <div
+                                style={{
+                                    display: "flex",
+                                    flexWrap: "wrap",
+                                    gap: "4px",
+                                    marginTop: "8px",
+                                }}
+                            >
                                 {note.tags?.map((tag) => (
                                     <span
                                         key={tag}
                                         style={{
                                             fontSize: "0.6rem",
                                             border: "1px solid #ccc",
-                                            borderRadius: "1px",
-                                            padding: "1px 1px",
-                                            marginRight: "1px",
-                                            marginBottom: "1px",
-                                            color: getColorForTag(tag),
+                                            borderRadius: "4px",
+                                            padding: "2px 4px",
+                                            backgroundColor: getColorForTag(tag),
+                                            color: "#fff",
                                         }}
                                     >
-                                        {tag}
+                                            {tag}
                                     </span>
                                 ))}
                             </div>
-                            <div style={{ marginTop: 4, display: "flex"}}>
+
+                            {/* Переключатель */}
+                            <div
+                                style={{
+                                    marginTop: "auto",
+                                    display: "flex",
+                                    justifyContent: "center",
+                                }}
+                            >
                                 <Switch
                                     checked={selectedNoteIds.includes(note.id)}
-                                    onChange={(e) => handleNoteSelection(e, note.id)}
-                                    onClick={(e) => e.stopPropagation()} // Останавливаем распространение клика
-                                    // style={{ marginRight: "2px",marginTop: "4px" }}
+                                    onChange={(e) =>
+                                        handleNoteSelection(e, note.id, e.target.checked)
+                                    }
+                                    onClick={(e) => e.stopPropagation()}
                                 />
                             </div>
+
+                            {/* Элемент изменения размера */}
+                            <div
+                                style={{
+                                    position: "absolute",
+                                    bottom: 0,
+                                    right: 0,
+                                    width: "12px",
+                                    height: "12px",
+                                    backgroundColor: "#ccc",
+                                    cursor: "nwse-resize",
+                                    zIndex: 10,
+                                }}
+                                onMouseDown={(e) => handleResizeStart(e, note.id)}
+                            />
                         </div>
+
+
                     ),
                 },
-                position: { x: note.x || index * 200, y: note.y || index * 100 },
+                position: {x: note.x || index * 200, y: note.y || index * 100},
                 style: {
-                    background: "#fff",
-                    borderRadius: "8px", // Оставляем радиус для эстетики
-                    padding: "2px", // Увеличиваем внутренний отступ
                     width: `${note.width || 150}px`,
                     height: `${note.height || 150}px`,
+                    background: "#fff",
                     border: "1px solid #ccc",
-                    // fontSize: "0.3rem", // Увеличиваем шрифт, чтобы соответствовать размеру
-                    display: "flex",
-                    alignItems: "stretch",
-                    justifyContent: "center",
+                    borderRadius: "8px",
                     boxSizing: "border-box",
                 },
             }))
         );
-
-        setEdges(getEdges(notes));
     }, [notes]);
 
 
-   useEffect(() => {
+    useEffect(() => {
         const loadOpenGraphData = async () => {
             const newOpenGraphData = {};
 
@@ -293,6 +396,18 @@ const GraphBoard = ({
         const colors = ["#FF5733", "#079c21", "#3357FF", "#F333FF", "#FF5733"];
         return colors[hash % colors.length];
     };
+
+    // const getColorForTag = (() => {
+    //     const tagColors = {}; // Карта для сохранения цветов тегов
+    //     const colors = ["#FF5733", "#079c21", "#3357FF", "#F333FF", "#FFC300"];
+    //     return (tag) => {
+    //         if (!tagColors[tag]) {
+    //             const hash = Array.from(tag).reduce((sum, char) => sum + char.charCodeAt(0), 0);
+    //             tagColors[tag] = colors[hash % colors.length];
+    //         }
+    //         return tagColors[tag];
+    //     };
+    // })();
 
     const handleSaveNote = async (updatedNote) => {
         if (updatedNote.id) {
@@ -382,12 +497,22 @@ const GraphBoard = ({
             <ReactFlow
                 nodes={nodes}
                 edges={edges} // Пока без связей
+                onNodesChange={(changes) => {
+                    const updatedNodes = applyNodeChanges(changes, nodes);
+                    setNodes(updatedNodes);
+                }}
+                onNodeDragStart={(event, node) => {
+                    if (event.target.closest(".resize-handle")) {
+                        event.stopPropagation(); // Останавливаем перетаскивание, если оно началось с элемента изменения размера
+                    }
+                }}
+                onNodeResizeStop={onNodeResizeStop}
                 fitView
 
                 onNodeClick={handleNodeClick}
                 onNodeDragStart={onNodeDragStart}
                 onNodeDragStop={onNodeDragStop}
-                onNodeResizeStop={onNodeResizeStop}
+
                 style={{flex: 1}}
 
             >

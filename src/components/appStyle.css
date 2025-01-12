@@ -84,3 +84,23 @@
     max-height: 100vh;
     overflow-y: auto;
 }
+
+/* стили для нод */
+.node {
+    position: relative; /* Для размещения псевдоэлемента */
+    box-sizing: border-box; /* Учитываем размеры ноды */
+}
+
+.node::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 12px;
+    height: 12px;
+    background: #ccc; /* Цвет области изменения */
+    cursor: nwse-resize; /* Курсор изменения размера */
+    z-index: 10; /* Устанавливаем приоритет */
+    pointer-events: auto; /* Активируем события мыши */
+}
+
