@@ -265,7 +265,7 @@ const NoteModal = ({
                         boxShadow: 24,
                         display: "flex",
                         flexDirection: "column",
-                        overflow: "hidden",
+                        // overflow: "hidden",
                         position: "relative", // Для корректного позиционирования дочерних элементов
                     }}
                 >
@@ -504,38 +504,40 @@ const NoteModal = ({
                                         </Box>
                                 )}
                             </Box>
-                        </Box>
                     </Box>
-                {/* Кнопки внизу */}
 
-                <Box
-                    sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        padding: "16px",
-                        borderTop: "1px solid #e0e0e0",
-                        position: "absolute", // Позиция фиксируется относительно модального окна
-                        bottom: 0, // Прижимаем к нижнему краю модального окна
-                        width: "100%", // Устанавливаем ширину в 100% от родительского элемента
-                        backgroundColor: "background.paper", // Цвет совпадает с фоном модального окна
-                    }}
-                >
-                    <Button
-                        variant="outlined"
-                        color="secondary"
-                        onClick={onClose}
-                        sx={{ width: "48%" }}
+                    {/* Кнопки внизу */}
+
+                    <Box
+                        sx={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            padding: "16px",
+                            borderTop: "1px solid #e0e0e0",
+                            position: "absolute", // Позиция фиксируется относительно модального окна
+                            bottom: 0, // Прижимаем к нижнему краю модального окна
+                            width: "95%", // Устанавливаем ширину в 100% от родительского элемента
+                            backgroundColor: "background.paper", // Цвет совпадает с фоном модального окна
+                        }}
                     >
-                        Отмена
-                    </Button>
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={handleSave}
-                        sx={{ width: "48%" }}
-                    >
-                        Сохранить
-                    </Button>
+                        <Button
+                            variant="outlined"
+                            color="secondary"
+                            onClick={onClose}
+                            sx={{ width: "40%" }}
+                        >
+                            Отмена
+                        </Button>
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={handleSave}
+                            sx={{ width: "40%" }}
+                        >
+                            Сохранить
+                        </Button>
+                    </Box>
+
                 </Box>
 
             </React.Fragment>
