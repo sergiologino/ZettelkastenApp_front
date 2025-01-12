@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import ReactFlow, { MiniMap, Controls, Background } from "reactflow";
+import { Handle } from "reactflow";
 import "reactflow/dist/style.css";
 import NoteModal from "./NoteModal";
 import {Checkbox, Switch} from "@mui/material";
@@ -32,6 +33,22 @@ const GraphBoard = ({
     const [activeTab, setActiveTab] = useState(0); // Активный таб
     const [selectedTags, setSelectedTags] = useState([]); // Выбранные теги
     // console.log("Selected notes: ",notes);
+
+    const resizableStyle = {
+        resize: "both",
+        overflow: "hidden",
+        minWidth: "100px",
+        minHeight: "50px",
+        maxWidth: "500px",
+        maxHeight: "300px",
+        width: "100%", // Размер контента синхронизирован
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        alignItems: "center",
+        textAlign: "center",
+    };
 
 
 
@@ -99,16 +116,28 @@ const GraphBoard = ({
         )
     };
 
+    const onNodeResizeStop = (_, node) => {
+        setNodes((prevNodes) =>
+            prevNodes.map((n) =>
+                n.id === node.id
+                    ? { ...n, style: { ...n.style, width: node.style.width, height: node.style.height } }
+                    : n
+            )
+        );
 
-    // useEffect(() => {
-    //     if (selectedProjectId) {
-    //         const filtered = filteredNotes.filter((note) => note.projectId === selectedProjectId);
-    //         console.log("in useeffect GraphBoard filtered: ",filtered);
-    //         setFilteredNotes(filtered);
-    //         console.log("Notes of selected project: ",filtered);
-    //     }
-    //
-    // }, [selectedProjectId, notes]);
+        // Синхронизация с сервером
+        const updatedNote = {
+            ...notes.find((note) => note.id === node.id),
+            width: parseInt(node.style.width, 10),
+            height: parseInt(node.style.height, 10),
+        };
+
+        try {
+            onUpdateNote(updatedNote); // Сохранение изменений на сервере
+        } catch (error) {
+            console.error("Ошибка при обновлении размера ноды:", error);
+        }
+    };
 
     const handleAnalysisFlagChange = (noteId, isChecked) => {
         setNotes((prevNotes) =>
@@ -132,27 +161,11 @@ const GraphBoard = ({
     useEffect(() => {
         // Обновляем узлы и связи при изменении заметок
         setNodes(
-            notes.map((note, index) => ({
+            notes?.map((note, index) => ({
                 id: note.id,
                 data: {
                     label: (
-                        <div style={{
-                            resize: "both",
-                            overflow: "auto",
-                            minWidth: "100px",
-                            minHeight: "50px",
-                            maxWidth: "700px",
-                            maxHeight: "500px",
-                            display: "flex",
-                            flexDirection: "column",
-                            justifyContent: "center",
-                            alignItems: "center",
-                            height: "100%", // Растягиваем содержимое
-                            textAlign: "center", // Центрируем текст
-                            fontSize: "0.9rem", // Пропорциональный размер текста
-                        }}>
-
-                            {/*/>*/}
+                        <div style={resizableStyle}>
                             <div>{note.content}</div>
                             {note.urls?.length > 0 && (
                                 <div style={{ marginTop: 8 }}>
@@ -196,10 +209,10 @@ const GraphBoard = ({
                     background: "#fff",
                     borderRadius: "8px", // Оставляем радиус для эстетики
                     padding: "2px", // Увеличиваем внутренний отступ
-                    width: "150px", // Было 100px, увеличено на 50%
-                    height: "150px", // Сделали квадратной, аналогично ширине
+                    width: `${note.width || 150}px`,
+                    height: `${note.height || 150}px`,
                     border: "1px solid #ccc",
-                    fontSize: "0.3rem", // Увеличиваем шрифт, чтобы соответствовать размеру
+                    // fontSize: "0.3rem", // Увеличиваем шрифт, чтобы соответствовать размеру
                     display: "flex",
                     alignItems: "stretch",
                     justifyContent: "center",
@@ -374,6 +387,7 @@ const GraphBoard = ({
                 onNodeClick={handleNodeClick}
                 onNodeDragStart={onNodeDragStart}
                 onNodeDragStop={onNodeDragStop}
+                onNodeResizeStop={onNodeResizeStop}
                 style={{flex: 1}}
 
             >
