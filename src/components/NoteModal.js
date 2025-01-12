@@ -152,8 +152,12 @@ const NoteModal = ({
         setNewUrl("");
     };
 
+    // Удалить URL
     const handleDeleteUrl = (urlToDelete) => {
         setUrls((prevUrls) => prevUrls.filter((url) => url !== urlToDelete));
+        const updatedOpenGraphData = { ...openGraphData };
+        delete updatedOpenGraphData[urlToDelete];
+        setOpenGraphData(updatedOpenGraphData);
     };
 
     const handleAddTag = () => {
@@ -547,7 +551,7 @@ const NoteModal = ({
                 <Box
                     sx={{
                         flex: 1,
-                        overflowY: "auto", // Прокрутка для вкладок
+                        overflowY: "auto",
                         padding: "16px",
                         fontSize: "0.9rem",
                     }}
@@ -608,120 +612,62 @@ const NoteModal = ({
                         <Box>
                             <Typography variant="h6">Вложения</Typography>
 
-                            {/* Файлы */}
-                            <Box mt={2}>
-                                <Typography variant="subtitle1">Файлы:</Typography>
-                                <Button
-                                    variant="outlined"
-                                    component="label"
-                                    startIcon={<AttachFile />}
-                                    sx={{ marginTop: "8px" }}
-                                >
-                                    Загрузить файл
-                                    <input type="file" hidden onChange={handleFileChange} />
-                                </Button>
-                                <Box mt={2}>
-                                    {files.map((file, index) => (
-                                        <Box
-                                            key={file.id || index}
-                                            display="flex"
-                                            justifyContent="space-between"
-                                            alignItems="center"
-                                            mb={1}
-                                            sx={{ borderBottom: "1px solid #e0e0e0", paddingBottom: "8px" }}
-                                        >
-                                            <Typography variant="body2">
-                                                {file.fileName || "Без имени"}
-                                            </Typography>
-                                            <a
-                                                href={`${BASE_URL}${file.filePath}`}
-                                                download={file.fileName}
-                                            >
-                                                Скачать
-                                            </a>
-                                            <IconButton
-                                                color="error"
-                                                onClick={() => handleFileDelete(file)}
-                                            >
-                                                <Delete />
-                                            </IconButton>
-                                        </Box>
-                                    ))}
-                                </Box>
-                            </Box>
-
-                            {/* Аудиофайлы */}
-                            <Box mt={2}>
-                                <Typography variant="subtitle1">Аудиофайлы:</Typography>
-                                <Box display="flex" gap={2} mt={1}>
-                                    <Button
-                                        variant="contained"
-                                        color={isRecording ? "error" : "primary"}
-                                        onClick={isRecording ? stopRecording : startRecording}
-                                    >
-                                        {isRecording ? "Остановить запись" : "Записать"}
-                                    </Button>
-                                    {recordedAudio && (
-                                        <Button variant="outlined" onClick={saveRecordedAudio}>
-                                            Сохранить запись
-                                        </Button>
-                                    )}
-                                    <Button variant="outlined" component="label">
-                                        Загрузить файл
-                                        <input
-                                            type="file"
-                                            hidden
-                                            accept="audio/*"
-                                            onChange={handleAudioFileChange}
-                                        />
-                                    </Button>
-                                </Box>
-                                <Box mt={2}>
-                                    {audios.map((audio, index) => (
-                                        <Box
-                                            key={index}
-                                            display="flex"
-                                            justifyContent="space-between"
-                                            alignItems="center"
-                                            mb={1}
-                                            sx={{ borderBottom: "1px solid #e0e0e0", paddingBottom: "8px" }}
-                                        >
-                                            <audio controls src={audio.url} style={{ width: "60%" }} />
-                                            <a href={audio.url} download={audio.name}>
-                                                Скачать
-                                            </a>
-                                            <IconButton
-                                                color="error"
-                                                onClick={() => handleAudioDelete(audio)}
-                                            >
-                                                <Delete />
-                                            </IconButton>
-                                        </Box>
-                                    ))}
-                                </Box>
-                            </Box>
-
                             {/* OpenGraph */}
                             <Box mt={2}>
                                 <Typography variant="subtitle1">OpenGraph данные:</Typography>
-                                {Object.entries(openGraphData || {}).map(([url, ogData]) => (
-                                    <Box key={url} mt={1} sx={{ borderBottom: "1px solid #e0e0e0", paddingBottom: "8px" }}>
-                                        <Typography variant="body2">
-                                            <strong>{ogData.title || "Без названия"}</strong>
-                                        </Typography>
-                                        {ogData.image && (
-                                            <img
-                                                src={ogData.image}
-                                                alt={ogData.title || "Изображение"}
-                                                style={{ maxWidth: "100%", height: "auto", marginBottom: "8px" }}
-                                            />
-                                        )}
-                                        <Typography variant="body2">{ogData.description || "Без описания"}</Typography>
-                                        <a href={ogData.url} target="_blank" rel="noopener noreferrer">
-                                            Открыть ссылку
-                                        </a>
-                                    </Box>
-                                ))}
+                                <Box display="flex" mt={1}>
+                                    <TextField
+                                        fullWidth
+                                        label="Добавить ссылку"
+                                        value={newUrl}
+                                        onChange={(e) => setNewUrl(e.target.value)}
+                                        sx={{ marginRight: "8px" }}
+                                    />
+                                    <Button
+                                        variant="contained"
+                                        onClick={handleAddUrl}
+                                    >
+                                        Добавить
+                                    </Button>
+                                </Box>
+                                <Box mt={2}>
+                                    {Object.entries(openGraphData || {}).map(([url, ogData]) => (
+                                        <Box
+                                            key={url}
+                                            mt={1}
+                                            sx={{
+                                                borderBottom: "1px solid #e0e0e0",
+                                                paddingBottom: "8px",
+                                                display: "flex",
+                                                flexDirection: "column",
+                                                gap: "8px",
+                                            }}
+                                        >
+                                            <Typography variant="body2">
+                                                <strong>{ogData.title || "Без названия"}</strong>
+                                            </Typography>
+                                            {ogData.image && (
+                                                <img
+                                                    src={ogData.image}
+                                                    alt={ogData.title || "Изображение"}
+                                                    style={{ maxWidth: "100%", height: "auto" }}
+                                                />
+                                            )}
+                                            <Typography variant="body2">{ogData.description || "Без описания"}</Typography>
+                                            <Box display="flex" justifyContent="space-between" alignItems="center">
+                                                <a href={ogData.url} target="_blank" rel="noopener noreferrer">
+                                                    Открыть ссылку
+                                                </a>
+                                                <IconButton
+                                                    color="error"
+                                                    onClick={() => handleDeleteUrl(url)}
+                                                >
+                                                    <Delete />
+                                                </IconButton>
+                                            </Box>
+                                        </Box>
+                                    ))}
+                                </Box>
                             </Box>
                         </Box>
                     )}
