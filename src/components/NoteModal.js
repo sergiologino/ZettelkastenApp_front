@@ -21,6 +21,8 @@ import { Save, Close, Add } from "@mui/icons-material";
 import { AttachFile, Delete } from "@mui/icons-material"; // Иконки для загрузки и удаления файлов
 import OGPreview from "./OGPreview";
 import {uploadAudioFiles, uploadFiles} from "../api/api";
+import {fetchOpenGraphData} from "../api/api";
+
 
 
 const NoteModal = ({
@@ -130,16 +132,35 @@ const NoteModal = ({
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            setFiles((prevFiles) => [...prevFiles, file]);
+            const fileData = {
+                name: file.name,
+                url: URL.createObjectURL(file), // Создаём временную ссылку
+                file,
+            };
+            setFiles((prevFiles) => [...prevFiles, fileData]); // Добавляем файл в состояние
         }
     };
+
 
     // Удаление файла
     const handleFileDelete = (fileToDelete) => {
         setFiles((prevFiles) => prevFiles.filter((file) => file !== fileToDelete));
     };
 
-    const handleAddUrl = () => {
+    // const handleAddUrl = () => {
+    //     if (!newUrl.trim()) {
+    //         alert("Введите ссылку.");
+    //         return;
+    //     }
+    //     if (!/^https?:\/\/[^\s$.?#].[^\s]*$/.test(newUrl.trim())) {
+    //         alert("Введите корректный URL.");
+    //         return;
+    //     }
+    //     setUrls((prevUrls) => [...prevUrls, newUrl.trim()]);
+    //     setNewUrl("");
+    // };
+
+    const handleAddUrl = async () => {
         if (!newUrl.trim()) {
             alert("Введите ссылку.");
             return;
@@ -148,8 +169,22 @@ const NoteModal = ({
             alert("Введите корректный URL.");
             return;
         }
-        setUrls((prevUrls) => [...prevUrls, newUrl.trim()]);
-        setNewUrl("");
+
+        try {
+            // Пытаемся получить OpenGraph данные для нового URL
+            const ogData = await fetchOpenGraphData(newUrl.trim());
+            setOpenGraphData((prev) => ({
+                ...prev,
+                [newUrl]: ogData || { url: newUrl }, // Если данные не найдены, сохраняем только URL
+            }));
+            setUrls((prevUrls) => [...prevUrls, newUrl]); // Добавляем URL в список
+            setNewUrl("");
+        } catch (error) {
+            console.error("Ошибка при поиске OpenGraph данных:", error);
+            alert("Не удалось загрузить OpenGraph данные. URL будет добавлен без данных.");
+            setUrls((prevUrls) => [...prevUrls, newUrl]); // Добавляем только URL
+            setNewUrl("");
+        }
     };
 
     // Удалить URL
@@ -267,6 +302,7 @@ const NoteModal = ({
                         flexDirection: "column",
                         // overflow: "hidden",
                         position: "relative", // Для корректного позиционирования дочерних элементов
+                        paddingBottom: 8,
                     }}
                 >
 
@@ -395,12 +431,11 @@ const NoteModal = ({
                                                             mb={1}
                                                         >
                                                             <Typography variant="body2">{file.fileName}</Typography>
-                                                            <Typography variant="body2">{file.filePath}</Typography>
                                                             <Button
                                                                 variant="outlined"
                                                                 size="small"
-                                                                href={file.url}
-                                                                download={file.name}
+                                                                href={file.url} // Используем временную ссылку
+                                                                download={file.name} // Имя файла для загрузки
                                                             >
                                                                 Скачать
                                                             </Button>
@@ -410,7 +445,21 @@ const NoteModal = ({
                                                             >
                                                                 <Delete />
                                                             </IconButton>
-
+                                                            {/*<Typography variant="body2">{file.filePath}</Typography>*/}
+                                                            {/*<Button*/}
+                                                            {/*    variant="outlined"*/}
+                                                            {/*    size="small"*/}
+                                                            {/*    href={file.url}*/}
+                                                            {/*    download={file.name}*/}
+                                                            {/*>*/}
+                                                            {/*    Скачать*/}
+                                                            {/*</Button>*/}
+                                                            {/*<IconButton*/}
+                                                            {/*    color="error"*/}
+                                                            {/*    onClick={() => handleFileDelete(file)}*/}
+                                                            {/*>*/}
+                                                            {/*    <Delete />*/}
+                                                            {/*</IconButton>*/}
                                                         </Box>
                                                     ))}
                                                 </Box>
@@ -433,19 +482,34 @@ const NoteModal = ({
                                                         <Typography variant="subtitle1">OpenGraph данные:</Typography>
                                                         {Object.keys(openGraphData).length > 0 ? (
                                                             Object.entries(openGraphData).map(([url, ogData], index) => (
-                                                                <Box key={index} mt={1}>
+                                                                <Box key={index}
+                                                                     display="flex"
+                                                                     alignItems="center"
+                                                                     justifyContent="space-between" // Разделяем содержимое и иконку удаления
+                                                                     mt={1}
+                                                                >
                                                                     {ogData ? (
                                                                         <OGPreview
                                                                             ogData={{
                                                                                 title: ogData.title || "Без названия",
                                                                                 description: ogData.description || "Описание отсутствует",
-                                                                                image: ogData.image || "",
+                                                                                image: ogData.image || "Нет изображения",
                                                                                 url: ogData.url || url, // Используем URL из ключа
                                                                             }}
                                                                         />
-                                                                    ) : (
+                                                                    )
+                                                                        : (
                                                                         <Typography variant="body2">Нет данных для URL: {url}</Typography>
+
                                                                     )}
+                                                                    <Box display="flex" justifyContent="space-between" alignItems="center">
+                                                                        <IconButton
+                                                                            color="error"
+                                                                            onClick={() => handleDeleteUrl(url)}
+                                                                        >
+                                                                            <Delete />
+                                                                        </IconButton>
+                                                                    </Box>
                                                                 </Box>
                                                             ))
                                                         ) : (
