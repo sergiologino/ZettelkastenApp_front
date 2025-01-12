@@ -430,7 +430,7 @@ const NoteModal = ({
                                                             alignItems="center"
                                                             mb={1}
                                                         >
-                                                            <Typography variant="body2">{file.fileName}</Typography>
+                                                            <Typography variant="body2">{file.name}</Typography>
                                                             <Button
                                                                 variant="outlined"
                                                                 size="small"
