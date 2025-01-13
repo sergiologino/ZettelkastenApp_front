@@ -247,7 +247,6 @@ const GraphBoard = ({
                                 position: "relative",
                             }}
                             className="node"
-                            onMouseDown={(e) => e.stopPropagation()} // Остановка событий перетаскивания для всей ноды
                         >
                             {/* Контент */}
                             <div>{note.content}</div>
@@ -273,7 +272,7 @@ const GraphBoard = ({
                                             color: "#fff",
                                         }}
                                     >
-                                            {tag}
+                                        {tag}
                                     </span>
                                 ))}
                             </div>
@@ -297,21 +296,10 @@ const GraphBoard = ({
 
                             {/* Элемент изменения размера */}
                             <div
-                                style={{
-                                    position: "absolute",
-                                    bottom: 0,
-                                    right: 0,
-                                    width: "12px",
-                                    height: "12px",
-                                    backgroundColor: "#ccc",
-                                    cursor: "nwse-resize",
-                                    zIndex: 10,
-                                }}
+                                className="node-resize-handle"
                                 onMouseDown={(e) => handleResizeStart(e, note.id)}
                             />
                         </div>
-
-
                     ),
                 },
                 position: {x: note.x || index * 200, y: note.y || index * 100},
@@ -502,8 +490,9 @@ const GraphBoard = ({
                     setNodes(updatedNodes);
                 }}
                 onNodeDragStart={(event, node) => {
-                    if (event.target.closest(".resize-handle")) {
-                        event.stopPropagation(); // Останавливаем перетаскивание, если оно началось с элемента изменения размера
+                    if (event.target.classList.contains("node-resize-handle")) {
+                        event.stopPropagation(); // Останавливаем перетаскивание
+                        return;
                     }
                 }}
                 onNodeResizeStop={onNodeResizeStop}
