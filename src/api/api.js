@@ -52,6 +52,7 @@ export const addNote = async (note,projectId) => {
         const response = await api.post(`/notes/${projectId}`, note, {
             headers: { "Content-Type": "application/json" },
         });
+        console.log("Ответ сервера по сохранению заметки: ", response.data);
         return response.data; // Возвращаем данные созданной заметки
     } catch (error) {
         console.error("Ошибка при вызове API для создания заметки:", error);

@@ -102,9 +102,9 @@ const App = () => {
       // Таб "Проекты"
       if (selectedProjectId) {
         const filtered = notes.filter((note) => note.projectId === selectedProjectId);
-        console.log("Filtered notes for project: ",filtered);
+        //console.log("Filtered notes for project: ",filtered);
         setFilteredNotes(filtered); // Обновляем заметки для проекта
-        console.log("notes in filtered: ",filtered);
+        //console.log("notes in filtered: ",filtered);
       } else {
         console.log("No project selected");
         setFilteredNotes([]); // Очищаем, если проект не выбран

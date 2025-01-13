@@ -33,6 +33,7 @@ const NoteModal = ({
                        isGlobalAnalysisEnabled = false,
                        note = null, // Обрабатываем null корректно
                        selectedProject,
+                       setNotes,
 
                    }) => {
     const [activeTab, setActiveTab] = useState(0); // Текущий таб
@@ -58,14 +59,14 @@ const NoteModal = ({
     const BASE_URL = "http://localhost:8080";
 
 
-    console.log("Заметка с доски, note: ",note);
-    console.log("OpenGraphData in NoteModal:", openGraphData);
+    //console.log("Заметка с доски, note: ",note);
+    //console.log("OpenGraphData in NoteModal:", openGraphData);
 
     useEffect(() => {
 
         //console.log("note status in NoteModal: ",note);
         if (open && note) {
-            console.log("EXISTING projectId в Select:", note?.projectId, "selectedProject:", selectedProject);
+           // console.log("EXISTING projectId в Select:", note?.projectId, "selectedProject:", selectedProject);
             setContent(note.content || "");
             setSelectedProject(note.projectId || "");
             setTags(note.tags || []);
@@ -74,7 +75,7 @@ const NoteModal = ({
             setOpenGraphData(note.openGraphData || {}); // Устанавливаем OpenGraph данные
 
         } else if (open){
-            console.log("CREATE projectId в Select:", note?.projectId, "selectedProject:", selectedProject);
+           // console.log("CREATE projectId в Select:", note?.projectId, "selectedProject:", selectedProject);
             // console.log("Open new note");
             setContent("");
             setSelectedProject(selectedProject||"");
@@ -207,6 +208,7 @@ const NoteModal = ({
     };
 
     const handleSave = async () => {
+        console.log("Файлы перед сохранением:", files);
         if (!content.trim()) {
             alert("Текст заметки не может быть пустым.");
             return;
@@ -227,41 +229,77 @@ const NoteModal = ({
                     url: audio.url,
                     name: audio.name,
                 })), // Добавляем аудиофайлы
-                files: files?.map((file) => ({
-                    name: file.name,
-                    url: URL.createObjectURL(file), // Временно создаём ссылку
-                })), // Добавляем файлы
+                files: files?.map((file) => {
+                    if (file instanceof File) {
+                        return {
+                            name: file.name,
+                            url: URL.createObjectURL(file), // Временно создаём ссылку
+                        };
+                    } else {
+                        return file; // Возвращаем объект как есть, если это не File
+                    }
+                }),
+
                 individualAnalysisFlag,
                 tags,
                 urls,
 
             };
-            console.log(" tags of note: ",tags);
+            //console.log(" tags of note: ",tags);
 
             const savedNote = await onSave(updatedNote);
+
+            //console.log(" ЗАМЕТКА СОХРАНЕНА НА БЭКЕ !",savedNote);
 
             // Отправляем файлы
             if (files.length > 0) {
                 const formData = new FormData();
-                files.forEach((file) => formData.append("files", file));
+                console.log("Отправка файлов: ",files);
+                files.forEach((file) => {
+                    if (file instanceof File) {
+                        formData.append("files", file); // Добавляем файл напрямую
+                        // console.log(" Добавление напрямую 1е условие:",file);
+                    } else if (file.file instanceof File) {
+                        formData.append("files", file.file);
+                        // console.log(" Добавление напрямую 2е условие:",file.file);
+                    } else {
+                        console.error("Некорректный файл:", file);
+                    }
+                });
+                // console.log("--- Отправка массива files: ", formData);
+                // console.log("Код заметки: ", savedNote.id);
                 await uploadFiles(savedNote.id, formData); // Передаём ID заметки и файлы
             }
 
             // Отправляем аудиофайлы
             if (audios.length > 0) {
                 const formData = new FormData();
+                console.log("Отправка аудиофайлов: ",audios);
                 audios.forEach((audio) => formData.append("audios", audio.blob));
-                console.log("---Аудиомассив audios: ", formData);
+                for (let [key, value] of formData.entries()) {
+                    console.log(`${key}:`, value);
+                }
+                console.log("---Отправка аудиомассива audios: ", formData);
                 await uploadAudioFiles(savedNote.id, formData); // Передаём ID заметки и аудио
             }
-
+            // Обновляем состояние
+            setNotes((prevNotes) =>
+                prevNotes.map((n) => (n.id === savedNote.id ? savedNote : n))
+            );
+            files.forEach((file) => {
+                if (file.url && file instanceof File) {
+                    URL.revokeObjectURL(file.url); // Удаляем временную ссылку
+                }
+            });
             alert("Заметка успешно сохранена!");
             onClose();
 
         } catch (error) {
-            console.error("Ошибка при сохранении заметки:", error);
+            console.error("Ошибка при сохранении заметки:", error.response?.data || error.message);
             alert("Не удалось сохранить заметку. Проверьте соединение с сервером.");
         }
+        //  освобождаем созданные временные ссылки, чтобы избежать утечек памяти
+
     };
 
 
@@ -430,12 +468,12 @@ const NoteModal = ({
                                                             alignItems="center"
                                                             mb={1}
                                                         >
-                                                            <Typography variant="body2">{file.name}</Typography>
+                                                            <Typography variant="body2">{file.fileName || file.name}</Typography>
                                                             <Button
                                                                 variant="outlined"
                                                                 size="small"
-                                                                href={file.url} // Используем временную ссылку
-                                                                download={file.name} // Имя файла для загрузки
+                                                                href={file.filePath || file.url} // Используем временную ссылку
+                                                                download={file.fileName || file.name} // Имя файла для загрузки
                                                             >
                                                                 Скачать
                                                             </Button>

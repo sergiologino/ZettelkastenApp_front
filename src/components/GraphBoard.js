@@ -223,7 +223,7 @@ const GraphBoard = ({
     };
 
     useEffect(() => {
-        console.log("Заметки для отображения в GraphBoard:", filteredNotes);
+        //console.log("Заметки для отображения в GraphBoard:", filteredNotes);
         setNodes((filteredNotes || []).map((note, index) => ({
             id: note.id,
             data: { label: note.content || "Нет содержания" },
@@ -558,6 +558,7 @@ const GraphBoard = ({
                     note={selectedNote || {}}
                     projects={projects}
                     selectedProject={selectedProject}
+                    setNotes={setNotes} // Передача setNotes
 
                 />
             )}
