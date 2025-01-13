@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import ReactFlow, { MiniMap, Controls, Background } from "reactflow";
+import ReactFlow, {MiniMap, Controls, Background, applyEdgeChanges} from "reactflow";
 import { applyNodeChanges } from "reactflow";
 import { Handle } from "reactflow";
 import "reactflow/dist/style.css";
@@ -161,7 +161,8 @@ const GraphBoard = ({
     };
 
     const handleResizeStart = (event, nodeId) => {
-        event.stopPropagation(); // Предотвращаем перетаскивание
+        event.stopPropagation(); // Отключаем событие drag
+
         const node = nodes.find((n) => n.id === nodeId);
 
         if (!node) return;
@@ -195,7 +196,6 @@ const GraphBoard = ({
             document.removeEventListener("mousemove", handleMouseMove);
             document.removeEventListener("mouseup", handleMouseUp);
 
-            // Сохраняем изменения на сервере
             const updatedNode = nodes.find((n) => n.id === nodeId);
             if (updatedNode) {
                 const updatedNote = {
@@ -212,8 +212,6 @@ const GraphBoard = ({
         document.addEventListener("mousemove", handleMouseMove);
         document.addEventListener("mouseup", handleMouseUp);
     };
-
-
 
 
     const handleAnalysisFlagChange = (noteId, isChecked) => {
@@ -233,6 +231,13 @@ const GraphBoard = ({
             style: { background: '#fff', border: '1px solid #ccc' },
         })));
     }, [filteredNotes]);
+
+    useEffect(() => {
+        if (notes.length > 0) {
+            const calculatedEdges = getEdges(notes);
+            setEdges(calculatedEdges);
+        }
+    }, [notes]);
 
 
     useEffect(() => {
@@ -298,6 +303,16 @@ const GraphBoard = ({
                             <div
                                 className="node-resize-handle"
                                 onMouseDown={(e) => handleResizeStart(e, note.id)}
+                                style={{
+                                    position: "absolute",
+                                    bottom: 0,
+                                    right: 0,
+                                    width: "12px",
+                                    height: "12px",
+                                    backgroundColor: "#ccc",
+                                    cursor: "nwse-resize",
+                                    zIndex: 10,
+                                }}
                             />
                         </div>
                     ),
@@ -351,20 +366,23 @@ const GraphBoard = ({
                     commonTags.forEach((tag) => {
                         const edgeId = `${noteA.id}-${noteB.id}-${tag}`;
                         const reverseEdgeId = `${noteB.id}-${noteA.id}-${tag}`;
+
+                        // Убедимся, что связь уникальна
                         if (!addedEdges.has(edgeId) && !addedEdges.has(reverseEdgeId)) {
                             edges.push({
                                 id: edgeId,
                                 source: noteA.id,
                                 target: noteB.id,
-                                animated: true,
+                                animated: true, // Для анимации связи
                                 style: { stroke: getColorForTag(tag) },
                             });
-                            addedEdges.add(edgeId);
+                            addedEdges.add(edgeId); // Сохраняем уникальность
                         }
                     });
                 }
             });
         });
+
 
         return edges;
     };
@@ -489,17 +507,19 @@ const GraphBoard = ({
                     const updatedNodes = applyNodeChanges(changes, nodes);
                     setNodes(updatedNodes);
                 }}
+                onEdgesChange={(changes) => setEdges(applyEdgeChanges(changes, edges))}
                 onNodeDragStart={(event, node) => {
                     if (event.target.classList.contains("node-resize-handle")) {
                         event.stopPropagation(); // Останавливаем перетаскивание
                         return;
                     }
-                }}
-                onNodeResizeStop={onNodeResizeStop}
+                                        }
+                }
+                // onNodeResizeStop={onNodeResizeStop}
                 fitView
 
                 onNodeClick={handleNodeClick}
-                onNodeDragStart={onNodeDragStart}
+                // onNodeDragStart={onNodeDragStart}
                 onNodeDragStop={onNodeDragStop}
 
                 style={{flex: 1}}
