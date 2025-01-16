@@ -162,34 +162,34 @@ const App = () => {
                         selectedTags={selectedTags}
                     />
                     {selectedProjectId ? (
-                        <GraphBoard
-                            notes={filteredNotes || []}
-                            setNotes={setNotes}
-                            onUpdateNote={handleUpdateNote}
-                            projects={projects}
-                            selectedProject={selectedProjectId}
-                            activeTab={activeTab}
-                            setActiveTab={setActiveTab}
-                            filteredNotes={filteredNotes || []}
-                        />
-                    ) : (
-                        <div
-                            style={{
-                              flex: 1,
-                              display: "flex",
-                              justifyContent: "center",
-                              alignItems: "center",
-                            }}
-                        >
-                          <h3>Выберите проект, чтобы увидеть граф заметок</h3>
+                          <GraphBoard
+                              notes={filteredNotes || []}
+                              setNotes={setNotes}
+                              onUpdateNote={handleUpdateNote}
+                              projects={projects}
+                              selectedProject={selectedProjectId}
+                              activeTab={activeTab}
+                              setActiveTab={setActiveTab}
+                              filteredNotes={filteredNotes || []}
+                          />
+                          ) : (
+                          <div
+                              style={{
+                                flex: 1,
+                                display: "flex",
+                                justifyContent: "center",
+                                alignItems: "center",
+                              }}
+                          >
+                            <h3>Выберите проект, чтобы увидеть граф заметок</h3>
+                          </div>
+                          )}
                         </div>
-                    )}
-                  </div>
-                </ProtectedRoute>
-              }
-          />
-        </Routes>
-      </Router>
+                      </ProtectedRoute>
+                    }
+                    />
+                  </Routes>
+                </Router>
       // </>
   );
 };

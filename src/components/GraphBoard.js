@@ -507,7 +507,7 @@ const GraphBoard = ({
 
     return (
 
-        <div className="board" style={{width: "100%", height: "100%"}}>
+        <div className="board" style={{width: "100%", height: "100vh"}}>
             <ReactFlow
                 nodes={nodes}
                 edges={edges} // Пока без связей
@@ -535,7 +535,7 @@ const GraphBoard = ({
             >
                 <MiniMap/>
                 <Controls/>
-                <Background gap={16} size={0.5} color="#ddd"/>
+                <Background gap={16} size={0.5} color="##11F3B2"/>
             </ReactFlow>
             <button
                 onClick={() => {
@@ -557,6 +557,9 @@ const GraphBoard = ({
                 }}
             >
                 +
+            </button>
+            <button onClick={handleLogout} style={{color: "blue", margin: "10px", height: "50px", width: "100px", borderRadius: "20%",padding: "10px"}}>
+                Выйти
             </button>
             {isModalOpen && (
                 <NoteModal

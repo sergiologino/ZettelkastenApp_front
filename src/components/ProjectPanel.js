@@ -83,7 +83,7 @@ const ProjectPanel = ({
             style={{
                 width: `${panelWidth}%`,
                 height: "100vh",
-                backgroundColor: "#c5e6ff",
+                backgroundColor: "rgba(197,221,255,0.6)",
                 borderRight: "1px solid #e0e0e0",
                 display: "flex",
                 flexDirection: "column",
