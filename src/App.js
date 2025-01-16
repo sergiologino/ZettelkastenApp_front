@@ -134,10 +134,6 @@ const App = () => {
   };
 
   return (
-      // <>
-      //   <head>
-      //     <script src="https://yastatic.net/s3/passport-sdk/autofill/v1/sdk-suggest-token-with-polyfills-latest.js"></script>
-      //   </head>
   <Router>
     <Routes>
       <Route path="/auth" element={<AuthPage/>}/>

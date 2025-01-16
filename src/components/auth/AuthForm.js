@@ -71,7 +71,7 @@ const AuthForm = () => {
             localStorage.setItem("accessToken", accessToken);
             localStorage.setItem("refreshToken", refreshToken);
 
-            alert("Вы успешно вошли!");
+            //alert("Вы успешно вошли!");
             navigate("/notes"); // Перенаправляем на страницу заметок
         } catch (error) {
             console.error("Ошибка авторизации:", error);
@@ -82,6 +82,7 @@ const AuthForm = () => {
     //Авторизация через Яндекс
     const handleYandexLogin = async () => {
         try {
+            axios.defaults.withCredentials = true;
             const response = await axios.get("http://localhost:8081/api/auth/oauth2/authorize/yandex");
             const { state } = response.data;
 
@@ -93,11 +94,10 @@ const AuthForm = () => {
 
             const clientId = "a0bc7b7381a84739be01111f12d9447e"; // Ваш client_id
             const redirectUri = "http://localhost:8081/login/oauth2/code/yandex";
-            //const redirectUri = "https://oauth.yandex.ru/verification_code";
             const scope = "login login:email  login:info";
             //const state = 'someUniqueStateValue';
 
-            const authUrl = `https://oauth.yandex.ru/authorize?response_type=code&client_id=${clientId}&scope=${encodeURIComponent(scope)}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}`;
+            const authUrl = `https://oauth.yandex.ru/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}`;
             //const authUrl = `https://oauth.yandex.ru/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}`;
             window.location.href = authUrl;
         } catch (error) {
