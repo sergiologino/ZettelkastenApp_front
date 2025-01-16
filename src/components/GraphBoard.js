@@ -8,6 +8,7 @@ import {Checkbox, Switch} from "@mui/material";
 import {analyzeNotes, updateNoteCoordinates} from "../api/api";
 import OGPreview from "./OGPreview";
 import { fetchOpenGraphDataForNote } from "../api/api";
+import { useNavigate } from "react-router-dom";
 
 
 
@@ -33,15 +34,22 @@ const GraphBoard = ({
     const [selectedProjectId, setSelectedProjectId] = useState(null); // Активный проект
     const [activeTab, setActiveTab] = useState(0); // Активный таб
     const [selectedTags, setSelectedTags] = useState([]); // Выбранные теги
+    const navigate = useNavigate();
     // console.log("Selected notes: ",notes);
+
+    const handleLogout = () => {
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+        navigate("/auth"); // Перенаправляем на страницу авторизации
+    };
 
     const resizableStyle = {
         display: "flex",
         flexDirection: "column", // Выстраиваем элементы в колонку
         justifyContent: "space-between", // Оставляем место между элементами
         alignItems: "center", // Центруем элементы по горизонтали
-        width: "100%",
-        height: "100%",
+        width: "150px", //"100%",
+        height: "150px", //"100%",
         padding: "8px", // Добавляем отступы
         boxSizing: "border-box", // Учитываем padding в размерах
         overflow: "hidden", // Скрываем выходящий контент
@@ -233,7 +241,7 @@ const GraphBoard = ({
     }, [filteredNotes]);
 
     useEffect(() => {
-        if (notes.length > 0) {
+        if (notes?.length > 0) {
             const calculatedEdges = getEdges(notes);
             setEdges(calculatedEdges);
         }
@@ -350,8 +358,8 @@ const GraphBoard = ({
             setOpenGraphData(newOpenGraphData);
         };
 
-        if (notes.length > 0) {
-            loadOpenGraphData();
+        if (notes?.length > 0) {
+            loadOpenGraphData().then(r => '');
         }
     }, [filteredNotes]);
 
@@ -513,7 +521,7 @@ const GraphBoard = ({
                         event.stopPropagation(); // Останавливаем перетаскивание
                         return;
                     }
-                                        }
+                }
                 }
                 // onNodeResizeStop={onNodeResizeStop}
                 fitView

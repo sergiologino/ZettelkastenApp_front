@@ -113,4 +113,20 @@
     cursor: nwse-resize; /* Устанавливаем курсор изменения размера */
     z-index: 10;
 }
+.yandex-login-button {
+    background-color: #ffcc00; /* Цвет Яндекса */
+    color: #000; /* Чёрный текст */
+    font-size: 16px;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.yandex-login-button:hover {
+    background-color: #f1c40f; /* Чуть более тёмный оттенок */
+}
 

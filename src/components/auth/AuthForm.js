@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { TextField, Button, Box, Typography } from "@mui/material";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import "./AuthStyle.css"; // Подключаем стили
+
 
 const AuthForm = () => {
     const [isRegister, setIsRegister] = useState(false); // Регистрация или вход
@@ -12,63 +14,96 @@ const AuthForm = () => {
     });
     const navigate = useNavigate();
 
-    // Автоматическая авторизация, если токен есть в localStorage
+    // Проверка токена в localStorage для автоматической авторизации7
     useEffect(() => {
         const accessToken = localStorage.getItem("accessToken");
         if (accessToken) {
-            navigate("/"); // Перенаправляем на главную страницу
+            navigate("/"); // Если токен есть, перенаправляем на главную страницу
         }
     }, [navigate]);
 
-    // Обновление состояния формы
+    // Обновление данных формы
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
-    // Регистрация пользователя
+    // Обработка регистрации пользователя
     const handleRegister = async () => {
         try {
-            await axios.post("http://localhost:8081/api/auth/register", formData);
+            await axios.post(
+                "http://localhost:8081/api/auth/register",
+                formData,
+                {
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    withCredentials: true, // Убедитесь, что cookies используются корректно
+                }
+            );
             alert("Регистрация успешна! Теперь войдите.");
-            setIsRegister(false);
+            setIsRegister(false); // Переключаемся на экран входа
         } catch (error) {
             console.error("Ошибка регистрации:", error);
             alert("Ошибка регистрации. Проверьте данные.");
         }
     };
 
-    // Авторизация пользователя
+    // Обработка авторизации пользователя
     const handleLogin = async () => {
         try {
-            const response = await axios.post("http://localhost:8081/api/auth/login", {
+            const response = await axios.post(
+                "http://localhost:8081/api/auth/login",
+                {
                 username: formData.username,
                 password: formData.password,
-            });
+            },
+                {
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    withCredentials: true, // Включите, если используете cookie
+                }
+                );
             const { accessToken, refreshToken } = response.data;
 
-            // Сохраняем токены
+            // Сохраняем токены в localStorage
             localStorage.setItem("accessToken", accessToken);
             localStorage.setItem("refreshToken", refreshToken);
 
             alert("Вы успешно вошли!");
-            navigate("/"); // Перенаправляем на главную страницу
+            navigate("/notes"); // Перенаправляем на страницу заметок
         } catch (error) {
             console.error("Ошибка авторизации:", error);
             alert("Ошибка авторизации. Проверьте данные.");
         }
     };
 
-    // Перенаправление на YandexID
-    const handleYandexLogin = () => {
-        const clientId = 'a0bc7b7381a84739be01111f12d9447e';
-        const redirectUri = 'http://localhost:8081/login/oauth2/code/yandex';
-        const scope = 'login login:email';
-        const state = 'someUniqueStateValue';
+    //Авторизация через Яндекс
+    const handleYandexLogin = async () => {
+        try {
+            const response = await axios.get("http://localhost:8081/api/auth/oauth2/authorize/yandex");
+            const { state } = response.data;
 
-        const authUrl = `https://oauth.yandex.ru/authorize?response_type=code&client_id=${clientId}&scope=${encodeURIComponent(scope)}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}`;
+            if (!state) {
+                console.error("Ошибка: state отсутствует в ответе сервера");
+                alert("Не удалось получить state для авторизации.");
+                return;
+            }
 
-        window.location.href = authUrl;
+            const clientId = "a0bc7b7381a84739be01111f12d9447e"; // Ваш client_id
+            const redirectUri = "http://localhost:8081/login/oauth2/code/yandex";
+            //const redirectUri = "https://oauth.yandex.ru/verification_code";
+            const scope = "login login:email  login:info";
+            //const state = 'someUniqueStateValue';
+
+            const authUrl = `https://oauth.yandex.ru/authorize?response_type=code&client_id=${clientId}&scope=${encodeURIComponent(scope)}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}`;
+            //const authUrl = `https://oauth.yandex.ru/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}`;
+            window.location.href = authUrl;
+        } catch (error) {
+            console.error("Ошибка при инициализации Yandex OAuth:", error);
+            alert("Не удалось начать авторизацию через Яндекс.");
+        }
     };
 
     return (
@@ -130,14 +165,13 @@ const AuthForm = () => {
                     ? "Уже есть аккаунт? Войти"
                     : "Нет аккаунта? Зарегистрироваться"}
             </Button>
-            <Button
-                variant="outlined"
-                color="secondary"
+            <button
+                className="yandex-login-button"
                 onClick={handleYandexLogin}
-                sx={{ marginTop: "16px", width: "100%" }}
+                style={{ marginTop: "16px", width: "100%" }}
             >
-                Войти через YandexID
-            </Button>
+                Войти через Яндекс
+            </button>
         </Box>
     );
 };

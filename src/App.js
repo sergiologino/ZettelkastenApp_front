@@ -12,6 +12,7 @@ import {
   fetchNotesByTags,
 } from "./api/api";
 import { addNote } from "./api/api";
+import HomePage from "./components/HomePage";
 
 const ProtectedRoute = ({ children }) => {
   const isAuthenticated = !!localStorage.getItem("accessToken");
@@ -133,13 +134,16 @@ const App = () => {
   };
 
   return (
-      <>
-        <head>
-          <script src="https://yastatic.net/s3/passport-sdk/autofill/v1/sdk-suggest-token-with-polyfills-latest.js"></script>
-        </head>
+      // <>
+      //   <head>
+      //     <script src="https://yastatic.net/s3/passport-sdk/autofill/v1/sdk-suggest-token-with-polyfills-latest.js"></script>
+      //   </head>
   <Router>
     <Routes>
       <Route path="/auth" element={<AuthPage/>}/>
+      <Route path="/oauth2/authorization/yandex" element={<AuthPage />} />
+      <Route path="/notes" element={<ProtectedRoute><GraphBoard /></ProtectedRoute>} />
+      {/*<Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />*/}
       <Route
           path="/"
           element={
@@ -154,6 +158,7 @@ const App = () => {
                         activeTab={activeTab}
                         onTabChange={setActiveTab}
                         tags={tags}
+                        onTagChange={setTags} // Функция для обновления
                         selectedTags={selectedTags}
                     />
                     {selectedProjectId ? (
@@ -185,7 +190,7 @@ const App = () => {
           />
         </Routes>
       </Router>
-      </>
+      // </>
   );
 };
 
