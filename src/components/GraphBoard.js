@@ -6,8 +6,10 @@ import "reactflow/dist/style.css";
 import NoteModal from "./NoteModal";
 import {Checkbox, Switch} from "@mui/material";
 import {analyzeNotes, updateNoteCoordinates} from "../api/api";
+import {onCreateNote} from "../api/api";
 import OGPreview from "./OGPreview";
 import { fetchOpenGraphDataForNote } from "../api/api";
+import { useNavigate } from "react-router-dom";
 
 
 
@@ -33,15 +35,22 @@ const GraphBoard = ({
     const [selectedProjectId, setSelectedProjectId] = useState(null); // Активный проект
     const [activeTab, setActiveTab] = useState(0); // Активный таб
     const [selectedTags, setSelectedTags] = useState([]); // Выбранные теги
+    const navigate = useNavigate();
     // console.log("Selected notes: ",notes);
+
+    const handleLogout = () => {
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+        navigate("/auth"); // Перенаправляем на страницу авторизации
+    };
 
     const resizableStyle = {
         display: "flex",
         flexDirection: "column", // Выстраиваем элементы в колонку
         justifyContent: "space-between", // Оставляем место между элементами
         alignItems: "center", // Центруем элементы по горизонтали
-        width: "100%",
-        height: "100%",
+        width: "150px", //"100%",
+        height: "150px", //"100%",
         padding: "8px", // Добавляем отступы
         boxSizing: "border-box", // Учитываем padding в размерах
         overflow: "hidden", // Скрываем выходящий контент
@@ -123,42 +132,42 @@ const GraphBoard = ({
         }
     };
 
-    const onNodeResizeStop = (_, node) => {
-        const resizedNodes = nodes.map((n) => {
-            if (n.id === node.id) {
-                // Обновляем размеры стиля и позиции ноды
-                return {
-                    ...n,
-                    style: {
-                        ...n.style,
-                        width: `${node.style.width}px`,
-                        height: `${node.style.height}px`,
-                    },
-                    data: {
-                        ...n.data, // Оставляем данные без изменений
-                    },
-                };
-            }
-            return n;
-        });
+    // const onNodeResizeStop = (_, node) => {
+    //     const resizedNodes = nodes.map((n) => {
+    //         if (n.id === node.id) {
+    //             // Обновляем размеры стиля и позиции ноды
+    //             return {
+    //                 ...n,
+    //                 style: {
+    //                     ...n.style,
+    //                     width: `${node.style.width}px`,
+    //                     height: `${node.style.height}px`,
+    //                 },
+    //                 data: {
+    //                     ...n.data, // Оставляем данные без изменений
+    //                 },
+    //             };
+    //         }
+    //         return n;
+    //     });
 
-        setNodes(resizedNodes); // Обновляем состояние нод
+        // setNodes(resizedNodes); // Обновляем состояние нод
 
         // Находим соответствующую заметку
-        const resizedNote = notes.find((note) => note.id === node.id);
-        if (resizedNote) {
-            const updatedNote = {
-                ...resizedNote,
-                width: parseInt(node.style.width, 10),
-                height: parseInt(node.style.height, 10),
-            };
-
-            // Сохраняем изменения на сервере
-            onUpdateNote(updatedNote)
-                .then(() => console.log("Размер заметки успешно обновлён"))
-                .catch((error) => console.error("Ошибка при обновлении размера заметки:", error));
-        }
-    };
+        // const resizedNote = notes.find((note) => note.id === node.id);
+        // if (resizedNote) {
+        //     const updatedNote = {
+        //         ...resizedNote,
+        //         width: parseInt(node.style.width, 10),
+        //         height: parseInt(node.style.height, 10),
+        //     };
+        //
+        //     // Сохраняем изменения на сервере
+        //     onUpdateNote(updatedNote)
+        //         .then(() => console.log("Размер заметки успешно обновлён"))
+        //         .catch((error) => console.error("Ошибка при обновлении размера заметки:", error));
+        // }
+    // };
 
     const handleResizeStart = (event, nodeId) => {
         event.stopPropagation(); // Отключаем событие drag
@@ -233,7 +242,7 @@ const GraphBoard = ({
     }, [filteredNotes]);
 
     useEffect(() => {
-        if (notes.length > 0) {
+        if (notes?.length > 0) {
             const calculatedEdges = getEdges(notes);
             setEdges(calculatedEdges);
         }
@@ -350,8 +359,8 @@ const GraphBoard = ({
             setOpenGraphData(newOpenGraphData);
         };
 
-        if (notes.length > 0) {
-            loadOpenGraphData();
+        if (notes?.length > 0) {
+            loadOpenGraphData().then(r => '');
         }
     }, [filteredNotes]);
 
@@ -499,7 +508,7 @@ const GraphBoard = ({
 
     return (
 
-        <div className="board" style={{width: "100%", height: "100%"}}>
+        <div className="board" style={{width: "100%", height: "100vh"}}>
             <ReactFlow
                 nodes={nodes}
                 edges={edges} // Пока без связей
@@ -513,7 +522,7 @@ const GraphBoard = ({
                         event.stopPropagation(); // Останавливаем перетаскивание
                         return;
                     }
-                                        }
+                }
                 }
                 // onNodeResizeStop={onNodeResizeStop}
                 fitView
@@ -527,7 +536,7 @@ const GraphBoard = ({
             >
                 <MiniMap/>
                 <Controls/>
-                <Background gap={16} size={0.5} color="#ddd"/>
+                <Background gap={16} size={0.5} color="##11F3B2"/>
             </ReactFlow>
             <button
                 onClick={() => {
@@ -549,6 +558,9 @@ const GraphBoard = ({
                 }}
             >
                 +
+            </button>
+            <button onClick={handleLogout} style={{color: "blue", margin: "10px", height: "50px", width: "100px", borderRadius: "20%",padding: "10px"}}>
+                Выйти
             </button>
             {isModalOpen && (
                 <NoteModal

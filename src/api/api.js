@@ -90,9 +90,10 @@ export const analyzeNotes = async (noteIds) => {
 
 export const fetchOpenGraphData = async (url) => {
     try {
-        const response = await api.get(`/notes/og-data`, {
+        const response = await api.get(`/notes/og-data-clear`, {
             params: { url },
         });
+        console.log("Ответ с OpenGraph: ",response.data);
         return response.data; // Возвращаем данные OpenGraph
     } catch (error) {
         console.error("Ошибка при получении данных OpenGraph:", error);

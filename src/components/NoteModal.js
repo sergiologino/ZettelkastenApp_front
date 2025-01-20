@@ -16,6 +16,7 @@ import {
     Chip,
     IconButton,
 } from "@mui/material";
+import DownloadIcon from "@mui/icons-material/Download";
 import './appStyle.css';
 import { Save, Close, Add } from "@mui/icons-material";
 import { AttachFile, Delete } from "@mui/icons-material"; // Иконки для загрузки и удаления файлов
@@ -56,15 +57,18 @@ const NoteModal = ({
     const [mediaRecorder, setMediaRecorder] = useState(null); // MediaRecorder
     const [recordedAudio, setRecordedAudio] = useState(null); // Временное аудио
     const [openGraphData, setOpenGraphData] = useState({});
+    const [deletedFiles, setDeletedFiles] = useState([]);  // Удаленные файлы
+    const noteId = note?.id || "Нет ID"; // Проверяем наличие ID заметки
     const BASE_URL = "http://localhost:8080";
 
 
-    //console.log("Заметка с доски, note: ",note);
+    console.log("Заметка с доски, note: ",note);
     //console.log("OpenGraphData in NoteModal:", openGraphData);
 
     useEffect(() => {
 
         //console.log("note status in NoteModal: ",note);
+        console.log("!!! Открываем заметку: ", note);
         if (open && note) {
            // console.log("EXISTING projectId в Select:", note?.projectId, "selectedProject:", selectedProject);
             setContent(note.content || "");
@@ -74,6 +78,7 @@ const NoteModal = ({
             setFiles(note.files || []);
             setOpenGraphData(note.openGraphData || {}); // Устанавливаем OpenGraph данные
 
+
         } else if (open){
            // console.log("CREATE projectId в Select:", note?.projectId, "selectedProject:", selectedProject);
             // console.log("Open new note");
@@ -81,6 +86,8 @@ const NoteModal = ({
             setSelectedProject(selectedProject||"");
             setTags([]);
             setOpenGraphData({}); // Очищаем OpenGraph данные
+            setAudioFiles([]);
+            setFiles([]);
 
         }
     }, [open,note]);
@@ -109,6 +116,14 @@ const NoteModal = ({
             console.error("Ошибка при доступе к микрофону:", error);
             alert("Не удалось начать запись. Проверьте доступ к микрофону.");
         }
+    };
+
+
+    const handleDownload = (audio) => {
+        const link = document.createElement("a");
+        link.href = BASE_URL + audio.url; // Полный путь к файлу
+        link.download = audio.name || "noname.mp3"; // Имя файла
+        link.click();
     };
 
 // Остановка записи
@@ -146,20 +161,11 @@ const NoteModal = ({
     // Удаление файла
     const handleFileDelete = (fileToDelete) => {
         setFiles((prevFiles) => prevFiles.filter((file) => file !== fileToDelete));
-    };
 
-    // const handleAddUrl = () => {
-    //     if (!newUrl.trim()) {
-    //         alert("Введите ссылку.");
-    //         return;
-    //     }
-    //     if (!/^https?:\/\/[^\s$.?#].[^\s]*$/.test(newUrl.trim())) {
-    //         alert("Введите корректный URL.");
-    //         return;
-    //     }
-    //     setUrls((prevUrls) => [...prevUrls, newUrl.trim()]);
-    //     setNewUrl("");
-    // };
+        if (fileToDelete.id) {
+            setDeletedFiles((prev) => [...prev, fileToDelete.id]);
+        }
+    };
 
     const handleAddUrl = async () => {
         if (!newUrl.trim()) {
@@ -253,44 +259,61 @@ const NoteModal = ({
 
             // Отправляем файлы
             if (files.length > 0) {
-                const formData = new FormData();
+                const formDataFiles = new FormData();
                 console.log("Отправка файлов: ",files);
                 files.forEach((file) => {
                     if (file instanceof File) {
-                        formData.append("files", file); // Добавляем файл напрямую
-                        // console.log(" Добавление напрямую 1е условие:",file);
+                        // Если файл уже объект File
+                        formDataFiles.append("files", file);
+                        console.log("Добавление напрямую (1-е условие):", file);
                     } else if (file.file instanceof File) {
-                        formData.append("files", file.file);
-                        // console.log(" Добавление напрямую 2е условие:",file.file);
+                        // Если внутри объекта есть поле file, являющееся File
+                        formDataFiles.append("files", file.file);
+                        console.log("Добавление напрямую (2-е условие):", file.file);
+                    } else if (file.filePath) {
+                        // Если файл передается в формате с метаданными
+                        const blob = new Blob([file.filePath], { type: "text/plain" });
+                        formDataFiles.append("files", blob, file.fileName);
+                        console.log("Добавление из метаданных (3-е условие):", file.fileName);
                     } else {
-                        console.error("Некорректный файл:", file);
+                        console.warn("Неподдерживаемый формат файла:", file);
                     }
                 });
-                // console.log("--- Отправка массива files: ", formData);
+                console.log("--- Итоговый formData на отправку на бэк: ", formDataFiles);
                 // console.log("Код заметки: ", savedNote.id);
-                await uploadFiles(savedNote.id, formData); // Передаём ID заметки и файлы
+
+                if (Array.from(formDataFiles.keys()).length > 0) { // Проверка на наличие данных в formData
+                    await uploadFiles(savedNote.id, formDataFiles);
+                }
             }
 
             // Отправляем аудиофайлы
             if (audios.length > 0) {
-                const formData = new FormData();
-                console.log("Отправка аудиофайлов: ",audios);
-                audios.forEach((audio) => formData.append("audios", audio.blob));
-                for (let [key, value] of formData.entries()) {
-                    console.log(`${key}:`, value);
+                const formDataAudio = new FormData();
+                console.log("Исходный массив аудиофайлов: ", audios);
+                try {
+                    const newAudiosFormData = await prepareFormDataForAudios(audios);
+
+                    if (newAudiosFormData.has("audios")) {
+                        await uploadAudioFiles(savedNote.id, newAudiosFormData);
+                    }
+                }catch (error) {
+                    console.error("Не удалось сохранить. Ошибка при сохранении audios:", error);
                 }
-                console.log("---Отправка аудиомассива audios: ", formData);
-                await uploadAudioFiles(savedNote.id, formData); // Передаём ID заметки и аудио
+
+                // if (Array.from(formDataAudio.keys()).length > 0) { // Проверка на наличие данных в formData
+                //     await uploadAudioFiles(savedNote.id, formDataAudio); // Передаём ID заметки и аудио
+                // }
+                // Обновляем состояние
+                setNotes((prevNotes) =>
+                    prevNotes.map((n) => (n.id === savedNote.id ? savedNote : n))
+                );
+                files.forEach((file) => {
+                    if (file.url && file instanceof File) {
+                        URL.revokeObjectURL(file.url); // Удаляем временную ссылку
+                    }
+                });
             }
-            // Обновляем состояние
-            setNotes((prevNotes) =>
-                prevNotes.map((n) => (n.id === savedNote.id ? savedNote : n))
-            );
-            files.forEach((file) => {
-                if (file.url && file instanceof File) {
-                    URL.revokeObjectURL(file.url); // Удаляем временную ссылку
-                }
-            });
             alert("Заметка успешно сохранена!");
             onClose();
 
@@ -299,6 +322,15 @@ const NoteModal = ({
             alert("Не удалось сохранить заметку. Проверьте соединение с сервером.");
         }
         //  освобождаем созданные временные ссылки, чтобы избежать утечек памяти
+        setContent("");
+        setFile(null);
+        setSelectedProject("");
+        setIndividualAnalysisFlag(isGlobalAnalysisEnabled);
+        setAudioFiles(null);
+        setUrls(null);
+        setFiles(null);
+        setOpenGraphData(null);
+        onClose();
 
     };
 
@@ -314,6 +346,49 @@ const NoteModal = ({
 
     const handleAudioDelete = (audioToDelete) => {
         setAudioFiles((prev) => prev.filter((audio) => audio !== audioToDelete));
+    };
+
+
+    const prepareFormDataForAudios = async (audios) => {
+        const formData = new FormData();
+
+        for (const audio of audios) {
+            if (audio.blob instanceof Blob) {
+                console.log("Если это Blob, добавляем напрямую: ", audio);
+                // Если это Blob, добавляем напрямую
+                formData.append("audios", audio.blob, audio.name);
+            } else if (audio.url) {
+                try {
+                    console.log("Если это ссылка, загружаем аудиофайл и создаем Blob: ", audio.url);
+                    // Если это ссылка, загружаем аудиофайл и создаем Blob
+                    const response = await fetch(audio.url);
+                    if (response.ok) {
+                        console.log("Получилось response = await fetch(audio.url) стр 344: ", response);
+                        const blob = await response.blob();
+                        formData.append("audios", blob, audio.name || generateDefaultFileName());
+                    } else {
+                        console.warn(`Не удалось загрузить аудио: ${audio.url}`);
+                    }
+                } catch (error) {
+                    console.error(`Ошибка при загрузке аудио с ${audio.url}:`, error);
+                }
+            } else {
+                console.warn("Пропущено некорректное аудио:", audio);
+            }
+        }
+
+        return formData;
+    };
+
+    const generateDefaultFileName = () => {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, "0");
+        const day = String(now.getDate()).padStart(2, "0");
+        const hours = String(now.getHours()).padStart(2, "0");
+        const minutes = String(now.getMinutes()).padStart(2, "0");
+
+        return `${year}-${month}-${day}_${hours}-${minutes}_recording.mp3`;
     };
 
 
@@ -413,8 +488,8 @@ const NoteModal = ({
                                                 value={content}
                                                 onChange={(e) => setContent(e.target.value)}
                                             />
-                                            <Box>
-                                                <TextField
+                                        <Box>
+                                                <TextField sx={{ display: "flex", flexWrap: "wrap",  bottom: "100px", gap: 1, mt: 2 }}
                                                     label="Добавить тег"
                                                     value={newTag}
                                                     onChange={(e) => setNewTag(e.target.value)}
@@ -436,8 +511,21 @@ const NoteModal = ({
                                                     />
                                                 ))}
                                             </Box>
+                                            <Box>
+                                                <Typography
+                                                    variant="body2"
+                                                     style={{
+                                                         position: "absolute",
+                                                         bottom: "50px",
+                                                         right: "50px",
+                                                         color: "#888",
+                                                         fontSize: "0.6rem",
+                                                     }}
+                                                >
+                                                    id объекта: {noteId}
+                                                </Typography>
+                                            </Box>
                                         </Box>
-
                                 )}
                                 {activeTab === 1 && (
 
@@ -483,21 +571,6 @@ const NoteModal = ({
                                                             >
                                                                 <Delete />
                                                             </IconButton>
-                                                            {/*<Typography variant="body2">{file.filePath}</Typography>*/}
-                                                            {/*<Button*/}
-                                                            {/*    variant="outlined"*/}
-                                                            {/*    size="small"*/}
-                                                            {/*    href={file.url}*/}
-                                                            {/*    download={file.name}*/}
-                                                            {/*>*/}
-                                                            {/*    Скачать*/}
-                                                            {/*</Button>*/}
-                                                            {/*<IconButton*/}
-                                                            {/*    color="error"*/}
-                                                            {/*    onClick={() => handleFileDelete(file)}*/}
-                                                            {/*>*/}
-                                                            {/*    <Delete />*/}
-                                                            {/*</IconButton>*/}
                                                         </Box>
                                                     ))}
                                                 </Box>
@@ -589,9 +662,30 @@ const NoteModal = ({
                                                                 alignItems="center"
                                                                 mb={1}
                                                             >
-                                                                <audio controls src={audio.url} style={{ width: "40%" }} />
-                                                                <Typography variant="body2">{audio.name || "Неизвестно"}</Typography>
-                                                                <Typography variant="body2">{audio.audioPath}</Typography>
+                                                                <audio controls src={`${BASE_URL}${audio.url}`}
+                                                                       style={{
+                                                                    width: "40%",
+                                                                    fontSize: "0.5em", // Уменьшаем шрифт в 2 раза
+                                                                    height: "30px",    // Устанавливаем высоту явно
+                                                                    padding: "inherit",
+                                                                        }}
+                                                                />
+                                                                <Typography variant="body2"
+                                                                            style={{
+                                                                                // position: "absolute",
+                                                                                color: "#888",
+                                                                                fontSize: "0.6rem",
+                                                                            }}
+                                                                >
+                                                                    {audio.name || "Неизвестно"}
+                                                                </Typography>
+                                                                <IconButton
+                                                                    onClick={() => handleDownload(audio)}
+                                                                    style={{ marginLeft: "8px" }}
+                                                                    aria-label="Скачать аудио"
+                                                                >
+                                                                    <DownloadIcon />
+                                                                </IconButton>
                                                                 <IconButton
                                                                     color="error"
                                                                     onClick={() => handleAudioDelete(audio)}

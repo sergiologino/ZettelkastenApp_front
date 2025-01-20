@@ -83,7 +83,7 @@ const ProjectPanel = ({
             style={{
                 width: `${panelWidth}%`,
                 height: "100vh",
-                backgroundColor: "#c5e6ff",
+                backgroundColor: "rgba(197,221,255,0.6)",
                 borderRight: "1px solid #e0e0e0",
                 display: "flex",
                 flexDirection: "column",
@@ -208,9 +208,9 @@ const ProjectPanel = ({
                                             border: isSelected ? "2px solid" : "1px solid", // Жирная граница для выбранных тегов
                                             borderColor: getColorForTag(tag), // Цвет границы совпадает с цветом тэга
                                             backgroundColor: isSelected ? `${getColorForTag(tag)}30` : "transparent", // Прозрачная заливка для выбранных
-                                            borderRadius: "4px",
-                                            padding: "4px 8px",
-                                            fontSize: "0.8rem",
+                                            borderRadius: "15px",
+                                            padding: "4px 4px",
+                                            fontSize: "0.6rem",
                                             color: "#333",
                                             "&:hover": {
                                                 backgroundColor: `${getColorForTag(tag)}20`, // Лёгкая заливка при наведении
