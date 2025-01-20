@@ -119,18 +119,48 @@ const NoteModal = ({
     };
 
 
-    const handleDownloadAudio = (audio) => {
-        const link = document.createElement("a");
-        link.href = BASE_URL + audio.url; // Полный путь к файлу
-        link.download = audio.name || "noname.mp3"; // Имя файла
-        link.click();
+    const handleDownloadAudio = async (e, audio) => {
+        e.preventDefault(); // Останавливает стандартное поведение
+        console.log("Путь для скачивания: ", BASE_URL + audio.url);
+        if (!audio || !audio.url) {
+            console.error("Некорректный объект audio:", audio);
+            return;
+        }
+        try {
+            const response = await fetch(BASE_URL + audio.url);
+            if (!response.ok) throw new Error("Ошибка загрузки файла");
+
+            const blob = await response.blob();
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = audio.name || "noname.mp3";
+            link.click();
+            URL.revokeObjectURL(link.href); // Освобождаем память
+        } catch (error) {
+            console.error("Ошибка при скачивании файла:", error);
+        }
     };
 
-    const handleDownloadFile = (file) => {
-        const link = document.createElement("a");
-        link.href = BASE_URL + file.url; // Полный путь к файлу
-        link.download = file.name || "noname.mp3"; // Имя файла
-        link.click();
+    const handleDownloadFile = async (file) => {
+        e.preventDefault(); // Останавливает стандартное поведение
+        console.log("Путь для скачивания: ", BASE_URL + file.url);
+        if (!file || !file.url) {
+            console.error("Некорректный объект audio:", file);
+            return;
+        }
+        try {
+            const response = await fetch(BASE_URL + file.url);
+            if (!response.ok) throw new Error("Ошибка загрузки файла");
+
+            const blob = await response.blob();
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = file.name || "noname.mp3";
+            link.click();
+            URL.revokeObjectURL(link.href); // Освобождаем память
+        } catch (error) {
+            console.error("Ошибка при скачивании файла:", error);
+        }
     };
 
 // Остановка записи
@@ -560,13 +590,17 @@ const NoteModal = ({
                                                             key={index}
                                                             display="flex"
                                                             justifyContent="space-between"
-                                                            alignItems="center"
+                                                            alignItems="flex-end"
                                                             mb={1}
                                                         >
                                                             <Typography variant="body2">{file.fileName || file.name}</Typography>
                                                             <IconButton
-                                                                onClick={() => handleDownloadFile(file)}
-                                                                style={{ marginLeft: "8px" }}
+                                                                onClick={(e) => handleDownloadAudio(e, file)}
+                                                                style={{
+                                                                    marginLeft: "8px",
+                                                                    zIndex: 9999, // Убедимся, что кнопка на переднем плане
+                                                                }}
+
                                                                 aria-label="Скачать файл"
                                                             >
                                                                 <DownloadIcon />
@@ -665,7 +699,7 @@ const NoteModal = ({
                                                                 key={index}
                                                                 display="flex"
                                                                 justifyContent="space-between"
-                                                                alignItems="center"
+                                                                alignItems="flex-end"
                                                                 mb={1}
                                                             >
                                                                 <audio controls src={`${BASE_URL}${audio.url}`}
@@ -686,8 +720,11 @@ const NoteModal = ({
                                                                     {audio.name || "Неизвестно"}
                                                                 </Typography>
                                                                 <IconButton
-                                                                    onClick={() => handleDownloadAudio(audio)}
-                                                                    style={{ marginLeft: "8px" }}
+                                                                    onClick={(e) => handleDownloadAudio(e, audio)}
+                                                                    style={{
+                                                                        marginLeft: "8px",
+                                                                        zIndex: 9999, // Убедимся, что кнопка на переднем плане
+                                                                    }}
                                                                     aria-label="Скачать аудио"
                                                                 >
                                                                     <DownloadIcon />
