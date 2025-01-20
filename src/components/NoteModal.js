@@ -119,10 +119,17 @@ const NoteModal = ({
     };
 
 
-    const handleDownload = (audio) => {
+    const handleDownloadAudio = (audio) => {
         const link = document.createElement("a");
         link.href = BASE_URL + audio.url; // Полный путь к файлу
         link.download = audio.name || "noname.mp3"; // Имя файла
+        link.click();
+    };
+
+    const handleDownloadFile = (file) => {
+        const link = document.createElement("a");
+        link.href = BASE_URL + file.url; // Полный путь к файлу
+        link.download = file.name || "noname.mp3"; // Имя файла
         link.click();
     };
 
@@ -557,14 +564,13 @@ const NoteModal = ({
                                                             mb={1}
                                                         >
                                                             <Typography variant="body2">{file.fileName || file.name}</Typography>
-                                                            <Button
-                                                                variant="outlined"
-                                                                size="small"
-                                                                href={file.filePath || file.url} // Используем временную ссылку
-                                                                download={file.fileName || file.name} // Имя файла для загрузки
+                                                            <IconButton
+                                                                onClick={() => handleDownloadFile(file)}
+                                                                style={{ marginLeft: "8px" }}
+                                                                aria-label="Скачать файл"
                                                             >
-                                                                Скачать
-                                                            </Button>
+                                                                <DownloadIcon />
+                                                            </IconButton>
                                                             <IconButton
                                                                 color="error"
                                                                 onClick={() => handleFileDelete(file)}
@@ -680,7 +686,7 @@ const NoteModal = ({
                                                                     {audio.name || "Неизвестно"}
                                                                 </Typography>
                                                                 <IconButton
-                                                                    onClick={() => handleDownload(audio)}
+                                                                    onClick={() => handleDownloadAudio(audio)}
                                                                     style={{ marginLeft: "8px" }}
                                                                     aria-label="Скачать аудио"
                                                                 >
@@ -739,182 +745,6 @@ const NoteModal = ({
             </React.Fragment>
         </Modal>
     );
-    // return (
-    //     <Modal
-    //         open={open}
-    //         onClose={onClose}
-    //         aria-labelledby="modal-title"
-    //         aria-describedby="modal-description"
-    //     >
-    //         <Box
-    //             sx={{
-    //                 position: "absolute",
-    //                 top: "50%",
-    //                 left: "50%",
-    //                 transform: "translate(-50%, -50%)",
-    //                 width: "900px",
-    //                 height: "600px",
-    //                 bgcolor: "background.paper",
-    //                 boxShadow: 24,
-    //                 borderRadius: "8px",
-    //                 display: "flex",
-    //                 flexDirection: "column",
-    //                 overflow: "hidden",
-    //             }}
-    //         >
-    //             <Tabs
-    //                 value={activeTab}
-    //                 onChange={(e, newValue) => setActiveTab(newValue)}
-    //                 centered
-    //                 sx={{ borderBottom: "1px solid #e0e0e0" }}
-    //             >
-    //                 <Tab label="Основное" />
-    //                 <Tab label="Вложения" />
-    //             </Tabs>
-    //
-    //             <Box
-    //                 sx={{
-    //                     flex: 1,
-    //                     overflowY: "auto",
-    //                     padding: "16px",
-    //                     fontSize: "0.9rem",
-    //                 }}
-    //             >
-    //                 {activeTab === 0 && (
-    //                     <Box>
-    //                         <Typography variant="h6">Основное</Typography>
-    //                         <FormControl fullWidth margin="normal">
-    //                             <InputLabel id="project-select-label">Проект</InputLabel>
-    //                             <Select
-    //                                 labelId="project-select-label"
-    //                                 value={selectedProject || ""}
-    //                                 onChange={(e) => setSelectedProject(e.target.value)}
-    //                             >
-    //                                 {projects.map((project) => (
-    //                                     <MenuItem key={project.id} value={project.id}>
-    //                                         {project.name}
-    //                                     </MenuItem>
-    //                                 ))}
-    //                             </Select>
-    //                         </FormControl>
-    //                         <TextField
-    //                             fullWidth
-    //                             margin="normal"
-    //                             label="Текст заметки"
-    //                             multiline
-    //                             rows={3}
-    //                             value={content}
-    //                             onChange={(e) => setContent(e.target.value)}
-    //                         />
-    //                         <Box mt={2}>
-    //                             <TextField
-    //                                 label="Добавить тег"
-    //                                 value={newTag}
-    //                                 onChange={(e) => setNewTag(e.target.value)}
-    //                                 onKeyDown={(e) => e.key === "Enter" && handleAddTag()}
-    //                                 sx={{ marginRight: 2 }}
-    //                             />
-    //                             <Button variant="contained" onClick={handleAddTag}>
-    //                                 Добавить
-    //                             </Button>
-    //                         </Box>
-    //                         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 2 }}>
-    //                             {tags.map((tag) => (
-    //                                 <Chip
-    //                                     key={tag}
-    //                                     label={tag}
-    //                                     onDelete={() => handleDeleteTag(tag)}
-    //                                     color="primary"
-    //                                     variant="outlined"
-    //                                 />
-    //                             ))}
-    //                         </Box>
-    //                     </Box>
-    //                 )}
-    //
-    //                 {activeTab === 1 && (
-    //                     <Box>
-    //                         <Typography variant="h6">Вложения</Typography>
-    //
-    //                         {/* OpenGraph */}
-    //                         <Box mt={2}>
-    //                             <Typography variant="subtitle1">OpenGraph данные:</Typography>
-    //                             <Box display="flex" mt={1}>
-    //                                 <TextField
-    //                                     fullWidth
-    //                                     label="Добавить ссылку"
-    //                                     value={newUrl}
-    //                                     onChange={(e) => setNewUrl(e.target.value)}
-    //                                     sx={{ marginRight: "8px" }}
-    //                                 />
-    //                                 <Button
-    //                                     variant="contained"
-    //                                     onClick={handleAddUrl}
-    //                                 >
-    //                                     Добавить
-    //                                 </Button>
-    //                             </Box>
-    //                             <Box mt={2}>
-    //                                 {Object.entries(openGraphData || {}).map(([url, ogData]) => (
-    //                                     <Box
-    //                                         key={url}
-    //                                         mt={1}
-    //                                         sx={{
-    //                                             borderBottom: "1px solid #e0e0e0",
-    //                                             paddingBottom: "8px",
-    //                                             display: "flex",
-    //                                             flexDirection: "column",
-    //                                             gap: "8px",
-    //                                         }}
-    //                                     >
-    //                                         <Typography variant="body2">
-    //                                             <strong>{ogData.title || "Без названия"}</strong>
-    //                                         </Typography>
-    //                                         {ogData.image && (
-    //                                             <img
-    //                                                 src={ogData.image}
-    //                                                 alt={ogData.title || "Изображение"}
-    //                                                 style={{ maxWidth: "100%", height: "auto" }}
-    //                                             />
-    //                                         )}
-    //                                         <Typography variant="body2">{ogData.description || "Без описания"}</Typography>
-    //                                         <Box display="flex" justifyContent="space-between" alignItems="center">
-    //                                             <a href={ogData.url} target="_blank" rel="noopener noreferrer">
-    //                                                 Открыть ссылку
-    //                                             </a>
-    //                                             <IconButton
-    //                                                 color="error"
-    //                                                 onClick={() => handleDeleteUrl(url)}
-    //                                             >
-    //                                                 <Delete />
-    //                                             </IconButton>
-    //                                         </Box>
-    //                                     </Box>
-    //                                 ))}
-    //                             </Box>
-    //                         </Box>
-    //                     </Box>
-    //                 )}
-    //             </Box>
-    //
-    //             <Box
-    //                 sx={{
-    //                     display: "flex",
-    //                     justifyContent: "space-between",
-    //                     padding: "16px",
-    //                     borderTop: "1px solid #e0e0e0",
-    //                 }}
-    //             >
-    //                 <Button variant="outlined" onClick={onClose} sx={{ width: "48%" }}>
-    //                     Отмена
-    //                 </Button>
-    //                 <Button variant="contained" onClick={handleSave} sx={{ width: "48%" }}>
-    //                     Сохранить
-    //                 </Button>
-    //             </Box>
-    //         </Box>
-    //     </Modal>
-    // );
 };
 export default NoteModal;
 
