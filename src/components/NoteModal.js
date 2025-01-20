@@ -222,12 +222,12 @@ const NoteModal = ({
                 [newUrl]: ogData || { url: newUrl }, // Если данные не найдены, сохраняем только URL
             }));
             setUrls((prevUrls) => [...prevUrls, newUrl]); // Добавляем URL в список
-            setNewUrl("");
+            //setNewUrl("");
         } catch (error) {
             console.error("Ошибка при поиске OpenGraph данных:", error);
             alert("Не удалось загрузить OpenGraph данные. URL будет добавлен без данных.");
             setUrls((prevUrls) => [...prevUrls, newUrl]); // Добавляем только URL
-            setNewUrl("");
+            //setNewUrl("");
         }
     };
 
