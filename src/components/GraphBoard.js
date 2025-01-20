@@ -412,19 +412,17 @@ const GraphBoard = ({
         return colors[hash % colors.length];
     };
 
-    // const getColorForTag = (() => {
-    //     const tagColors = {}; // Карта для сохранения цветов тегов
-    //     const colors = ["#FF5733", "#079c21", "#3357FF", "#F333FF", "#FFC300"];
-    //     return (tag) => {
-    //         if (!tagColors[tag]) {
-    //             const hash = Array.from(tag).reduce((sum, char) => sum + char.charCodeAt(0), 0);
-    //             tagColors[tag] = colors[hash % colors.length];
-    //         }
-    //         return tagColors[tag];
-    //     };
-    // })();
+
 
     const handleSaveNote = async (updatedNote) => {
+
+        // Гарантируем, что urls всегда массив
+        const noteWithUrls = {
+            ...updatedNote,
+            urls: Array.isArray(updatedNote.urls) ? updatedNote.urls : [], // Если urls отсутствует или не массив, создаём пустой массив
+        };
+
+
         if (updatedNote.id) {
             // Обновляем заметку
             const savedNote = await onUpdateNote(updatedNote);
@@ -452,16 +450,6 @@ const GraphBoard = ({
         }
     };
 
-
-    // Выбор проекта
-    // const handleSelectProject = (projectId) => {
-    //     console.log("Выбран проект:", projectId);
-    //     setSelectedProjectId(projectId);
-    //     const filtered = notes.filter((note) => note.projectId === projectId);
-    //     console.log("Заметки для выбранного проекта:", filtered);
-    //     setFilteredNotes(filtered);
-    //
-    // };
 
     // Выбор тега
     const handleSelectTag = (tag) => {
@@ -559,7 +547,7 @@ const GraphBoard = ({
             >
                 +
             </button>
-            <button onClick={handleLogout} style={{color: "blue", margin: "10px", height: "50px", width: "100px", borderRadius: "20%",padding: "10px"}}>
+            <button onClick={handleLogout} style={{border:"thin", color: "blue", margin: "10px", height: "20px", width: "60px", borderRadius: "10px",padding: "2px"}}>
                 Выйти
             </button>
             {isModalOpen && (
@@ -587,7 +575,7 @@ const GraphBoard = ({
                         fontSize: "0.8rem", // Уменьшение текста
                         border: "none",
 
-                        borderRadius: "4px", // Сделаем углы чуть более острыми
+                        borderRadius: "6px", // Сделаем углы чуть более острыми
                         cursor: "pointer",
                     }}
                 >
