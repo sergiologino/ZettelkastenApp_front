@@ -141,7 +141,7 @@ const NoteModal = ({
         }
     };
 
-    const handleDownloadFile = async (file) => {
+    const handleDownloadFile = async (e, file) => {
         e.preventDefault(); // Останавливает стандартное поведение
         console.log("Путь для скачивания: ", BASE_URL + file.url);
         if (!file || !file.url) {
@@ -595,7 +595,7 @@ const NoteModal = ({
                                                         >
                                                             <Typography variant="body2">{file.fileName || file.name}</Typography>
                                                             <IconButton
-                                                                onClick={(e) => handleDownloadAudio(e, file)}
+                                                                onClick={(e) => handleDownloadFile(e, file)}
                                                                 style={{
                                                                     marginLeft: "8px",
                                                                     zIndex: 9999, // Убедимся, что кнопка на переднем плане
