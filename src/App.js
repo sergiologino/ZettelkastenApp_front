@@ -162,6 +162,7 @@ const App = () => {
                               notes={filteredNotes || []}
                               setNotes={setNotes}
                               onUpdateNote={handleUpdateNote}
+                              onCreateNote={handleCreateNote}
                               projects={projects}
                               selectedProject={selectedProjectId}
                               activeTab={activeTab}

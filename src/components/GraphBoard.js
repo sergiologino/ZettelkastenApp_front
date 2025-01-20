@@ -6,6 +6,7 @@ import "reactflow/dist/style.css";
 import NoteModal from "./NoteModal";
 import {Checkbox, Switch} from "@mui/material";
 import {analyzeNotes, updateNoteCoordinates} from "../api/api";
+import {onCreateNote} from "../api/api";
 import OGPreview from "./OGPreview";
 import { fetchOpenGraphDataForNote } from "../api/api";
 import { useNavigate } from "react-router-dom";
@@ -131,42 +132,42 @@ const GraphBoard = ({
         }
     };
 
-    const onNodeResizeStop = (_, node) => {
-        const resizedNodes = nodes.map((n) => {
-            if (n.id === node.id) {
-                // Обновляем размеры стиля и позиции ноды
-                return {
-                    ...n,
-                    style: {
-                        ...n.style,
-                        width: `${node.style.width}px`,
-                        height: `${node.style.height}px`,
-                    },
-                    data: {
-                        ...n.data, // Оставляем данные без изменений
-                    },
-                };
-            }
-            return n;
-        });
+    // const onNodeResizeStop = (_, node) => {
+    //     const resizedNodes = nodes.map((n) => {
+    //         if (n.id === node.id) {
+    //             // Обновляем размеры стиля и позиции ноды
+    //             return {
+    //                 ...n,
+    //                 style: {
+    //                     ...n.style,
+    //                     width: `${node.style.width}px`,
+    //                     height: `${node.style.height}px`,
+    //                 },
+    //                 data: {
+    //                     ...n.data, // Оставляем данные без изменений
+    //                 },
+    //             };
+    //         }
+    //         return n;
+    //     });
 
-        setNodes(resizedNodes); // Обновляем состояние нод
+        // setNodes(resizedNodes); // Обновляем состояние нод
 
         // Находим соответствующую заметку
-        const resizedNote = notes.find((note) => note.id === node.id);
-        if (resizedNote) {
-            const updatedNote = {
-                ...resizedNote,
-                width: parseInt(node.style.width, 10),
-                height: parseInt(node.style.height, 10),
-            };
-
-            // Сохраняем изменения на сервере
-            onUpdateNote(updatedNote)
-                .then(() => console.log("Размер заметки успешно обновлён"))
-                .catch((error) => console.error("Ошибка при обновлении размера заметки:", error));
-        }
-    };
+        // const resizedNote = notes.find((note) => note.id === node.id);
+        // if (resizedNote) {
+        //     const updatedNote = {
+        //         ...resizedNote,
+        //         width: parseInt(node.style.width, 10),
+        //         height: parseInt(node.style.height, 10),
+        //     };
+        //
+        //     // Сохраняем изменения на сервере
+        //     onUpdateNote(updatedNote)
+        //         .then(() => console.log("Размер заметки успешно обновлён"))
+        //         .catch((error) => console.error("Ошибка при обновлении размера заметки:", error));
+        // }
+    // };
 
     const handleResizeStart = (event, nodeId) => {
         event.stopPropagation(); // Отключаем событие drag
