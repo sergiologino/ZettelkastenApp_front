@@ -3,7 +3,7 @@ const OGPreview = ({ ogData }) => {
     // return <div>OGPreview content</div>;
     if (!ogData) return <p>Нет данных</p>;
     return (
-        <div style={{ marginTop: "8px", border: "1px solid #ccc", borderRadius: "4px", padding: "8px" }}>
+        <div style={{ marginTop: "8px", border: "1px solid #ccc", borderRadius: "8px", padding: "8px" }}>
             {ogData ? (
                 <>
                     <div style={{ display: "flex", alignItems: "center" }}>

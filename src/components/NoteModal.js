@@ -11,8 +11,6 @@ import {
     InputLabel,
     Tabs,
     Tab,
-    Switch,
-    FormControlLabel,
     Chip,
     IconButton,
 } from "@mui/material";
@@ -32,7 +30,7 @@ const NoteModal = ({
                        onSave,
                        projects = [],
                        isGlobalAnalysisEnabled = false,
-                       note = null, // Обрабатываем null корректно
+                       note=null, // Обрабатываем null корректно
                        selectedProject,
                        setNotes,
 
@@ -47,7 +45,7 @@ const NoteModal = ({
     const [tags, setTags] = useState(note?.tags || []);
     const [newTag, setNewTag] = useState("");
     const [files, setFiles] = useState(note?.files || []); // Состояние для загруженных файлов
-    // const [newFile, setNewFile] = useState(null); // Временное состояние для выбранного файла
+
 
     const [urls, setUrls] = useState(note?.urls || []); // Состояние для ссылок
     const [newUrl, setNewUrl] = useState("");
@@ -60,18 +58,13 @@ const NoteModal = ({
     const [deletedFiles, setDeletedFiles] = useState([]);  // Удаленные файлы
     const noteId = note?.id || "Нет ID"; // Проверяем наличие ID заметки
     const BASE_URL = "http://localhost:8080";
-    const safeNote = {
-        ...note,
-        urls: Array.isArray(note.urls) ? note.urls : [], // Гарантия, что urls всегда массив
-    };
 
 
-    console.log("Заметка с доски, note: ", note);
-    //console.log("OpenGraphData in NoteModal:", openGraphData);
+
+
 
     useEffect(() => {
 
-        //console.log("note status in NoteModal: ",note);
         console.log("!!! Открываем заметку: ", note);
         if (open && note) {
             // console.log("EXISTING projectId в Select:", note?.projectId, "selectedProject:", selectedProject);
@@ -92,6 +85,7 @@ const NoteModal = ({
             setOpenGraphData({}); // Очищаем OpenGraph данные
             setAudioFiles([]);
             setFiles([]);
+            setUrls([]);
 
         }
     }, [open, note]);
@@ -147,19 +141,20 @@ const NoteModal = ({
 
     const handleDownloadFile = async (e, file) => {
         e.preventDefault(); // Останавливает стандартное поведение
-        console.log("Путь для скачивания: ", BASE_URL + file.url);
-        if (!file || !file.url) {
-            console.error("Некорректный объект audio:", file);
+        console.log("Путь для скачивания: ", BASE_URL + file.fileUrl);
+        if (!file || !file.fileUrl) {
+            console.error("Некорректный объект :", file);
             return;
         }
         try {
-            const response = await fetch(BASE_URL + file.url);
+            console.log("download file: ",file);
+            const response = await fetch(BASE_URL + file.fileUrl);
             if (!response.ok) throw new Error("Ошибка загрузки файла");
 
             const blob = await response.blob();
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
-            link.download = file.name || "noname.mp3";
+            link.download = file.name;
             link.click();
             URL.revokeObjectURL(link.href); // Освобождаем память
         } catch (error) {
@@ -217,42 +212,27 @@ const NoteModal = ({
             alert("Введите корректный URL.");
             return;
         }
-        //добавление новой ссылки в urls для передачи на бэк
-        const updatedUrls = Array.isArray(note.urls) ? [...note.urls] : [];
-        if (!updatedUrls.includes(newUrl)) {
-            const updatedNote = {
-                ...note,
-                urls: [...note.urls, newUrl],
-            };
 
-            // Обновляем состояние notes
-            setNotes((prevNotes) =>
-                prevNotes.map((n) => (n.id === updatedNote.id ? updatedNote : n))
-            );
-
-            // получение OpenGraph для отображения в заметке сразу после добавления ссылки
-            try {
-                // Пытаемся получить OpenGraph данные для нового URL
-                const ogData = await fetchOpenGraphData(newUrl.trim());
-                setOpenGraphData((prev) => ({
-                    ...prev,
-                    [newUrl]: ogData || {url: newUrl}, // Если данные не найдены, сохраняем только URL
-
-                }));
-                setUrls((prevUrls) => [...prevUrls, newUrl]); // Добавляем URL в список
-                console.log("ADDED newURL: ",newUrl)
-                //setNewUrl("");
-            } catch (error) {
-                console.error("Ошибка при поиске OpenGraph данных:", error);
-                alert("Не удалось загрузить OpenGraph данные. URL будет добавлен без данных.");
-                setUrls((prevUrls) => [...prevUrls, newUrl]); // Добавляем только URL
-                //setNewUrl("");
-            }
-
+        try {
+            // Пытаемся получить OpenGraph данные для нового URL
+            const ogData = await fetchOpenGraphData(newUrl.trim());
+            setOpenGraphData((prev) => ({
+                ...prev,
+                [newUrl]: ogData || { url: newUrl }, // Если данные не найдены, сохраняем только URL
+            }));
+            setUrls((prevUrls) => [...prevUrls, newUrl]); // Добавляем URL в список
+            setNewUrl("");
+        } catch (error) {
+            console.error("Ошибка при поиске OpenGraph данных:", error);
+            alert("Не удалось загрузить OpenGraph данные. URL будет добавлен без данных.");
+            setUrls((prevUrls) => [...prevUrls, newUrl]); // Добавляем только URL
+            setNewUrl("");
         }
     };
+    console.log("массив ссылок после добавления OGData: ",urls);
 
-        // Удалить URL
+
+    // Удалить URL
     const handleDeleteUrl = (urlToDelete) => {
         setUrls((prevUrls) => prevUrls.filter((url) => url !== urlToDelete));
         const updatedOpenGraphData = {...openGraphData};
@@ -297,103 +277,106 @@ const NoteModal = ({
                     if (file instanceof File) {
                         return {
                             name: file.name,
-                            url: URL.createObjectURL(file), // Временно создаём ссылку
+                            fileUrl: URL.createObjectURL(file), // Временно создаём ссылку
                         };
                     } else {
                         return file; // Возвращаем объект как есть, если это не File
                     }
                 }),
-
                 individualAnalysisFlag,
                 tags,
                 urls,
-                openGraphData: Array.isArray(note.openGraphData)
-                    ? [...note.openGraphData] // Если данные уже есть, копируем их
-                    : [],
 
             };
-            //console.log(" tags of note: ",tags);
+            console.log("заметка перед отправкой на БЭК: ", updatedNote);
 
-                const savedNote = await onSave(updatedNote);
+            const savedNote = await onSave(updatedNote);
 
-                //console.log(" ЗАМЕТКА СОХРАНЕНА НА БЭКЕ !",savedNote);
+            console.log(" ЗАМЕТКА СОХРАНЕНА НА БЭКЕ !",savedNote);
 
-                // Отправляем файлы
-                if (files.length > 0) {
-                    const formDataFiles = new FormData();
-                    console.log("Отправка файлов: ", files);
-                    files.forEach((file) => {
-                        if (file instanceof File) {
-                            // Если файл уже объект File
-                            formDataFiles.append("files", file);
-                            console.log("Добавление напрямую (1-е условие):", file);
-                        } else if (file.file instanceof File) {
-                            // Если внутри объекта есть поле file, являющееся File
-                            formDataFiles.append("files", file.file);
-                            console.log("Добавление напрямую (2-е условие):", file.file);
-                        } else if (file.filePath) {
-                            // Если файл передается в формате с метаданными
-                            const blob = new Blob([file.filePath], {type: "text/plain"});
-                            formDataFiles.append("files", blob, file.fileName);
-                            console.log("Добавление из метаданных (3-е условие):", file.fileName);
-                        } else {
-                            console.warn("Неподдерживаемый формат файла:", file);
-                        }
-                    });
-                    console.log("--- Итоговый formData на отправку на бэк: ", formDataFiles);
-                    // console.log("Код заметки: ", savedNote.id);
-
-                    if (Array.from(formDataFiles.keys()).length > 0) { // Проверка на наличие данных в formData
-                        await uploadFiles(savedNote.id, formDataFiles);
+            // Отправляем файлы
+            if (files.length > 0) {
+                const formDataFiles = new FormData();
+                console.log("Отправка файлов: ",files);
+                files.forEach((file) => {
+                    if (file instanceof File) {
+                        // Если файл уже объект File
+                        formDataFiles.append("files", file);
+                        console.log("Добавление напрямую (1-е условие):", file);
+                    } else if (file.file instanceof File) {
+                        // Если внутри объекта есть поле file, являющееся File
+                        formDataFiles.append("files", file.file);
+                        console.log("Добавление напрямую (2-е условие):", file.file);
+                    } else if (file.filePath) {
+                        // Если файл передается в формате с метаданными
+                        const blob = new Blob([file.filePath], { type: "text/plain" });
+                        formDataFiles.append("files", blob, file.fileName);
+                        console.log("Добавление из метаданных (3-е условие):", file.fileName);
+                    } else {
+                        console.warn("Неподдерживаемый формат файла:", file);
                     }
+                });
+                console.log("--- Итоговый formData на отправку на бэк: ", formDataFiles);
+                // console.log("Код заметки: ", savedNote.id);
+
+                if (Array.from(formDataFiles.keys()).length > 0) { // Проверка на наличие данных в formData
+                    console.log(" files in formdata: ",formDataFiles);
+                    await uploadFiles(savedNote.id, formDataFiles);
                 }
-
-                // Отправляем аудиофайлы
-                if (audios.length > 0) {
-                    const formDataAudio = new FormData();
-                    console.log("Исходный массив аудиофайлов: ", audios);
-                    try {
-                        const newAudiosFormData = await prepareFormDataForAudios(audios);
-
-                        if (newAudiosFormData.has("audios")) {
-                            await uploadAudioFiles(savedNote.id, newAudiosFormData);
-                        }
-                    } catch (error) {
-                        console.error("Не удалось сохранить. Ошибка при сохранении audios:", error);
-                    }
-
-                    // if (Array.from(formDataAudio.keys()).length > 0) { // Проверка на наличие данных в formData
-                    //     await uploadAudioFiles(savedNote.id, formDataAudio); // Передаём ID заметки и аудио
-                    // }
-                    // Обновляем состояние
-                    setNotes((prevNotes) =>
-                        prevNotes.map((n) => (n.id === savedNote.id ? savedNote : n))
-                    );
-                    files.forEach((file) => {
-                        if (file.url && file instanceof File) {
-                            URL.revokeObjectURL(file.url); // Удаляем временную ссылку
-                        }
-                    });
-                }
-                alert("Заметка успешно сохранена!");
-                onClose();
-
-            } catch (error) {
-                console.error("Ошибка при сохранении заметки:", error.response?.data || error.message);
-                alert("Не удалось сохранить заметку. Проверьте соединение с сервером.");
             }
-            //  освобождаем созданные временные ссылки, чтобы избежать утечек памяти
-            setContent("");
-            setFile(null);
-            setSelectedProject("");
-            setIndividualAnalysisFlag(isGlobalAnalysisEnabled);
-            setAudioFiles(null);
-            setUrls(null);
-            setFiles(null);
-            setOpenGraphData(null);
+
+            // Отправляем аудиофайлы
+            if (audios.length > 0) {
+                const formDataAudio = new FormData();
+                console.log("Исходный массив аудиофайлов: ", audios);
+                try {
+                    const newAudiosFormData = await prepareFormDataForAudios(audios);
+
+                    if (newAudiosFormData.has("audios")) {
+                        console.log("audios in formdata: ",newAudiosFormData);
+                        await uploadAudioFiles(savedNote.id, newAudiosFormData);
+                    }
+                }catch (error) {
+                    console.error("Не удалось сохранить. Ошибка при сохранении audios:", error);
+                }
+
+                // if (Array.from(formDataAudio.keys()).length > 0) { // Проверка на наличие данных в formData
+                //     await uploadAudioFiles(savedNote.id, formDataAudio); // Передаём ID заметки и аудио
+                // }
+                // Обновляем состояние
+                setNotes((prevNotes) =>
+                    prevNotes.map((n) => (n.id === savedNote.id ? savedNote : n))
+                );
+                audios.forEach((audio) => {
+                    if (audio.url && audio instanceof File) {
+                        URL.revokeObjectURL(audio.url); // Удаляем временную ссылку
+                    }
+                });
+                files.forEach((file) => {
+                    if (file.fileUrl && file instanceof File) {
+                        URL.revokeObjectURL(file.fileUrl); // Удаляем временную ссылку
+                    }
+                });
+            }
+            alert("Заметка успешно сохранена!");
             onClose();
 
-        };
+        } catch (error) {
+            console.error("Ошибка при сохранении заметки:", error.response?.data || error.message);
+            alert("Не удалось сохранить заметку. Проверьте соединение с сервером.");
+        }
+        //  освобождаем созданные временные ссылки, чтобы избежать утечек памяти
+        setContent("");
+        setFile(null);
+        setSelectedProject("");
+        setIndividualAnalysisFlag(isGlobalAnalysisEnabled);
+        setAudioFiles(null);
+        setUrls(null);
+        setFiles(null);
+        setOpenGraphData(null);
+        onClose();
+
+    };
 
 
         const handleAudioFileChange = (e) => {
@@ -417,7 +400,7 @@ const NoteModal = ({
                 if (audio.blob instanceof Blob) {
                     console.log("Если это Blob, добавляем напрямую: ", audio);
                     // Если это Blob, добавляем напрямую
-                    formData.append("audios", audio.blob, audio.name);
+                    formData.append("audios", audio.blob, audio.name || generateDefaultFileName());
                 } else if (audio.url) {
                     try {
                         console.log("Если это ссылка, загружаем аудиофайл и создаем Blob: ", audio.url);
@@ -551,7 +534,7 @@ const NoteModal = ({
                                         />
                                         <Box>
                                             <TextField
-                                                sx={{display: "flex", flexWrap: "wrap", bottom: "100px", gap: 1, mt: 2}}
+                                                sx={{display: "flex", flexWrap: "wrap", bottom: "100px", gap: 1, mt: 2, }}
                                                 label="Добавить тег"
                                                 value={newTag}
                                                 onChange={(e) => setNewTag(e.target.value)}

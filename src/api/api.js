@@ -1,4 +1,3 @@
-import axios from "axios";
 import api from "./axiosConfig";
 
 
@@ -18,6 +17,7 @@ export const fetchNotes = async (projectId) => {
         // eslint-disable-next-line no-template-curly-in-string
 
         const response = await api.get(`/notes/${projectId}/notes`);
+        console.log("Получены заметки по проекту:", response);
 
         return response.data;
 
@@ -31,7 +31,7 @@ export const updateNote = async (note) => {
 
     try {
 
-        //console.log("отправляем измененную заметку на сервер: ", note);
+        console.log("!!! отправляем измененную заметку на сервер: ", JSON.stringify(note));
         const response = await api.put(`/notes`, note, {
             headers: { "Content-Type": "application/json" },
         });
@@ -46,6 +46,8 @@ export const updateNote = async (note) => {
 
 ///-----------------
 export const addNote = async (note,projectId) => {
+    console.log("Создаем заметку: ", note);
+    console.log("по проекту: ", projectId);
 
     try {
         //console.log("отправляем новую заметку на сервер: ", note);

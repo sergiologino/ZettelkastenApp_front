@@ -58,16 +58,16 @@ const GraphBoard = ({
 
 
 
-    const onNodeDragStart = (_, node) => {
-        if (node.style.cursor === "nwse-resize") {
-            return; // Прерываем обработку, если пользователь тянет за область изменения размера
-        }
-        setNodes((prevNodes) =>
-            prevNodes.map((n) =>
-                n.id === node.id ? { ...n, style: { ...n.style, opacity: 0.5 } } : n
-            )
-        );
-    };
+    // const onNodeDragStart = (_, node) => {
+    //     if (node.style.cursor === "nwse-resize") {
+    //         return; // Прерываем обработку, если пользователь тянет за область изменения размера
+    //     }
+    //     setNodes((prevNodes) =>
+    //         prevNodes.map((n) =>
+    //             n.id === node.id ? { ...n, style: { ...n.style, opacity: 0.5 } } : n
+    //         )
+    //     );
+    // };
 
     const onNodeDragStop = async (_, node) => {
 
@@ -132,44 +132,7 @@ const GraphBoard = ({
         }
     };
 
-    // const onNodeResizeStop = (_, node) => {
-    //     const resizedNodes = nodes.map((n) => {
-    //         if (n.id === node.id) {
-    //             // Обновляем размеры стиля и позиции ноды
-    //             return {
-    //                 ...n,
-    //                 style: {
-    //                     ...n.style,
-    //                     width: `${node.style.width}px`,
-    //                     height: `${node.style.height}px`,
-    //                 },
-    //                 data: {
-    //                     ...n.data, // Оставляем данные без изменений
-    //                 },
-    //             };
-    //         }
-    //         return n;
-    //     });
-
-        // setNodes(resizedNodes); // Обновляем состояние нод
-
-        // Находим соответствующую заметку
-        // const resizedNote = notes.find((note) => note.id === node.id);
-        // if (resizedNote) {
-        //     const updatedNote = {
-        //         ...resizedNote,
-        //         width: parseInt(node.style.width, 10),
-        //         height: parseInt(node.style.height, 10),
-        //     };
-        //
-        //     // Сохраняем изменения на сервере
-        //     onUpdateNote(updatedNote)
-        //         .then(() => console.log("Размер заметки успешно обновлён"))
-        //         .catch((error) => console.error("Ошибка при обновлении размера заметки:", error));
-        // }
-    // };
-
-    const handleResizeStart = (event, nodeId) => {
+     const handleResizeStart = (event, nodeId) => {
         event.stopPropagation(); // Отключаем событие drag
 
         const node = nodes.find((n) => n.id === nodeId);
@@ -362,7 +325,7 @@ const GraphBoard = ({
         if (notes?.length > 0) {
             loadOpenGraphData().then(r => '');
         }
-    }, [filteredNotes]);
+    }, [filteredNotes, notes]);
 
     const getEdges = (notes) => {
         const edges = [];
@@ -464,24 +427,6 @@ const GraphBoard = ({
         setFilteredNotes(filteredByTags);
     };
 
-    // Переключение табов
-    const handleTabChange = (newTab) => {
-        setActiveTab(newTab);
-        if (newTab === 0) {
-            if (selectedProjectId) {
-                const filtered = filteredNotes?.filter((note) => note.projectId === selectedProjectId);
-                setFilteredNotes(filtered);
-            } else {
-
-                setFilteredNotes([]);
-            }
-        } else if (newTab === 1) {
-
-            setFilteredNotes([]); // Очистка доски при переключении на теги
-            setSelectedTags([]);  // Сброс выбранных тегов
-        }
-    };
-
     useEffect(() => {
         if (activeTab === 1) {
             const filteredByTags = notes.filter((note) =>
@@ -555,7 +500,7 @@ const GraphBoard = ({
                     open={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
                     onSave={handleSaveNote}
-                    note={selectedNote || {}}
+                    note={selectedNote || { urls: [] }} // Передаём объект с полем urls
                     projects={projects}
                     selectedProject={selectedProject}
                     setNotes={setNotes} // Передача setNotes
