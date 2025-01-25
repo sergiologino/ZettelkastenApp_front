@@ -1,8 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import GraphBoard from "./components/GraphBoard_new";
-import ProjectPanel from "./components/ProjectPanel";
+import GraphBoard_new from "./components/GraphBoard_new";
+import AuthForm from "./components/auth/AuthForm";
+import ProjectPanel_new from "./components/ProjectPanel_new";
 import AuthPage from "./components/auth/AuthPage";
+import Profile from "./components/Profile";
+import TopNavBar from "./components/TopNavBar"; // Импортируем TopNavBar
+import NotFound from "./components/NotFound";
+import PrivateRoute from "./components/PrivateRoute";
+
 import {
   fetchProjects,
   fetchNotes,
@@ -140,14 +146,41 @@ const App = () => {
     <Routes>
       <Route path="/auth" element={<AuthPage/>}/>
       <Route path="/oauth2/authorization/yandex" element={<AuthPage />} />
-      <Route path="/notes" element={<ProtectedRoute><GraphBoard_new /></ProtectedRoute>} />
+      <Route
+          path="/*"
+          element={
+            <>
+              <TopNavBar /> {/* TopNavBar отображается здесь */}
+              <Routes>
+                <Route path="/" element={<Navigate to="/notes" />} />
+                <Route
+                    path="/notes"
+                    element={
+                      <PrivateRoute>
+                        <GraphBoard_new />
+                      </PrivateRoute>
+                    }
+                />
+                <Route
+                    path="/profile"
+                    element={
+                      <PrivateRoute>
+                        <Profile />
+                      </PrivateRoute>
+                    }
+                />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </>
+          }
+      />
       {/*<Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />*/}
       <Route
           path="/"
           element={
                 <ProtectedRoute>
                   <div style={{ display: "flex", height: "100vh" }}>
-                    <ProjectPanel
+                    <ProjectPanel_new
                         projects={projects}
                         onSelect={handleProjectSelect}
                         onCreate={handleCreateProject}
@@ -184,9 +217,9 @@ const App = () => {
                           </div>
                           )}
                         </div>
-                      </ProtectedRoute>
+                </ProtectedRoute>
                     }
-                    />
+      />
                   </Routes>
                 </Router>
       // </>

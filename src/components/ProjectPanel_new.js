@@ -16,7 +16,7 @@ import { SketchPicker } from "react-color";
 import { fetchAllTags } from "../api/api";
 import "./appStyle.css";
 
-const ProjectPanel = ({
+const ProjectPanel_new = ({
                           projects = [],
                           selectedProjectId,
                           onSelect,
@@ -296,4 +296,4 @@ const ProjectPanel = ({
     );
 };
 
-export default ProjectPanel;
+export default ProjectPanel_new;

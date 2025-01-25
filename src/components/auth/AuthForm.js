@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { TextField, Button, Box, Typography } from "@mui/material";
+import { TextField, Button, Box, Typography, Container, Paper, Divider } from "@mui/material";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "./AuthStyle.css"; // Подключаем стили
-
 
 const AuthForm = () => {
     const [isRegister, setIsRegister] = useState(false); // Регистрация или вход
@@ -14,7 +13,7 @@ const AuthForm = () => {
     });
     const navigate = useNavigate();
 
-    // Проверка токена в localStorage для автоматической авторизации7
+    // Проверка токена в localStorage для автоматической авторизации
     useEffect(() => {
         const accessToken = localStorage.getItem("accessToken");
         if (accessToken) {
@@ -55,23 +54,22 @@ const AuthForm = () => {
             const response = await axios.post(
                 "http://localhost:8081/api/auth/login",
                 {
-                username: formData.username,
-                password: formData.password,
-            },
+                    username: formData.username,
+                    password: formData.password,
+                },
                 {
                     headers: {
                         "Content-Type": "application/json",
                     },
                     withCredentials: true, // Включите, если используете cookie
                 }
-                );
+            );
             const { accessToken, refreshToken } = response.data;
 
             // Сохраняем токены в localStorage
             localStorage.setItem("accessToken", accessToken);
             localStorage.setItem("refreshToken", refreshToken);
 
-            //alert("Вы успешно вошли!");
             navigate("/notes"); // Перенаправляем на страницу заметок
         } catch (error) {
             console.error("Ошибка авторизации:", error);
@@ -79,7 +77,7 @@ const AuthForm = () => {
         }
     };
 
-    //Авторизация через Яндекс
+    // Авторизация через Яндекс
     const handleYandexLogin = async () => {
         try {
             axios.defaults.withCredentials = true;
@@ -94,11 +92,9 @@ const AuthForm = () => {
 
             const clientId = "a0bc7b7381a84739be01111f12d9447e"; // Ваш client_id
             const redirectUri = "http://localhost:8081/login/oauth2/code/yandex";
-            const scope = "login login:email  login:info";
-            //const state = 'someUniqueStateValue';
+            const scope = "login login:email login:info";
 
             const authUrl = `https://oauth.yandex.ru/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}`;
-            //const authUrl = `https://oauth.yandex.ru/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}`;
             window.location.href = authUrl;
         } catch (error) {
             console.error("Ошибка при инициализации Yandex OAuth:", error);
@@ -107,72 +103,85 @@ const AuthForm = () => {
     };
 
     return (
-        <Box
-            display="flex"
-            flexDirection="column"
-            alignItems="center"
-            justifyContent="center"
-            maxWidth="400px"
-            bgcolor="#fff"
-            p={4}
-            borderRadius="8px"
-            boxShadow="0 4px 8px rgba(0, 0, 0, 0.1)"
-        >
-            <Typography variant="h5" gutterBottom>
-                {isRegister ? "Регистрация" : "Вход"}
-            </Typography>
-            {isRegister && (
-                <TextField
-                    fullWidth
-                    label="Email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    margin="normal"
-                />
-            )}
-            <TextField
-                fullWidth
-                label="Логин"
-                name="username"
-                value={formData.username}
-                onChange={handleChange}
-                margin="normal"
-            />
-            <TextField
-                fullWidth
-                type="password"
-                label="Пароль"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                margin="normal"
-            />
-            <Button
-                variant="contained"
-                color="primary"
-                onClick={isRegister ? handleRegister : handleLogin}
-                sx={{ marginTop: "16px", width: "100%" }}
-            >
-                {isRegister ? "Зарегистрироваться" : "Войти"}
-            </Button>
-            <Button
-                variant="text"
-                onClick={() => setIsRegister(!isRegister)}
-                sx={{ marginTop: "8px" }}
-            >
-                {isRegister
-                    ? "Уже есть аккаунт? Войти"
-                    : "Нет аккаунта? Зарегистрироваться"}
-            </Button>
-            <button
-                className="yandex-login-button"
-                onClick={handleYandexLogin}
-                style={{ marginTop: "16px", width: "100%" }}
-            >
-                Войти через Яндекс
-            </button>
-        </Box>
+        <Container maxWidth="sm">
+            <Paper elevation={3} sx={{ padding: 4, marginTop: 8, borderRadius: 2 }}>
+                <Box
+                    display="flex"
+                    flexDirection="column"
+                    alignItems="center"
+                    justifyContent="center"
+                >
+                    <Typography variant="h4" gutterBottom sx={{ fontWeight: "bold", color: "primary.main" }}>
+                        {isRegister ? "Регистрация" : "Вход"}
+                    </Typography>
+
+                    {isRegister && (
+                        <TextField
+                            fullWidth
+                            label="Email"
+                            name="email"
+                            value={formData.email}
+                            onChange={handleChange}
+                            margin="normal"
+                            variant="outlined"
+                            sx={{ mb: 2 }}
+                        />
+                    )}
+
+                    <TextField
+                        fullWidth
+                        label="Логин"
+                        name="username"
+                        value={formData.username}
+                        onChange={handleChange}
+                        margin="normal"
+                        variant="outlined"
+                        sx={{ mb: 2 }}
+                    />
+
+                    <TextField
+                        fullWidth
+                        type="password"
+                        label="Пароль"
+                        name="password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        margin="normal"
+                        variant="outlined"
+                        sx={{ mb: 2 }}
+                    />
+
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={isRegister ? handleRegister : handleLogin}
+                        sx={{ mt: 2, width: "100%", py: 1.5 }}
+                    >
+                        {isRegister ? "Зарегистрироваться" : "Войти"}
+                    </Button>
+
+                    <Button
+                        variant="text"
+                        onClick={() => setIsRegister(!isRegister)}
+                        sx={{ mt: 2 }}
+                    >
+                        {isRegister
+                            ? "Уже есть аккаунт? Войти"
+                            : "Нет аккаунта? Зарегистрироваться"}
+                    </Button>
+
+                    <Divider sx={{ width: "100%", my: 3 }} />
+
+                    <Button
+                        variant="outlined"
+                        onClick={handleYandexLogin}
+                        sx={{ mt: 2, width: "100%", py: 1.5 }}
+                    >
+                        Войти через Яндекс
+                    </Button>
+                </Box>
+            </Paper>
+        </Container>
     );
 };
 

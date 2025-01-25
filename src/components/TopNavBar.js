@@ -37,7 +37,7 @@ const TopNavBar = ({ onSearch, onToggleTheme, balance }) => {
                 />
                 <Switch onChange={onToggleTheme} />
                 <Typography variant="body1" sx={{ mx: 2 }}>
-                    Баланс: ${balance}
+                    Баланс: {balance} руб.
                 </Typography>
                 <Button color="inherit" onClick={handleProfile}>
                     Профиль
