@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import GraphBoard from "./components/GraphBoard";
+import GraphBoard from "./components/GraphBoard_new";
 import ProjectPanel from "./components/ProjectPanel";
 import AuthPage from "./components/auth/AuthPage";
 import {
@@ -27,6 +27,8 @@ const App = () => {
   const [filteredNotes, setFilteredNotes] = useState([]);
   const [tags, setTags] = useState([]);
   const [selectedTags, setSelectedTags] = useState([]);
+
+  console.log("Run App.js");
 
   useEffect(() => {
     const loadProjects = async () => {
@@ -138,7 +140,7 @@ const App = () => {
     <Routes>
       <Route path="/auth" element={<AuthPage/>}/>
       <Route path="/oauth2/authorization/yandex" element={<AuthPage />} />
-      <Route path="/notes" element={<ProtectedRoute><GraphBoard /></ProtectedRoute>} />
+      <Route path="/notes" element={<ProtectedRoute><GraphBoard_new /></ProtectedRoute>} />
       {/*<Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />*/}
       <Route
           path="/"
@@ -158,7 +160,7 @@ const App = () => {
                         selectedTags={selectedTags}
                     />
                     {selectedProjectId ? (
-                          <GraphBoard
+                          <GraphBoard_new
                               notes={filteredNotes || []}
                               setNotes={setNotes}
                               onUpdateNote={handleUpdateNote}

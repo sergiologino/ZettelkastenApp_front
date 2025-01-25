@@ -2,7 +2,7 @@ import React from "react";
 import ReactFlow, { MiniMap, Controls, Background } from "reactflow";
 import "reactflow/dist/style.css";
 
-const GraphBoard = ({ notes }) => {
+const GraphBoard_new = ({ notes }) => {
     const nodes = notes.map((note, index) => ({
         id: note.id,
         data: { label: note.content },

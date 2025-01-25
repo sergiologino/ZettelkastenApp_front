@@ -3,17 +3,18 @@ import ReactFlow, {MiniMap, Controls, Background, applyEdgeChanges} from "reactf
 import { applyNodeChanges } from "reactflow";
 import { Handle } from "reactflow";
 import "reactflow/dist/style.css";
-import NoteModal from "./NoteModal";
+import NoteModal_new from "./NoteModal";
 import {Checkbox, Switch} from "@mui/material";
 import {analyzeNotes, updateNoteCoordinates} from "../api/api";
 import {onCreateNote} from "../api/api";
 import OGPreview from "./OGPreview";
 import { fetchOpenGraphDataForNote } from "../api/api";
 import { useNavigate } from "react-router-dom";
+//import NoteModal_new from "./NoteModal_new";
 
 
 
-const GraphBoard = ({
+const GraphBoard_new = ({
                         notes, // Список отфильтрованных заметок
                         setNotes,
                         onUpdateNote,
@@ -58,18 +59,7 @@ const GraphBoard = ({
 
 
 
-    // const onNodeDragStart = (_, node) => {
-    //     if (node.style.cursor === "nwse-resize") {
-    //         return; // Прерываем обработку, если пользователь тянет за область изменения размера
-    //     }
-    //     setNodes((prevNodes) =>
-    //         prevNodes.map((n) =>
-    //             n.id === node.id ? { ...n, style: { ...n.style, opacity: 0.5 } } : n
-    //         )
-    //     );
-    // };
-
-    const onNodeDragStop = async (_, node) => {
+     const onNodeDragStop = async (_, node) => {
 
 
         const updatedNodes = nodes.map((n) =>
@@ -496,7 +486,7 @@ const GraphBoard = ({
                 Выйти
             </button>
             {isModalOpen && (
-                <NoteModal
+                <NoteModal_new
                     open={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
                     onSave={handleSaveNote}

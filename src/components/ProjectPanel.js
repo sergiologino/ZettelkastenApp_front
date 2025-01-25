@@ -25,6 +25,8 @@ const ProjectPanel = ({
     const [panelWidth, setPanelWidth] = useState(25); // Процент ширины панели
     const [selectedTab, setSelectedTab] = useState(0); // Текущий активный таб
 
+    console.log("Run ProjectPanel.js");
+
     useEffect(() => {
         if (activeTab === 1) { // Если выбрана вкладка "Теги"
             const loadTags = async () => {
