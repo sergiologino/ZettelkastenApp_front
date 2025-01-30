@@ -7,4 +7,13 @@ const api = axios.create({
     },
 });
 
+// Добавляем интерцептор для вставки токена в заголовки запросов
+api.interceptors.request.use((config) => {
+    const accessToken = localStorage.getItem("accessToken");
+    if (accessToken) {
+        config.headers.Authorization = `Bearer ${accessToken}`;
+    }
+    return config;
+});
+
 export default api;

@@ -3,11 +3,7 @@ import AuthForm from "./AuthForm";
 import { Box, Typography } from "@mui/material";
 
 const AuthPage = () => {
-
-
     return (
-
-
     <Box
         display="flex"
         flexDirection="column"

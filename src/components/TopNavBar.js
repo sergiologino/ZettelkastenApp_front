@@ -1,6 +1,9 @@
 import React, { useState } from "react";
+
 import { AppBar, Toolbar, TextField, Button, Typography, Switch } from "@mui/material";
+
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const TopNavBar = ({ onSearch, onToggleTheme, balance }) => {
     const [searchQuery, setSearchQuery] = useState("");
@@ -11,8 +14,23 @@ const TopNavBar = ({ onSearch, onToggleTheme, balance }) => {
         onSearch(e.target.value);
     };
 
-    const handleProfile = () => {
-        navigate("/profile");
+    const handleProfile = async () => {
+        try {
+            const accessToken = localStorage.getItem("accessToken");
+            if (accessToken) {
+                const response = await axios.get("/api/users/me", {
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                    },
+                });
+                navigate("/profile", { state: { user: response.data } }); // Передаем данные пользователя
+            } else {
+                navigate("/profile"); // Если токена нет, переходим без данных
+            }
+        } catch (error) {
+            console.error("Ошибка при получении данных пользователя:", error);
+            navigate("/profile"); // В случае ошибки переходим без данных
+        }
     };
 
     const handleLogout = () => {

@@ -142,87 +142,88 @@ const App = () => {
   };
 
   return (
-  <Router>
-    <Routes>
-      <Route path="/auth" element={<AuthPage/>}/>
-      <Route path="/oauth2/authorization/yandex" element={<AuthPage />} />
-      <Route
-          path="/*"
-          element={
-            <>
-              <TopNavBar /> {/* TopNavBar отображается здесь */}
-              <Routes>
-                <Route path="/" element={<Navigate to="/notes" />} />
-                <Route
-                    path="/notes"
-                    element={
-                      <PrivateRoute>
-                        <GraphBoard_new />
-                      </PrivateRoute>
-                    }
-                />
-                <Route
-                    path="/profile"
-                    element={
-                      <PrivateRoute>
-                        <Profile />
-                      </PrivateRoute>
-                    }
-                />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </>
-          }
-      />
-      {/*<Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />*/}
-      <Route
-          path="/"
-          element={
-                <ProtectedRoute>
-                  <div style={{ display: "flex", height: "100vh" }}>
-                    <ProjectPanel_new
-                        projects={projects}
-                        onSelect={handleProjectSelect}
-                        onCreate={handleCreateProject}
-                        onTagSelect={handleTagSelect}
-                        selectedProjectId={selectedProjectId}
-                        activeTab={activeTab}
-                        onTabChange={setActiveTab}
-                        tags={tags}
-                        onTagChange={setTags} // Функция для обновления
-                        selectedTags={selectedTags}
+      <Router>
+        <Routes>
+          {/* Маршрут для авторизации (без TopNavBar) */}
+          <Route path="/auth" element={<AuthPage />} />
+          <Route path="/oauth2/authorization/yandex" element={<AuthPage />} />
+
+          {/* Маршруты для защищенных страниц (с TopNavBar) */}
+          <Route
+              path="/*"
+              element={
+                <>
+                  <TopNavBar /> {/* TopNavBar отображается здесь */}
+                  <Routes>
+                    <Route path="/" element={<Navigate to="/notes" />} />
+                    <Route
+                        path="/notes"
+                        element={
+                          <ProtectedRoute>
+                            <GraphBoard_new />
+                          </ProtectedRoute>
+                        }
                     />
-                    {selectedProjectId ? (
-                          <GraphBoard_new
-                              notes={filteredNotes || []}
-                              setNotes={setNotes}
-                              onUpdateNote={handleUpdateNote}
-                              onCreateNote={handleCreateNote}
-                              projects={projects}
-                              selectedProject={selectedProjectId}
-                              activeTab={activeTab}
-                              setActiveTab={setActiveTab}
-                              filteredNotes={filteredNotes || []}
-                          />
-                          ) : (
-                          <div
-                              style={{
-                                flex: 1,
-                                display: "flex",
-                                justifyContent: "center",
-                                alignItems: "center",
-                              }}
-                          >
-                            <h3>Выберите проект, чтобы увидеть граф заметок</h3>
-                          </div>
-                          )}
-                        </div>
-                </ProtectedRoute>
-                    }
-      />
+                    <Route
+                        path="/profile"
+                        element={
+                          <ProtectedRoute>
+                            <Profile />
+                          </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/"
+                        element={
+                          <ProtectedRoute>
+                            <div style={{ display: "flex", height: "100vh" }}>
+                              <ProjectPanel_new
+                                  projects={projects || []}
+                                  onSelect={handleProjectSelect}
+                                  onCreate={handleCreateProject}
+                                  onTagSelect={handleTagSelect}
+                                  selectedProjectId={selectedProjectId}
+                                  activeTab={activeTab}
+                                  onTabChange={setActiveTab}
+                                  tags={tags}
+                                  onTagChange={setTags}
+                                  selectedTags={selectedTags}
+                              />
+                              {selectedProjectId ? (
+                                  <GraphBoard_new
+                                      notes={filteredNotes || []}
+                                      setNotes={setNotes}
+                                      onUpdateNote={handleUpdateNote}
+                                      onCreateNote={handleCreateNote}
+                                      projects={projects}
+                                      selectedProject={selectedProjectId}
+                                      activeTab={activeTab}
+                                      setActiveTab={setActiveTab}
+                                      filteredNotes={filteredNotes || []}
+                                  />
+                              ) : (
+                                  <div
+                                      style={{
+                                        flex: 1,
+                                        display: "flex",
+                                        justifyContent: "center",
+                                        alignItems: "center",
+                                      }}
+                                  >
+                                    <h3>Выберите проект, чтобы увидеть граф заметок</h3>
+                                  </div>
+                              )}
+                            </div>
+                          </ProtectedRoute>
+                        }
+                    />
+                    <Route path="*" element={<NotFound />} />
                   </Routes>
-                </Router>
-      // </>
+                </>
+              }
+          />
+        </Routes>
+      </Router>
   );
 };
 

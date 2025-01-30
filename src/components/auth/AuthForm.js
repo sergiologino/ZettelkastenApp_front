@@ -31,7 +31,7 @@ const AuthForm = () => {
     const handleRegister = async () => {
         try {
             await axios.post(
-                "http://localhost:8081/api/auth/register",
+                "http://localhost:8080/api/auth/register",
                 formData,
                 {
                     headers: {
@@ -52,7 +52,7 @@ const AuthForm = () => {
     const handleLogin = async () => {
         try {
             const response = await axios.post(
-                "http://localhost:8081/api/auth/login",
+                "http://localhost:8080/api/auth/login",
                 {
                     username: formData.username,
                     password: formData.password,
@@ -70,7 +70,8 @@ const AuthForm = () => {
             localStorage.setItem("accessToken", accessToken);
             localStorage.setItem("refreshToken", refreshToken);
 
-            navigate("/notes"); // Перенаправляем на страницу заметок
+            // navigate("/notes"); // Перенаправляем на страницу заметок
+            navigate("/"); // Перенаправляем на страницу заметок
         } catch (error) {
             console.error("Ошибка авторизации:", error);
             alert("Ошибка авторизации. Проверьте данные.");
@@ -81,7 +82,7 @@ const AuthForm = () => {
     const handleYandexLogin = async () => {
         try {
             axios.defaults.withCredentials = true;
-            const response = await axios.get("http://localhost:8081/api/auth/oauth2/authorize/yandex");
+            const response = await axios.get("http://localhost:8080/api/auth/oauth2/authorize/yandex");
             const { state } = response.data;
 
             if (!state) {
@@ -91,7 +92,7 @@ const AuthForm = () => {
             }
 
             const clientId = "a0bc7b7381a84739be01111f12d9447e"; // Ваш client_id
-            const redirectUri = "http://localhost:8081/login/oauth2/code/yandex";
+            const redirectUri = "http://localhost:8080/login/oauth2/code/yandex";
             const scope = "login login:email login:info";
 
             const authUrl = `https://oauth.yandex.ru/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}`;
