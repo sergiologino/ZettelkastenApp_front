@@ -124,7 +124,6 @@ const Profile = () => {
             formData.append("username", username);
             formData.append("email", email);
             formData.append("password", password);
-            formData.append("color_theme", colorTheme);
             formData.append("tlg_username", tlgUsername);
             formData.append("phone_number", phoneNumber);
             formData.append("billing", billing);
@@ -140,12 +139,16 @@ const Profile = () => {
             });
 
             if (response.status === 200) {
-                setUser(response.data);
-                enqueueSnackbar("Профиль успешно обновлен!", { variant: "success" });
+                console.log("Профиль успешно обновлён:", response.data);
+                setUser(response.data); // ✅ Теперь данные обновятся в UI
+                alert("Профиль успешно обновлён!");
+            } else {
+                console.error("Ошибка при обновлении профиля: ", response.statusText);
+                alert("Ошибка при обновлении профиля.");
             }
         } catch (error) {
             console.error("Ошибка при обновлении профиля:", error);
-            enqueueSnackbar("Не удалось обновить профиль. Проверьте данные.", { variant: "error" });
+            alert("Ошибка при обновлении профиля. Проверьте данные.");
         }
     };
 

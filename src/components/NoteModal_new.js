@@ -157,7 +157,222 @@ const NoteModal_new = ({
         }
     };
 
-    // Остальные функции остаются без изменений...
+    // Начало записи
+    const startRecording = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({audio: true});
+            const recorder = new MediaRecorder(stream);
+            const audioChunks = [];
+
+            recorder.ondataavailable = (event) => {
+                audioChunks.push(event.data);
+            };
+
+            recorder.onstop = () => {
+                const audioBlob = new Blob(audioChunks, {type: 'audio/mp3'});
+                const audioUrl = URL.createObjectURL(audioBlob);
+                setRecordedAudio({url: audioUrl, blob: audioBlob, name: `recording-${Date.now()}.mp3`});
+            };
+
+            recorder.start();
+            setMediaRecorder(recorder);
+            setIsRecording(true);
+        } catch (error) {
+            console.error("Ошибка при доступе к микрофону:", error);
+            alert("Не удалось начать запись. Проверьте доступ к микрофону.");
+        }
+    };
+
+
+    const handleDownloadAudio = async (e, audio) => {
+        e.preventDefault(); // Останавливает стандартное поведение
+        console.log("Путь для скачивания: ", BASE_URL + audio.url);
+        if (!audio || !audio.url) {
+            console.error("Некорректный объект audio:", audio);
+            return;
+        }
+        try {
+            const response = await fetch(BASE_URL + audio.url);
+            if (!response.ok) throw new Error("Ошибка загрузки файла");
+
+            const blob = await response.blob();
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = audio.name || "noname.mp3";
+            link.click();
+            URL.revokeObjectURL(link.href); // Освобождаем память
+        } catch (error) {
+            console.error("Ошибка при скачивании файла:", error);
+        }
+    };
+
+    const handleDownloadFile = async (e, file) => {
+        e.preventDefault(); // Останавливает стандартное поведение
+        console.log("Путь для скачивания: ", BASE_URL + file.fileUrl);
+        if (!file || !file.fileUrl) {
+            console.error("Некорректный объект :", file);
+            return;
+        }
+        try {
+            console.log("download file: ",file);
+            const response = await fetch(BASE_URL + file.fileUrl);
+            if (!response.ok) throw new Error("Ошибка загрузки файла");
+
+            const blob = await response.blob();
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = file.name;
+            link.click();
+            URL.revokeObjectURL(link.href); // Освобождаем память
+        } catch (error) {
+            console.error("Ошибка при скачивании файла:", error);
+        }
+    };
+
+// Остановка записи
+    const stopRecording = () => {
+        if (mediaRecorder) {
+            mediaRecorder.stop();
+            setIsRecording(false);
+        }
+    };
+
+
+// Сохранение записанного аудио в список
+    const saveRecordedAudio = () => {
+        if (recordedAudio) {
+            setAudioFiles((prev) => [...prev, recordedAudio]);
+            setRecordedAudio(null);
+        }
+    };
+
+
+    // Обработчик выбора файла
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const fileData = {
+                name: file.name,
+                url: URL.createObjectURL(file), // Создаём временную ссылку
+                file,
+            };
+            setFiles((prevFiles) => [...prevFiles, fileData]); // Добавляем файл в состояние
+        }
+    };
+
+
+    // Удаление файла
+    const handleFileDelete = (fileToDelete) => {
+        setFiles((prevFiles) => prevFiles.filter((file) => file !== fileToDelete));
+
+        if (fileToDelete.id) {
+            setDeletedFiles((prev) => [...prev, fileToDelete.id]);
+        }
+    };
+
+    const handleAddUrl = async () => {
+        if (!newUrl.trim()) {
+            alert("Введите ссылку.");
+            return;
+        }
+        if (!/^https?:\/\/[^\s$.?#].[^\s]*$/.test(newUrl.trim())) {
+            alert("Введите корректный URL.");
+            return;
+        }
+
+        try {
+            // Пытаемся получить OpenGraph данные для нового URL
+            const ogData = await fetchOpenGraphData(newUrl.trim());
+            setOpenGraphData((prev) => ({
+                ...prev,
+                [newUrl]: ogData || { url: newUrl }, // Если данные не найдены, сохраняем только URL
+            }));
+            setUrls((prevUrls) => [...prevUrls, newUrl]); // Добавляем URL в список
+            setNewUrl("");
+        } catch (error) {
+            console.error("Ошибка при поиске OpenGraph данных:", error);
+            alert("Не удалось загрузить OpenGraph данные. URL будет добавлен без данных.");
+            setUrls((prevUrls) => [...prevUrls, newUrl]); // Добавляем только URL
+            setNewUrl("");
+        }
+    };
+    console.log("массив ссылок после добавления OGData: ",urls);
+
+
+    // Удалить URL
+    const handleDeleteUrl = (urlToDelete) => {
+        setUrls((prevUrls) => prevUrls.filter((url) => url !== urlToDelete));
+        const updatedOpenGraphData = {...openGraphData};
+        delete updatedOpenGraphData[urlToDelete];
+        setOpenGraphData(updatedOpenGraphData);
+    };
+
+    const handleAddTag = () => {
+        if (newTag.trim() && !tags.includes(newTag.trim())) {
+            setTags([...tags, newTag.trim()]);
+            setNewTag("");
+        }
+    };
+
+    const handleDeleteTag = (tagToDelete) => {
+        setTags(tags.filter((tag) => tag !== tagToDelete));
+    };
+
+    const handleAudioFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file && (file.type === "audio/mpeg" || file.type === "audio/wav" || file.type === "audio/m4a")) {
+            setAudioFiles((prev) => [...prev, {name: file.name, url: URL.createObjectURL(file), blob: file}]);
+        } else {
+            alert("Пожалуйста, загрузите файл в формате MP3 или WAV.");
+        }
+    };
+
+    const handleAudioDelete = (audioToDelete) => {
+        setAudioFiles((prev) => prev.filter((audio) => audio !== audioToDelete));
+    };
+
+
+    const prepareFormDataForAudios = async (audios) => {
+        const formData = new FormData();
+
+        for (const audio of audios) {
+            if (audio.blob instanceof Blob) {
+                console.log("Если это Blob, добавляем напрямую: ", audio);
+                // Если это Blob, добавляем напрямую
+                formData.append("audios", audio.blob, audio.name || generateDefaultFileName());
+            } else if (audio.url) {
+                try {
+                    console.log("Если это ссылка, загружаем аудиофайл и создаем Blob: ", audio.url);
+                    // Если это ссылка, загружаем аудиофайл и создаем Blob
+                    const response = await fetch(audio.url);
+                    if (response.ok) {
+                        console.log("Получилось response = await fetch(audio.url) стр 344: ", response);
+                        const blob = await response.blob();
+                        formData.append("audios", blob, audio.name || generateDefaultFileName());
+                    } else {
+                        console.warn(`Не удалось загрузить аудио: ${audio.url}`);
+                    }
+                } catch (error) {
+                    console.error(`Ошибка при загрузке аудио с ${audio.url}:`, error);
+                }
+            } else {
+                console.warn("Пропущено некорректное аудио:", audio);
+            }
+        }
+
+        return formData;
+    };
+
+    const generateDefaultFileName = () => {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, "0");
+        const day = String(now.getDate()).padStart(2, "0");
+        const hours = String(now.getHours()).padStart(2, "0");
+        const minutes = String(now.getMinutes()).padStart(2, "0");
+
+        return `${year}-${month}-${day}_${hours}-${minutes}_recording.mp3`;
+    };
 
     return (
         <Modal open={open} onClose={onClose} aria-labelledby="modal-title" aria-describedby="modal-description">

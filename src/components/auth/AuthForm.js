@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { TextField, Button, Box, Typography, Container, Paper, Divider } from "@mui/material";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import api from "../../api/axiosConfig";
 import "./AuthStyle.css"; // Подключаем стили
 
 const AuthForm = () => {
@@ -30,14 +31,14 @@ const AuthForm = () => {
     // Обработка регистрации пользователя
     const handleRegister = async () => {
         try {
-            await axios.post(
-                "http://localhost:8080/api/auth/register",
-                formData,
+            console.log("Отправляем запрос на регистрацию:", formData);
+            await api.post(
+                "/auth/register", formData,
                 {
                     headers: {
-                        "Content-Type": "application/json",
+                        "Content-Type": "application/json;charset=UTF-8",
                     },
-                    withCredentials: true, // Убедитесь, что cookies используются корректно
+                    // withCredentials: true, // Убедитесь, что cookies используются корректно
                 }
             );
             alert("Регистрация успешна! Теперь войдите.");
@@ -51,7 +52,7 @@ const AuthForm = () => {
     // Обработка авторизации пользователя
     const handleLogin = async () => {
         try {
-            const response = await axios.post(
+            const response = await api.post(
                 "http://localhost:8080/api/auth/login",
                 {
                     username: formData.username,
@@ -82,7 +83,7 @@ const AuthForm = () => {
     const handleYandexLogin = async () => {
         try {
             axios.defaults.withCredentials = true;
-            const response = await axios.get("http://localhost:8080/api/auth/oauth2/authorize/yandex");
+            const response = await api.get("http://localhost:8080/api/auth/oauth2/authorize/yandex");
             const { state } = response.data;
 
             if (!state) {

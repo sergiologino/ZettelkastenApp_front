@@ -65,8 +65,13 @@ export const addNote = async (note,projectId) => {
 
 export const createProject = async (project) => {
     try {
-        // eslint-disable-next-line no-template-curly-in-string
-        const response = await api.post('/projects', project);
+        const token = localStorage.getItem("accessToken");
+        const response = await api.post('/projects', project, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+            },
+        });
         return response.data;
     } catch (error) {
         console.error("Ошибка при создании проекта:", error.response?.data || error.message);

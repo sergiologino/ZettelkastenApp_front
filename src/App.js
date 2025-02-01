@@ -34,18 +34,21 @@ const App = () => {
   const [tags, setTags] = useState([]);
   const [selectedTags, setSelectedTags] = useState([]);
 
-  console.log("Run App.js");
+  //console.log("Run App.js");
 
   useEffect(() => {
-    const loadProjects = async () => {
-      try {
-        const projects = await fetchProjects();
-        setProjects(projects);
-      } catch (error) {
-        console.error("Ошибка загрузки проектов:", error);
-      }
-    };
-    loadProjects();
+    const accessToken = localStorage.getItem("accessToken");
+    if (accessToken) {
+      const loadProjects = async () => {
+        try {
+          const projects = await fetchProjects();
+          setProjects(projects);
+        } catch (error) {
+          console.error("Ошибка загрузки проектов:", error);
+        }
+      };
+      loadProjects();
+    }
   }, []);
 
   useEffect(() => {
@@ -147,78 +150,41 @@ const App = () => {
           {/* Маршрут для авторизации (без TopNavBar) */}
           <Route path="/auth" element={<AuthPage />} />
           <Route path="/oauth2/authorization/yandex" element={<AuthPage />} />
-
           {/* Маршруты для защищенных страниц (с TopNavBar) */}
           <Route
               path="/*"
               element={
                 <>
-                  <TopNavBar /> {/* TopNavBar отображается здесь */}
-                  <Routes>
-                    <Route path="/" element={<Navigate to="/notes" />} />
-                    <Route
-                        path="/notes"
-                        element={
-                          <ProtectedRoute>
-                            <GraphBoard_new />
-                          </ProtectedRoute>
-                        }
+                  <TopNavBar />
+                  <div style={{ display: "flex", height: "100vh" }}>
+                    <ProjectPanel_new
+                        projects={projects}
+                        onSelect={handleProjectSelect}
+                        onCreate={handleCreateProject}
+                        onTagSelect={handleTagSelect}
+                        selectedProjectId={selectedProjectId}
+                        activeTab={activeTab}
+                        onTabChange={setActiveTab}
+                        tags={tags}
+                        onTagChange={setTags}
+                        selectedTags={selectedTags}
                     />
-                    <Route
-                        path="/profile"
-                        element={
-                          <ProtectedRoute>
-                            <Profile />
-                          </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/"
-                        element={
-                          <ProtectedRoute>
-                            <div style={{ display: "flex", height: "100vh" }}>
-                              <ProjectPanel_new
-                                  projects={projects || []}
-                                  onSelect={handleProjectSelect}
-                                  onCreate={handleCreateProject}
-                                  onTagSelect={handleTagSelect}
-                                  selectedProjectId={selectedProjectId}
-                                  activeTab={activeTab}
-                                  onTabChange={setActiveTab}
-                                  tags={tags}
-                                  onTagChange={setTags}
-                                  selectedTags={selectedTags}
-                              />
-                              {selectedProjectId ? (
-                                  <GraphBoard_new
-                                      notes={filteredNotes || []}
-                                      setNotes={setNotes}
-                                      onUpdateNote={handleUpdateNote}
-                                      onCreateNote={handleCreateNote}
-                                      projects={projects}
-                                      selectedProject={selectedProjectId}
-                                      activeTab={activeTab}
-                                      setActiveTab={setActiveTab}
-                                      filteredNotes={filteredNotes || []}
-                                  />
-                              ) : (
-                                  <div
-                                      style={{
-                                        flex: 1,
-                                        display: "flex",
-                                        justifyContent: "center",
-                                        alignItems: "center",
-                                      }}
-                                  >
-                                    <h3>Выберите проект, чтобы увидеть граф заметок</h3>
-                                  </div>
-                              )}
-                            </div>
-                          </ProtectedRoute>
-                        }
-                    />
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
+                    <Routes>
+                      <Route path="/" element={<Navigate to="/notes" />} />
+                      <Route path="/notes" element={
+                        <ProtectedRoute>
+                          <GraphBoard_new
+                              notes={filteredNotes}
+                              setNotes={setNotes}
+                              onUpdateNote={handleUpdateNote}
+                              onCreateNote={handleCreateNote}
+                              projects={projects}
+                              selectedProject={selectedProjectId}
+                          />
+                        </ProtectedRoute>
+                      } />
+                    </Routes>
+                  </div>
                 </>
               }
           />
