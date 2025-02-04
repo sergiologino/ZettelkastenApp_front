@@ -201,6 +201,7 @@ const ProjectPanel = ({
                         >
                             {tags?.map((tag) => {
                                 const isSelected = selectedTags.includes(tag); // Проверяем, выбран ли тэг
+
                                 return (
                                     <Button
                                         key={tag}

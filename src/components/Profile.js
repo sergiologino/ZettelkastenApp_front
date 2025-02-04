@@ -18,6 +18,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { PhotoCamera } from "@mui/icons-material";
 import { useDropzone } from "react-dropzone";
 import { useSnackbar } from "notistack";
+import api from "../api/api";
 
 const Profile = () => {
     const location = useLocation();
@@ -26,6 +27,17 @@ const Profile = () => {
     const enqueueSnackbar = (message, options) => {
         console.log(message, options);
     };
+
+    // Логируем загрузку компонента
+    console.log("🔹 Profile.js загружен!");
+    console.log("🔹 location.state:", location.state);
+
+    // Используем `location.state?.user` (если есть) или `null`
+    // const [user, setUser] = useState(location.state?.user || null);
+    // const [loading, setLoading] = useState(!user); // Если user есть, не грузим
+
+    // Если user пришел из state, логируем его
+
 
     const [user, setUser] = useState(location.state?.user || {});
     const [username, setUsername] = useState(user.username || "");
@@ -37,6 +49,10 @@ const Profile = () => {
     const [billing, setBilling] = useState(user.billing || false);
     const [avatar, setAvatar] = useState(user.avatar || null);
     const [avatarPreview, setAvatarPreview] = useState(user.avatar || "");
+    const [loading, setLoading] = useState(!user); // Если user есть, не грузим
+    console.log("пользак: ", user);
+
+    console.log("🔹 user из location.state:", user);
 
     // Загрузка данных пользователя
     useEffect(() => {
@@ -44,7 +60,7 @@ const Profile = () => {
             try {
                 const accessToken = localStorage.getItem("accessToken");
                 if (accessToken) {
-                    const response = await axios.get("/api/users/me", {
+                    const response = await api.get("/users/me", {
                         headers: {
                             Authorization: `Bearer ${accessToken}`,
                         },
@@ -73,6 +89,37 @@ const Profile = () => {
         return regex.test(username);
     };
 
+    useEffect(() => {
+        if (!user) {
+            setLoading(true);
+            const fetchUserData = async () => {
+                try {
+                    const accessToken = localStorage.getItem("accessToken");
+                    if (accessToken) {
+                        const response = await api.get("/users/me");
+                        console.log("✅ Данные пользователя загружены:", response.data);
+                        setUser(response.data);
+                    }
+                } catch (error) {
+                    console.error("❌ Ошибка загрузки профиля:", error);
+                    alert("Ошибка загрузки профиля.");
+                    navigate("/auth"); // Если ошибка — редирект на авторизацию
+                } finally {
+                    setLoading(false);
+                }
+            };
+            fetchUserData();
+        }
+    }, [user, navigate]);
+
+    if (loading) {
+        return <Typography>Загрузка...</Typography>; // ✅ Показываем индикатор загрузки
+    }
+
+    if (!user) {
+        return <Typography>Ошибка загрузки профиля.</Typography>;
+    }
+
     // Валидация номера телефона
     const validatePhoneNumber = (phone) => {
         const regex = /^\+\d{1,3} \(\d{1,3}\) \d{3}-\d{2}-\d{2}$/;
@@ -94,6 +141,7 @@ const Profile = () => {
         reader.readAsDataURL(file);
     };
 
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     const { getRootProps, getInputProps } = useDropzone({
         onDrop,
         accept: "image/png, image/jpeg, image/bmp",
@@ -168,6 +216,7 @@ const Profile = () => {
                     <Typography variant="h4" gutterBottom sx={{ fontWeight: "bold", color: "primary.main" }}>
                         Профиль
                     </Typography>
+                    {console.log("🔍 Данные в Profile.js:", user)}
 
                     {/* Аватар */}
                     <Box {...getRootProps()} sx={{ mb: 2, textAlign: "center" }}>

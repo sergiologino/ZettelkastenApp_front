@@ -3,9 +3,10 @@ import { TextField, Button, Box, Typography, Container, Paper, Divider } from "@
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import api from "../../api/axiosConfig";
-import "./AuthStyle.css"; // Подключаем стили
+import "./AuthStyle.css";
+import {fetchProjects} from "../../api/api"; // Подключаем стили
 
-const AuthForm = () => {
+const AuthForm = ({ resetAppState, loadProjectsAndSelectFirst }) => {
     const [isRegister, setIsRegister] = useState(false); // Регистрация или вход
     const [formData, setFormData] = useState({
         username: "",
@@ -38,7 +39,7 @@ const AuthForm = () => {
                     headers: {
                         "Content-Type": "application/json;charset=UTF-8",
                     },
-                    // withCredentials: true, // Убедитесь, что cookies используются корректно
+                    withCredentials: true, // Убедитесь, что cookies используются корректно
                 }
             );
             alert("Регистрация успешна! Теперь войдите.");
@@ -65,13 +66,16 @@ const AuthForm = () => {
                     withCredentials: true, // Включите, если используете cookie
                 }
             );
+            resetAppState(); // ✅ Очищаем все данные
             const { accessToken, refreshToken } = response.data;
 
             // Сохраняем токены в localStorage
             localStorage.setItem("accessToken", accessToken);
             localStorage.setItem("refreshToken", refreshToken);
 
-            // navigate("/notes"); // Перенаправляем на страницу заметок
+            loadProjectsAndSelectFirst(); // ✅ Загружаем проекты после входа
+
+            //navigate("/notes"); // Перенаправляем на страницу заметок
             navigate("/"); // Перенаправляем на страницу заметок
         } catch (error) {
             console.error("Ошибка авторизации:", error);

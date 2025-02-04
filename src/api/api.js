@@ -65,19 +65,36 @@ export const addNote = async (note,projectId) => {
 
 export const createProject = async (project) => {
     try {
-        const token = localStorage.getItem("accessToken");
-        const response = await api.post('/projects', project, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-            },
-        });
+        // const token = localStorage.getItem("accessToken");
+        const response = await api.post('/projects', project); // , {
+            // headers: {
+            //     Authorization: `Bearer ${token}`,
+            //     "Content-Type": "application/json",
+            // },
+        // });
         return response.data;
     } catch (error) {
         console.error("Ошибка при создании проекта:", error.response?.data || error.message);
         throw error;
     }
 };
+
+export const updateProject = async (project) => {
+    try {
+        console.log("Отправляем в API:", JSON.stringify(project)); // Логируем данные
+
+        const response = await api.put(`/projects/${project.id}`, project, {
+            headers: { "Content-Type": "application/json" },
+        });
+
+        console.log("Ответ API:", response.data);
+        return response.data;
+    } catch (error) {
+        console.error("Ошибка при обновлении проекта:", error.response?.data || error.message);
+        throw error;
+    }
+};
+
 
 export const deleteProject = async (projectId) => {
     try {

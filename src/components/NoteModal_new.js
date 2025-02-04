@@ -35,10 +35,10 @@ const NoteModal_new = ({
                        setNotes,
                    }) => {
     const [activeTab, setActiveTab] = useState(0);
-    const [title, setTitle] = useState(note?.title || "");
+    const [title, setTitle] = useState(note?.title ?? "Новая заметка");
     const [content, setContent] = useState(note?.content || "");
     const [file, setFile] = useState(null);
-    const [selectedProjectModal, setSelectedProject] = useState(note?.projectId || selectedProject || null);
+    const [selectedProjectModal, setSelectedProject] = useState(note?.projectId ?? selectedProject);
     const [selectedCategory, setSelectedCategory] = useState(note?.category || "");
     const [individualAnalysisFlag, setIndividualAnalysisFlag] = useState(isGlobalAnalysisEnabled);
     const [tags, setTags] = useState(note?.tags || []);
@@ -55,6 +55,18 @@ const NoteModal_new = ({
     const [errors, setErrors] = useState({});
     const noteId = note?.id || "Нет ID";
     const BASE_URL = "http://localhost:8080";
+
+    const titleRef = useRef(title);
+
+    useEffect(() => {
+        if (open && note) {
+            titleRef.current = note.title || "Новая заметка";
+            setTitle(titleRef.current);
+        } else if (open) {
+            titleRef.current = "Новая заметка";
+            setTitle(titleRef.current);
+        }
+    }, [open, note]);
 
     useEffect(() => {
         if (open && note) {
@@ -392,6 +404,16 @@ const NoteModal_new = ({
                     overflow: "hidden",
                 }}
             >
+                <TextField
+                    fullWidth
+                    margin="normal"
+                    label="Заголовок заметки"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    error={!!errors.title}
+                    helperText={errors.title}
+                    sx={{ mb: 2 }}
+                />
                 <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)} centered sx={{ borderBottom: "1px solid #e0e0e0" }}>
                     <Tab label="Основное" />
                     <Tab label={<Badge badgeContent={files.length + audios.length + urls.length} color="primary">Вложения</Badge>} />
@@ -410,12 +432,18 @@ const NoteModal_new = ({
                                         error={!!errors.title}
                                         helperText={errors.title}
                                     />
-                                    <FormControl fullWidth margin="normal" error={!!errors.project}>
+                                    <FormControl
+                                        fullWidth
+                                        margin="normal"
+                                        error={!!errors.project}>
                                         <InputLabel id="project-select-label">Проект</InputLabel>
                                         <Select
                                             labelId="project-select-label"
-                                            value={selectedProjectModal}
-                                            onChange={(e) => setSelectedProject(e.target.value)}
+                                            value={selectedProjectModal?.id ?? ""}
+                                            onChange={(e) => {
+                                                const project = projects.find(p => p.id === e.target.value);
+                                                setSelectedProject(project);
+                                            }}
                                         >
                                             {projects.map((project) => (
                                                 <MenuItem key={project.id} value={project.id}>

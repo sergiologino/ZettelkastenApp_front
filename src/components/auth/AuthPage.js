@@ -2,7 +2,7 @@ import React from "react";
 import AuthForm from "./AuthForm";
 import { Box, Typography } from "@mui/material";
 
-const AuthPage = () => {
+const AuthPage =({ resetAppState, loadProjectsAndSelectFirst })=> {
     return (
     <Box
         display="flex"
@@ -18,7 +18,7 @@ const AuthPage = () => {
             <Typography variant="subtitle1" gutterBottom>
                 Войдите или зарегистрируйтесь, чтобы продолжить.
             </Typography>
-            <AuthForm />
+        <AuthForm resetAppState={resetAppState} loadProjectsAndSelectFirst={loadProjectsAndSelectFirst} /> {/* ✅ Передаем resetAppState */}
         </Box>
     );
 };

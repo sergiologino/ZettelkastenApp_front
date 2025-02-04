@@ -15,7 +15,7 @@ import {
   createProject,
   updateNote,
   fetchAllNotes,
-  fetchNotesByTags,
+  fetchNotesByTags, updateProject, deleteProject,
 } from "./api/api";
 import { addNote } from "./api/api";
 import HomePage from "./components/HomePage";
@@ -108,6 +108,30 @@ const App = () => {
     }
   };
 
+  const handleEditProject = async (updatedProject) => {
+    try {
+      const updated = await updateProject(updatedProject);
+      setProjects((prevProjects) =>
+          prevProjects.map((project) =>
+              project.id === updated.id ? updated : project
+          )
+      );
+    } catch (error) {
+      console.error("Ошибка при обновлении проекта:", error);
+    }
+  };
+
+  const handleDeleteProject = async (projectId) => {
+    try {
+      await deleteProject(projectId); // Отправляем запрос на удаление
+      setProjects((prevProjects) => prevProjects.filter((p) => p.id !== projectId));
+      console.info("Проект удален!");
+    } catch (error) {
+      console.error("Ошибка при удалении проекта:", error);
+      alert("Не удалось удалить проект.");
+    }
+  };
+
   const handleProjectSelect = async (projectId) => {
     setSelectedProjectId(projectId);
     try {
@@ -122,11 +146,11 @@ const App = () => {
 
   const handleUpdateNote = async (updatedNote) => {
     try {
-      const response = await updateNote(updatedNote);
+      const savedNote  = await updateNote(updatedNote);
       setNotes((prevNotes) =>
-          prevNotes.map((note) => (note.id === updatedNote.id ? updatedNote : note))
+          prevNotes.map((note) => (note.id === savedNote .id ? savedNote  : note))
       );
-      return response;
+      return savedNote;
     } catch (error) {
       console.error("Ошибка при обновлении заметки:", error);
       alert("Не удалось обновить заметку. Проверьте соединение с сервером.");
@@ -135,37 +159,78 @@ const App = () => {
 
   const handleCreateNote = async (newNote, projectId) => {
     try {
-      const response = await addNote(newNote, newNote.projectId);
-      setNotes((prevNotes) => [...prevNotes, response]);
-      return response;
+      const savedNote  = await addNote(newNote, newNote.projectId);
+      setNotes((prevNotes) => [...prevNotes, savedNote ]);
+      return savedNote ;
     } catch (error) {
       console.error("Ошибка при создании заметки:", error);
       alert("Не удалось создать заметку. Проверьте соединение с сервером.");
     }
   };
 
+  const resetAppState = () => {
+    console.log("🔹 Очистка данных приложения...");
+
+    setProjects([]);
+    setNotes([]);
+    setSelectedProjectId(null);
+    setTags([]);
+    setSelectedTags([]);
+
+    // localStorage.removeItem("accessToken"); // ✅ Очистка токена авторизации
+    // localStorage.removeItem("refreshToken"); // ✅ Очистка refresh-токена
+  };
+
+  const loadProjectsAndSelectFirst = async () => {
+    try {
+      const projects = await fetchProjects();
+      setProjects(projects);
+
+      if (projects.length > 0) {
+        setSelectedProjectId(projects[0].id); // ✅ Выбираем первый проект
+        const notes = await fetchNotes(projects[0].id); // ✅ Загружаем заметки для первого проекта
+        setNotes(notes);
+        setFilteredNotes(notes);
+      }
+    } catch (error) {
+      console.error("Ошибка загрузки проектов:", error);
+    }
+  };
+
+// ✅ Загружаем проекты при загрузке страницы
+  useEffect(() => {
+    const accessToken = localStorage.getItem("accessToken");
+    if (accessToken) {
+      loadProjectsAndSelectFirst();
+    }
+  }, []);
+
+
+
   return (
       <Router>
         <Routes>
           {/* Маршрут для авторизации (без TopNavBar) */}
-          <Route path="/auth" element={<AuthPage />} />
+          <Route path="/auth" element={<AuthPage resetAppState={resetAppState} loadProjectsAndSelectFirst={loadProjectsAndSelectFirst} />} />
           <Route path="/oauth2/authorization/yandex" element={<AuthPage />} />
           {/* Маршруты для защищенных страниц (с TopNavBar) */}
           <Route
               path="/*"
               element={
                 <>
-                  <TopNavBar />
+                  <TopNavBar resetAppState={resetAppState} />
                   <div style={{ display: "flex", height: "100vh" }}>
                     <ProjectPanel_new
                         projects={projects}
                         onSelect={handleProjectSelect}
                         onCreate={handleCreateProject}
                         onTagSelect={handleTagSelect}
+                        onDelete={handleDeleteProject}
                         selectedProjectId={selectedProjectId}
                         activeTab={activeTab}
                         onTabChange={setActiveTab}
                         tags={tags}
+                        onEdit={handleEditProject}
                         onTagChange={setTags}
                         selectedTags={selectedTags}
                     />
@@ -188,6 +253,7 @@ const App = () => {
                 </>
               }
           />
+          <Route path="/profile" element={<Profile />} />
         </Routes>
       </Router>
   );

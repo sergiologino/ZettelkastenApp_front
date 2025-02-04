@@ -482,7 +482,14 @@ const GraphBoard_new = ({
             >
                 +
             </button>
-            <button onClick={handleLogout} style={{border:"thin", color: "blue", margin: "10px", height: "20px", width: "60px", borderRadius: "10px",padding: "2px"}}>
+            <button onClick={handleLogout} style={{
+                border:"thin",
+                color: "blue",
+                margin: "10px",
+                height: "20px",
+                width: "60px",
+                borderRadius: "10px",
+                padding: "2px"}}>
                 Выйти
             </button>
             {isModalOpen && (
