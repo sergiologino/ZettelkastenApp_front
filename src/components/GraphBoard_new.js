@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import ReactFlow, { MiniMap, Controls, Background, applyEdgeChanges, applyNodeChanges } from "reactflow";
 import "reactflow/dist/style.css";
-import NoteModal from "./NoteModal";
 import { Box, Button, Switch } from "@mui/material";
 import {analyzeNotes, fetchOpenGraphDataForNote, updateNoteCoordinates} from "../api/api";
 import { useNavigate } from "react-router-dom";
@@ -277,14 +276,14 @@ const GraphBoard_new = ({
 
             if (updatedNote.id) {
                 // Обновляем заметку
-                const savedNote = await onUpdateNote(updatedNote);
-                return savedNote;
+                savedNote = await onUpdateNote(updatedNote);
+
                 setNotes((prevNotes) =>
                     prevNotes.map((note) => (note.id === savedNote.id ? savedNote : note))
                 );
             } else {
                 // Создаём новую заметку
-                const savedNote = await onCreateNote(updatedNote, selectedProject);
+                savedNote = await onCreateNote(updatedNote, selectedProject);
                 setNotes((prevNotes) => [...prevNotes, savedNote]);
             }
                 return savedNote;

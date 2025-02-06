@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, {useState, useEffect, useRef} from "react";
 import {
     Box,
     Button,
@@ -32,7 +32,7 @@ const NoteModal_new = ({
                        isGlobalAnalysisEnabled = false,
                        note = null,
                        selectedProject,
-                       setNotes,
+                       setNotes = () => {},
                    }) => {
     const [activeTab, setActiveTab] = useState(0);
     const [title, setTitle] = useState(note?.title ?? "Новая заметка");
@@ -55,7 +55,6 @@ const NoteModal_new = ({
     const [errors, setErrors] = useState({});
     const noteId = note?.id || "Нет ID";
     const BASE_URL = "http://localhost:8080";
-
     const titleRef = useRef(title);
 
     useEffect(() => {
@@ -623,4 +622,4 @@ const NoteModal_new = ({
     );
 };
 
-export default NoteModal;
+export default NoteModal_new;

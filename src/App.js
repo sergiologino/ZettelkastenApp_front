@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import GraphBoard_new from "./components/GraphBoard_new";
-import AuthForm from "./components/auth/AuthForm";
 import ProjectPanel_new from "./components/ProjectPanel_new";
 import AuthPage from "./components/auth/AuthPage";
 import Profile from "./components/Profile";
-import TopNavBar from "./components/TopNavBar"; // Импортируем TopNavBar
-import NotFound from "./components/NotFound";
-import PrivateRoute from "./components/PrivateRoute";
+import TopNavBar from "./components/TopNavBar";
+import SearchResults from "./components/SearchResults";
+// import NotFound from "./components/NotFound";
+// import PrivateRoute from "./components/PrivateRoute";
 
 import {
   fetchProjects,
@@ -17,8 +17,10 @@ import {
   fetchAllNotes,
   fetchNotesByTags, updateProject, deleteProject,
 } from "./api/api";
+
 import { addNote } from "./api/api";
-import HomePage from "./components/HomePage";
+import searchResults from "./components/SearchResults";
+import NoteModal_new from "./components/NoteModal_new";
 
 const ProtectedRoute = ({ children }) => {
   const isAuthenticated = !!localStorage.getItem("accessToken");
@@ -33,6 +35,8 @@ const App = () => {
   const [filteredNotes, setFilteredNotes] = useState([]);
   const [tags, setTags] = useState([]);
   const [selectedTags, setSelectedTags] = useState([]);
+  const [searchResults, setSearchResults] = useState([]);
+  const [selectedNote, setSelectedNote] = useState(null);
 
   //console.log("Run App.js");
 
@@ -211,14 +215,38 @@ const App = () => {
       <Router>
         <Routes>
           {/* Маршрут для авторизации (без TopNavBar) */}
-          <Route path="/auth" element={<AuthPage resetAppState={resetAppState} loadProjectsAndSelectFirst={loadProjectsAndSelectFirst} />} />
+          <Route path="/auth" element={<AuthPage
+              resetAppState={resetAppState}
+              loadProjectsAndSelectFirst={loadProjectsAndSelectFirst}/>}
+          />
           <Route path="/oauth2/authorization/yandex" element={<AuthPage />} />
           {/* Маршруты для защищенных страниц (с TopNavBar) */}
           <Route
               path="/*"
               element={
                 <>
-                  <TopNavBar resetAppState={resetAppState} />
+                  <TopNavBar
+                      resetAppState={resetAppState}
+                      onSearchResults={setSearchResults}
+                  />
+                  {searchResults.length > 0 && (
+                      <SearchResults results={searchResults} onSelectNote={setSelectedNote} />
+                  )}
+                  {/* Модальное окно заметки */}
+                  {selectedNote && (
+                      <NoteModal_new
+                          open={Boolean(selectedNote)}
+                          onClose={() => setSelectedNote(null)}
+                          onSave={(updatedNote) => {
+                            setSelectedNote(null); // Закрываем окно после сохранения
+                          }}
+                          note={selectedNote}
+                          setNotes={setNotes} // ✅ Теперь setNotes передается!
+                      />
+                  )}
+                  <Routes>
+                    <Route path="/" element={<GraphBoard_new />} />
+                  </Routes>
                   <div style={{ display: "flex", height: "100vh" }}>
                     <ProjectPanel_new
                         projects={projects}

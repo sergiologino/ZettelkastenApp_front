@@ -152,18 +152,11 @@ const Profile = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!validateTlgUsername(tlgUsername)) {
-            enqueueSnackbar("Некорректный формат Telegram username (должно быть @username)", {
-                variant: "error",
-            });
-            return;
-        }
+        // Убираем "@" перед сохранением в базу
+        const formattedTlgUsername = tlgUsername.startsWith("@") ? tlgUsername.substring(1) : tlgUsername;
 
-        if (!validatePhoneNumber(phoneNumber)) {
-            enqueueSnackbar(
-                "Некорректный формат номера телефона (должен быть в формате +X (XXX) XXX-XX-XX)",
-                { variant: "error" }
-            );
+        if (!validateTlgUsername(formattedTlgUsername)) {
+            enqueueSnackbar("Некорректный формат Telegram username (должно быть @username)", { variant: "error" });
             return;
         }
 
@@ -172,9 +165,10 @@ const Profile = () => {
             formData.append("username", username);
             formData.append("email", email);
             formData.append("password", password);
-            formData.append("tlg_username", tlgUsername);
+            formData.append("tlg_username", formattedTlgUsername); // 👈 Сохраняем без "@"
             formData.append("phone_number", phoneNumber);
             formData.append("billing", billing);
+
             if (avatar) {
                 formData.append("avatar", avatar);
             }
@@ -188,7 +182,7 @@ const Profile = () => {
 
             if (response.status === 200) {
                 console.log("Профиль успешно обновлён:", response.data);
-                setUser(response.data); // ✅ Теперь данные обновятся в UI
+                setUser(response.data);
                 alert("Профиль успешно обновлён!");
             } else {
                 console.error("Ошибка при обновлении профиля: ", response.statusText);
@@ -273,7 +267,7 @@ const Profile = () => {
                     {/* Telegram username */}
                     <TextField
                         fullWidth
-                        label="Telegram username"
+                        label="Telegram @username"
                         name="tlg_username"
                         value={tlgUsername}
                         onChange={(e) => setTlgUsername(e.target.value)}
