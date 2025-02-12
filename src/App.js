@@ -161,9 +161,16 @@ const App = () => {
     }
   };
 
-  const handleCreateNote = async (newNote, projectId) => {
+  const handleCreateNote = async (newNote, selectedProject) => {
+
+    const projectId = selectedProject || projects[0]?.id;// ✅ Используем выбранный проект или первый доступный
+
+    if (!projectId) {
+      alert("Ошибка: Выберите проект перед созданием заметки.");
+      return;
+    }
     try {
-      const savedNote  = await addNote(newNote, newNote.projectId);
+      const savedNote  = await addNote({ ...newNote, projectId }, projectId);
       setNotes((prevNotes) => [...prevNotes, savedNote ]);
       return savedNote ;
     } catch (error) {
@@ -230,7 +237,13 @@ const App = () => {
                       onSearchResults={setSearchResults}
                   />
                   {searchResults.length > 0 && (
-                      <SearchResults results={searchResults} onSelectNote={setSelectedNote} />
+                      <SearchResults
+                          results={searchResults}
+                          onSelectNote={setSelectedNote}
+                          onClose={() => setSearchResults([])}
+                          projects={projects} // ✅ Передаем список проектов в SearchResults
+                          onSave={handleUpdateNote}
+                      />
                   )}
                   {/* Модальное окно заметки */}
                   {selectedNote && (

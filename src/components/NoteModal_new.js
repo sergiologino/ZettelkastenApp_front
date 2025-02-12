@@ -21,7 +21,7 @@ import './appStyle.css';
 import { Save, Close, Add } from "@mui/icons-material";
 import { AttachFile, Delete } from "@mui/icons-material";
 import OGPreview from "./OGPreview";
-import { uploadAudioFiles, uploadFiles } from "../api/api";
+import {fetchProjects, uploadAudioFiles, uploadFiles} from "../api/api";
 import { fetchOpenGraphData } from "../api/api";
 
 const NoteModal_new = ({
@@ -32,7 +32,8 @@ const NoteModal_new = ({
                        isGlobalAnalysisEnabled = false,
                        note = null,
                        selectedProject,
-                       setNotes = () => {},
+                       calculateNewNotePosition,
+                       // setNotes = () => {},
                    }) => {
     const [activeTab, setActiveTab] = useState(0);
     const [title, setTitle] = useState(note?.title ?? "Новая заметка");
@@ -52,120 +53,70 @@ const NoteModal_new = ({
     const [recordedAudio, setRecordedAudio] = useState(null);
     const [openGraphData, setOpenGraphData] = useState({});
     const [deletedFiles, setDeletedFiles] = useState([]);
+    const [project, setProjectName] = useState(note?.project|| "Не заполнено");
+    const [notes, setNotes]=useState([]);
+
     const [errors, setErrors] = useState({});
     const noteId = note?.id || "Нет ID";
     const BASE_URL = "http://localhost:8080";
     const titleRef = useRef(title);
+    //console.log("Поступившая заметка: ", note)
+    // console.log("selectedProject: ", selectedProject);
+    // console.log("Projects: ", projects);
+    // console.log("selectedProjectModal: ", selectedProjectModal);
+    // console.log("note.projectName: ", note?.projectName);
+    //console.log("onSave при открытии NoteModal: ", onSave);
 
     useEffect(() => {
-        if (open && note) {
-            titleRef.current = note.title || "Новая заметка";
-            setTitle(titleRef.current);
-        } else if (open) {
-            titleRef.current = "Новая заметка";
-            setTitle(titleRef.current);
+        if (!note?.projectId) {
+
+            setSelectedProject(selectedProject); // ✅ Теперь следим за изменениями `selectedProject`
+
         }
-    }, [open, note]);
+    }, [selectedProject]);
+
 
     useEffect(() => {
-        if (open && note) {
-            setTitle(note.title || "");
-            setContent(note.content || "");
-            setSelectedProject(note.projectId || "");
-            setSelectedCategory(note.category || "");
-            setTags(note.tags || []);
-            setAudioFiles(note.audios || []);
-            setFiles(note.files || []);
-            setOpenGraphData(note.openGraphData || {});
-        } else if (open) {
-            setTitle("");
-            setContent("");
-            setSelectedProject(selectedProject || "");
-            setSelectedCategory("");
-            setTags([]);
-            setOpenGraphData({});
-            setAudioFiles([]);
-            setFiles([]);
-            setUrls([]);
+        if (!note?.id) { // ✅ Только для новой заметки
+            setSelectedProject(selectedProject);
+
         }
-    }, [open, note]);
+    }, [selectedProject]); // ✅ Теперь отслеживаем изменения `selectedProject`
+
+    useEffect(() => {
+        if (open) {
+            if (note?.id) {  // ✅ Если заметка уже существует
+                setTitle(note.title || "Заметка без заголовка");
+                setContent(note.content || "Заметка без контента");
+                setSelectedProject(note.projectId || "");
+                setSelectedCategory(note.category || "");
+                setTags(note.tags || []);
+                setAudioFiles(note.audios || []);
+                setFiles(note.files || []);
+                setProjectName(note.projectName || "Не заполнено");
+                setOpenGraphData(note.openGraphData || {});
+            } else {  // ✅ Если `note` не передана - создаем новую
+
+                setTitle("");
+                setContent("");
+                setSelectedProject(selectedProject);
+
+                setSelectedCategory("");
+                setTags([]);
+                setOpenGraphData({});
+                setAudioFiles([]);
+                setFiles([]);
+                setUrls([]);
+            }
+        }
+    }, [open, note, selectedProject]);
 
     const validate = () => {
         const newErrors = {};
-        if (!title.trim()) newErrors.title = "Заголовок не может быть пустым";
         if (!content.trim()) newErrors.content = "Текст заметки не может быть пустым";
         if (!selectedProjectModal) newErrors.project = "Выберите проект";
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
-    };
-
-    const handleSave = async () => {
-        if (!validate()) return;
-
-        try {
-            const updatedNote = {
-                ...note,
-                title,
-                content,
-                projectId: selectedProjectModal,
-                category: selectedCategory,
-                audios: audios?.map((audio) => ({
-                    url: audio.url,
-                    name: audio.name,
-                })),
-                files: files?.map((file) => {
-                    if (file instanceof File) {
-                        return {
-                            name: file.name,
-                            fileUrl: URL.createObjectURL(file),
-                        };
-                    } else {
-                        return file;
-                    }
-                }),
-                individualAnalysisFlag,
-                tags,
-                urls,
-            };
-
-            const savedNote = await onSave(updatedNote);
-
-            if (files.length > 0) {
-                const formDataFiles = new FormData();
-                files.forEach((file) => {
-                    if (file instanceof File) {
-                        formDataFiles.append("files", file);
-                    } else if (file.file instanceof File) {
-                        formDataFiles.append("files", file.file);
-                    } else if (file.filePath) {
-                        const blob = new Blob([file.filePath], { type: "text/plain" });
-                        formDataFiles.append("files", blob, file.fileName);
-                    }
-                });
-
-                if (Array.from(formDataFiles.keys()).length > 0) {
-                    await uploadFiles(savedNote.id, formDataFiles);
-                }
-            }
-
-            if (audios.length > 0) {
-                const formDataAudio = new FormData();
-                const newAudiosFormData = await prepareFormDataForAudios(audios);
-                if (newAudiosFormData.has("audios")) {
-                    await uploadAudioFiles(savedNote.id, newAudiosFormData);
-                }
-            }
-
-            setNotes((prevNotes) =>
-                prevNotes.map((n) => (n.id === savedNote.id ? savedNote : n))
-            );
-
-            alert("Заметка успешно сохранена!");
-            onClose();
-        } catch (error) {
-            console.error("Ошибка при сохранении заметки:", error.response?.data || error.message);
-            alert("Не удалось сохранить заметку. Проверьте соединение с сервером.");
-        }
     };
 
     // Начало записи
@@ -195,9 +146,13 @@ const NoteModal_new = ({
     };
 
 
+
+
+
+
     const handleDownloadAudio = async (e, audio) => {
         e.preventDefault(); // Останавливает стандартное поведение
-        console.log("Путь для скачивания: ", BASE_URL + audio.url);
+        console.log("Путь для скачивания аудио: ", BASE_URL + audio.url);
         if (!audio || !audio.url) {
             console.error("Некорректный объект audio:", audio);
             return;
@@ -213,13 +168,13 @@ const NoteModal_new = ({
             link.click();
             URL.revokeObjectURL(link.href); // Освобождаем память
         } catch (error) {
-            console.error("Ошибка при скачивании файла:", error);
+            console.error("Ошибка при скачивании аудио:", error);
         }
     };
 
     const handleDownloadFile = async (e, file) => {
         e.preventDefault(); // Останавливает стандартное поведение
-        console.log("Путь для скачивания: ", BASE_URL + file.fileUrl);
+        console.log("Путь для скачивания файла : ", BASE_URL + file.fileUrl);
         if (!file || !file.fileUrl) {
             console.error("Некорректный объект :", file);
             return;
@@ -306,8 +261,9 @@ const NoteModal_new = ({
             setUrls((prevUrls) => [...prevUrls, newUrl]); // Добавляем только URL
             setNewUrl("");
         }
+        console.log("массив ссылок после добавления OGData: ",urls);
     };
-    console.log("массив ссылок после добавления OGData: ",urls);
+
 
 
     // Удалить URL
@@ -327,6 +283,253 @@ const NoteModal_new = ({
 
     const handleDeleteTag = (tagToDelete) => {
         setTags(tags.filter((tag) => tag !== tagToDelete));
+    };
+
+    // const handleSave = async () => {
+    //     if (!validate()) return;
+    //
+    //     try {
+    //         const updatedNote = {
+    //             ...note,
+    //             title,
+    //             content,
+    //             projectId: selectedProjectModal,
+    //             category: selectedCategory,
+    //             audios: audios?.map((audio) => ({
+    //                 url: audio.url,
+    //                 name: audio.name,
+    //             })),
+    //             files: files?.map((file) => {
+    //                 if (file instanceof File) {
+    //                     return {
+    //                         name: file.name,
+    //                         fileUrl: URL.createObjectURL(file),
+    //                     };
+    //                 } else {
+    //                     return file;
+    //                 }
+    //             }),
+    //             individualAnalysisFlag,
+    //             tags,
+    //             urls,
+    //         };
+    //
+    //         console.log("заметка перед отправкой на БЭК: ", updatedNote);
+    //         //console.log("onSave перед отправкой на БЭК: ", onSave);
+    //         // Если это новая заметка, сначала создаем ее
+    //         if (!updatedNote.id) {
+    //             console.log("Создаем новую заметку...");
+    //             updatedNote = await onSave(updatedNote); // Сохраняем и получаем ID
+    //         }
+    //
+    //         if (!updatedNote.id) {
+    //             console.error("Ошибка: сервер не вернул ID созданной заметки.");
+    //             alert("Ошибка сохранения. Сервер не вернул ID.");
+    //             return;
+    //         }
+    //
+    //         console.log("Заметка сохранена, ID:", updatedNote.id);
+    //
+    //         // const savedNote = await onSave(updatedNote);
+    //         let savedNote = updatedNote;
+    //
+    //         // if (updatedNote!== undefined){
+    //         //     console.log(" ЗАМЕТКА СОХРАНЕНА НА БЭКЕ начинаем сохранять вложения! ",updatedNote);
+    //         // }else{
+    //         //     console.log(" Не удалось сохранить заметку, пытаемся сохранить вложения! ",updatedNote);
+    //         // }
+    //         console.log("Добавляем в заметку вложения! ",updatedNote);
+    //
+    //
+    //         console.log("Дебаг: note.files", note?.files);
+    //         if (files.length > 0) {
+    //             const formDataFiles = new FormData();
+    //             files.forEach((file) => {
+    //                if (file.file instanceof File) {
+    //                     console.log("file.file instanceof File");
+    //                     console.log("добавляем файл: ", file.file);
+    //                     formDataFiles.append("files", file.file);
+    //
+    //                 }
+    //             });
+    //             console.log("получился такой formDataFiles файлов: ",formDataFiles);
+    //             console.log("Пробуем отправить массив файлов, размер массива: ",Array.from(formDataFiles.keys()).length);
+    //
+    //             if (Array.from(formDataFiles.keys()).length > 0) {
+    //                 console.log("длина массива файлов >0, отправлям, для заметки ",updatedNote.id);
+    //
+    //                 const uploadedFiles = await uploadFiles(updatedNote.id, formDataFiles);
+    //                 console.log("отправили файлы ",uploadedFiles);
+    //                 updatedNote.files = uploadedFiles.files;
+    //             }
+    //         }
+    //
+    //         console.log(" Файлы сохранены ",updatedNote);
+    //
+    //         console.log("Дебаг: note.audios", note?.audios);
+    //         if (audios.length > 0) {
+    //             try {
+    //             // const formDataAudio = new FormData();
+    //                 const newAudiosFormData = await prepareFormDataForAudios(audios);
+    //                 console.log("Проверим есть ли в formData аудио: ",newAudiosFormData.has("audios"));
+    //                 if (newAudiosFormData.has("audios")) {
+    //                     console.log("audios in formdata: ", newAudiosFormData);
+    //                     const uploadedAudios = await uploadAudioFiles(updatedNote.id, newAudiosFormData);
+    //                     console.log("отправили аудио ",uploadedAudios);
+    //                     updatedNote.audios = uploadedAudios.files;
+    //                 }else{
+    //                     console.log("Аудио нет в formdata: ");
+    //                 }
+    //
+    //             } catch (error) {
+    //                 console.error("Не удалось сохранить аудио. Ошибка при сохранении audios:", error);
+    //             }
+    //
+    //         }
+    //         savedNote = await onSave(updatedNote);
+    //         if (!savedNote) {
+    //             alert("Ошибка: сервер не вернул сохраненную заметку.");
+    //             return;
+    //         }
+    //
+    //         // ✅ Обновляем доску (GraphBoard)
+    //         setNotes((prevNotes) => {
+    //             const existingNoteIndex = prevNotes.findIndex((n) => n.id === savedNote.id);
+    //             if (existingNoteIndex !== -1) {
+    //                 return prevNotes.map((n) => (n.id === savedNote.id ? savedNote : n)); // 🔄 Обновляем заметку
+    //             } else {
+    //                 return [...prevNotes, savedNote]; // 🆕 Добавляем новую заметку
+    //             }
+    //         });
+    //
+    //         setNotes((prevNotes) =>
+    //             prevNotes.map((n) => (n.id === savedNote.id ? savedNote : n))
+    //         );
+    //         audios.forEach((audio) => {
+    //             if (audio.url && audio instanceof File) {
+    //                 URL.revokeObjectURL(audio.url); // Удаляем временную ссылку
+    //             }
+    //         });
+    //         files.forEach((file) => {
+    //             if (file.fileUrl && file instanceof File) {
+    //                 URL.revokeObjectURL(file.fileUrl); // Удаляем временную ссылку
+    //             }
+    //         });
+    //
+    //         alert("Заметка с ВЛОЖЕНИЯМИ  успешно сохранена!");
+    //         onClose();
+    //
+    //     } catch (error) {
+    //         console.error("Ошибка при сохранении заметки:", error.response?.data || error.message);
+    //         alert("Не удалось сохранить заметку. Проверьте соединение с сервером.");
+    //     }
+    //     setContent("");
+    //     setFile(null);
+    //     setSelectedProject("");
+    //     setIndividualAnalysisFlag(isGlobalAnalysisEnabled);
+    //     setAudioFiles(null);
+    //     setUrls(null);
+    //     setFiles(null);
+    //     setOpenGraphData(null);
+    //     onClose();
+    // };
+    const handleSave = async () => {
+        if (!validate()) return;
+
+        try {
+            let savedNote = {
+                ...note,
+                title,
+                content,
+                projectId: selectedProjectModal,
+                category: selectedCategory,
+                tags: tags ?? [], // ✅ Гарантируем, что всегда массив
+                urls: urls ?? [], // ✅ Гарантируем, что всегда массив
+                files: note.files ?? [], // ✅ Если `files` нет, передаем пустой массив
+                audios: note.audios ?? [] // ✅ Если `audios` нет, передаем пустой массив
+            };
+
+            console.log("Подготовленная заметка перед сохранением:", savedNote);
+
+            // Если это новая заметка, сначала создаем ее
+            if (!savedNote.id) {
+                console.log("Создаем новую заметку...");
+                savedNote = await onSave(savedNote); // Сохраняем и получаем ID
+            }
+
+            if (!savedNote.id) {
+                console.error("Ошибка: сервер не вернул ID созданной заметки.");
+                alert("Ошибка сохранения. Сервер не вернул ID.");
+                return;
+            }
+
+            console.log("Заметка сохранена, ID:", savedNote.id);
+
+            // Устанавливаем координаты новой заметки
+            if (!note.id) { // Если это новая заметка
+                const newPosition = calculateNewNotePosition(notes);
+                savedNote.x = newPosition.x;
+                savedNote.y = newPosition.y;
+            }
+
+            // Загружаем файлы, если они есть
+            if (files.length > 0) {
+                const formDataFiles = new FormData();
+                files.forEach((file) => {
+                    if (file instanceof File) {
+                        formDataFiles.append("files", file);
+                    } else if (file.file instanceof File) {
+                        formDataFiles.append("files", file.file);
+                    }
+                });
+
+                if (Array.from(formDataFiles.keys()).length > 0) {
+                    console.log("Загружаем файлы для заметки ID:", savedNote.id);
+                    const uploadedFiles = await uploadFiles(savedNote.id, formDataFiles);
+                    savedNote.files = uploadedFiles.files;
+                }
+            }
+
+            // Загружаем аудиофайлы, если есть
+            if (audios.length > 0) {
+                const formDataAudios = new FormData();
+                audios.forEach((audio) => {
+                    if (audio.blob instanceof Blob) {
+                        formDataAudios.append("audios", audio.blob, audio.name || "recording.mp3");
+                    }
+                });
+
+                if (formDataAudios.has("audios")) {
+                    console.log("Загружаем аудио для заметки ID:", savedNote.id);
+                    const uploadedAudios = await uploadAudioFiles(savedNote.id, formDataAudios);
+                    savedNote.audios = uploadedAudios.files;
+                }
+            }
+
+            // Финальное обновление заметки с файлами
+            savedNote = await onSave(savedNote);
+
+            // setNotes((prevNotes) =>
+            //     prevNotes.map((n) => (n.id === savedNote.id ? savedNote : n))
+        // );
+            setNotes((prevNotes) => {
+                const existingIndex = prevNotes.findIndex((n) => n.id === savedNote.id);
+                if (existingIndex !== -1) {
+                    // Обновляем существующую заметку
+                    return prevNotes.map((n) => (n.id === savedNote.id ? savedNote : n));
+                } else {
+                    // Добавляем новую заметку
+                    return [...prevNotes, savedNote];
+                }
+            });
+
+
+            alert("Заметка успешно сохранена!");
+            onClose();
+        } catch (error) {
+            console.error("Ошибка при сохранении заметки:", error.response?.data || error.message);
+            alert("Не удалось сохранить заметку. Проверьте соединение с сервером.");
+        }
     };
 
     const handleAudioFileChange = (e) => {
@@ -415,54 +618,55 @@ const NoteModal_new = ({
                 />
                 <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)} centered sx={{ borderBottom: "1px solid #e0e0e0" }}>
                     <Tab label="Основное" />
-                    <Tab label={<Badge badgeContent={files.length + audios.length + urls.length} color="primary">Вложения</Badge>} />
+                    <Tab label={<Badge
+                        badgeContent={
+                            (Array.isArray(files) ? files.length : 0) +
+                            (Array.isArray(audios) ? audios.length : 0) +
+                            (Array.isArray(urls) ? urls.length : 0)
+                        }
+                        color="primary"
+                    >
+                        Вложения
+                    </Badge>} />
                 </Tabs>
                 <Box sx={{ flex: 1, overflowY: "auto", padding: 4 }}>
                     <Fade in={activeTab === 0} timeout={500}>
                         <Box>
                             {activeTab === 0 && (
                                 <>
-                                    <TextField
-                                        fullWidth
-                                        margin="normal"
-                                        label="Заголовок заметки"
-                                        value={title}
-                                        onChange={(e) => setTitle(e.target.value)}
-                                        error={!!errors.title}
-                                        helperText={errors.title}
-                                    />
+                                    {/*<TextField*/}
+                                    {/*    fullWidth*/}
+                                    {/*    margin="normal"*/}
+                                    {/*    label="Заголовок заметки"*/}
+                                    {/*    value={title}*/}
+                                    {/*    onChange={(e) => setTitle(e.target.value)}*/}
+                                    {/*    error={!!errors.title}*/}
+                                    {/*    helperText={errors.title}*/}
+                                    {/*/>*/}
                                     <FormControl
                                         fullWidth
                                         margin="normal"
+                                        value={project}
                                         error={!!errors.project}>
                                         <InputLabel id="project-select-label">Проект</InputLabel>
                                         <Select
                                             labelId="project-select-label"
-                                            value={selectedProjectModal?.id ?? ""}
-                                            onChange={(e) => {
-                                                const project = projects.find(p => p.id === e.target.value);
-                                                setSelectedProject(project);
-                                            }}
+                                            value={selectedProjectModal || ""}
+                                            onChange={(e) => setSelectedProject(e.target.value)}
                                         >
-                                            {projects.map((project) => (
+                                            {projects.length > 0 ? (
+                                              projects.map((project) => (
                                                 <MenuItem key={project.id} value={project.id}>
                                                     {project.name}
                                                 </MenuItem>
-                                            ))}
+                                            ))
+                                                ):(
+                                                <MenuItem disabled>Нет доступных проектов</MenuItem>
+                                                )}
                                         </Select>
                                         {errors.project && <Typography color="error" variant="caption">{errors.project}</Typography>}
                                     </FormControl>
-                                    <FormControl fullWidth margin="normal">
-                                        <InputLabel id="category-select-label">Категория</InputLabel>
-                                        <Select
-                                            labelId="category-select-label"
-                                            value={selectedCategory}
-                                            onChange={(e) => setSelectedCategory(e.target.value)}
-                                        >
-                                            <MenuItem value="category1">Категория 1</MenuItem>
-                                            <MenuItem value="category2">Категория 2</MenuItem>
-                                        </Select>
-                                    </FormControl>
+
                                     <TextField
                                         fullWidth
                                         margin="normal"
@@ -474,6 +678,17 @@ const NoteModal_new = ({
                                         error={!!errors.content}
                                         helperText={errors.content}
                                     />
+                                    <FormControl fullWidth margin="normal">
+                                        <InputLabel id="category-select-label">Категория</InputLabel>
+                                        <Select
+                                            labelId="category-select-label"
+                                            value={selectedCategory}
+                                            onChange={(e) => setSelectedCategory(e.target.value)}
+                                        >
+                                            <MenuItem value="category1">Категория 1</MenuItem>
+                                            <MenuItem value="category2">Категория 2</MenuItem>
+                                        </Select>
+                                    </FormControl>
                                     <Box>
                                         <TextField
                                             label="Добавить тег"

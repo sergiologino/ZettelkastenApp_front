@@ -1,8 +1,11 @@
-import React from "react";
+import React, { useState }  from "react";
 import {Box, Typography, Paper, Chip, IconButton} from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import NoteModal_new from "./NoteModal_new";
 
-const SearchResults = ({ results, onSelectNote, onClose  }) => {
+const SearchResults = ({ results, onSelectNote, onClose, projects, onSave  }) => {
+    const [selectedNote, setSelectedNote] = useState(null);
+
     if (results.length === 0) {
         return <Typography sx={{ padding: 2 }}>Ничего не найдено.</Typography>;
     }
@@ -34,7 +37,7 @@ const SearchResults = ({ results, onSelectNote, onClose  }) => {
                         justifyContent: "space-between",
                         minHeight: "60px"
                     }}
-                    onClick={() => onSelectNote(note)}
+                    onClick={() => setSelectedNote(note)}
                 >
                     {/* ✅ Проект */}
                     <Typography
@@ -47,9 +50,19 @@ const SearchResults = ({ results, onSelectNote, onClose  }) => {
                     >
                         {note.projectName}
                     </Typography>
+                    {/* ✅ Заголовок заметки */}
+                    <Typography
+                        variant="body2"
+                        sx={{
+                            flexGrow: 1,
+                            fontWeight: "bold",
+
+                        }}>
+                        {note.title}
+                    </Typography>
 
                     {/* ✅ Контент заметки */}
-                    <Typography variant="body1" sx={{ flexGrow: 1 }}>
+                    <Typography variant="body4" sx={{ flexGrow: 1 }}>
                         {note.content}
                     </Typography>
 
@@ -83,6 +96,15 @@ const SearchResults = ({ results, onSelectNote, onClose  }) => {
                     </Typography>
                 </Paper>
             ))}
+            {results.length > 0 && (
+                <NoteModal_new
+                    open={Boolean(selectedNote)}
+                    onClose={() => setSelectedNote(null)}
+                    note={selectedNote}
+                    projects={projects} // ✅ Передаем проекты в NoteModal_new
+                    onSave={onSave}
+                />
+            )}
         </Box>
     );
 };

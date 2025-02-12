@@ -26,7 +26,7 @@ export const fetchNotes = async (projectId) => {
         throw error;
     }
 };
-
+// обновить существующую заметку
 export const updateNote = async (note) => {
 
     try {
@@ -35,10 +35,11 @@ export const updateNote = async (note) => {
         const response = await api.put(`/notes`, note, {
             headers: { "Content-Type": "application/json" },
         });
+        console.log("успешное обновление заметки: ",response.data);
         return response.data; // Возвращаем данные обновленной заметки
 
     } catch (error) {
-        console.error("Ошибка при вызове API для обновления заметки:", error);
+        console.error("api.js: Ошибка при передаче на сервер обновления заметки:", error);
         throw error;
     }
 };
@@ -57,7 +58,7 @@ export const addNote = async (note,projectId) => {
         console.log("Ответ сервера по сохранению заметки: ", response.data);
         return response.data; // Возвращаем данные созданной заметки
     } catch (error) {
-        console.error("Ошибка при вызове API для создания заметки:", error);
+        console.error("api.js: Ошибка при передаче на сервер создания заметки:", error);
         throw error;
     }
 };
@@ -87,7 +88,7 @@ export const updateProject = async (project) => {
             headers: { "Content-Type": "application/json" },
         });
 
-        console.log("Ответ API:", response.data);
+        // console.log("Ответ API:", response.data);
         return response.data;
     } catch (error) {
         console.error("Ошибка при обновлении проекта:", error.response?.data || error.message);
@@ -117,7 +118,7 @@ export const fetchOpenGraphData = async (url) => {
         const response = await api.get(`/notes/og-data-clear`, {
             params: { url },
         });
-        console.log("Ответ с OpenGraph: ",response.data);
+        // console.log("Ответ с OpenGraph: ",response.data);
         return response.data; // Возвращаем данные OpenGraph
     } catch (error) {
         console.error("Ошибка при получении данных OpenGraph:", error);
@@ -139,10 +140,10 @@ export const fetchOpenGraphData = async (url) => {
 };
 
 export const updateNoteCoordinates = async (noteId, x, y) => {
-    console.log(`отправка координат на сервер`);
+    // console.log(`отправка координат на сервер`);
     try {
         const response = await api.put(`/notes/${noteId}/coordinates`, { x, y });
-        console.log(`Координаты для заметки ${noteId} обновлены на сервере:`, response.data);
+        // console.log(`Координаты для заметки ${noteId} обновлены на сервере:`, response.data);
         return response.data;
     } catch (error) {
         console.error(`Ошибка при обновлении координат для заметки ${noteId}:`, error);
@@ -152,6 +153,7 @@ export const updateNoteCoordinates = async (noteId, x, y) => {
 
 export const uploadFiles = async (noteId, formData) => {
     try {
+        console.log(`Отправляем файлы для заметки ${noteId} `);
         const response = await api.post(`/notes/${noteId}/files`, formData, {
             headers: { "Content-Type": "multipart/form-data" },
         });
@@ -220,6 +222,19 @@ export const fetchAllTags = async () => {
         console.error('Ошибка при загрузке тегов:', error);
         throw error;
     }
+};
+
+export const updateAvatar = async (userId, avatarFile) => {
+    const formData = new FormData();
+    formData.append("avatar", avatarFile);
+
+    return api.put(`/users/${userId}/avatar`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+    });
+};
+
+export const updateUserProfile = async (userId, userData) => {
+    return api.put(`/users/${userId}`, userData);
 };
 
 

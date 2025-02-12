@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import ReactFlow, { MiniMap, Controls, Background, applyEdgeChanges, applyNodeChanges } from "reactflow";
 import "reactflow/dist/style.css";
-import { Box, Button, Switch } from "@mui/material";
+import {Badge, Box, Button, Switch} from "@mui/material";
 import {analyzeNotes, fetchOpenGraphDataForNote, updateNoteCoordinates} from "../api/api";
 import { useNavigate } from "react-router-dom";
-import NoteModal_new from "./NoteModal";
+import NoteModal_new from "./NoteModal_new";
 
 const GraphBoard_new = ({
                         notes,
@@ -83,6 +83,18 @@ const GraphBoard_new = ({
         );
     };
 
+    const calculateNewNotePosition = (notes) => {
+        if (notes.length === 0) {
+            return { x: 100, y: 100 }; // Если заметок нет, ставим в начальные координаты
+        }
+
+        const minX = Math.min(...notes.map(note => note.x || 0));
+        const minY = Math.min(...notes.map(note => note.y || 0));
+
+        return { x: minX + 50, y: minY + 50 }; // Смещаем новую заметку вниз и вправо
+    };
+
+
     useEffect(() => {
         setNodes(
             (filteredNotes || []).map((note, index) => ({
@@ -103,84 +115,10 @@ const GraphBoard_new = ({
 
     useEffect(() => {
         setNodes(
-            notes?.map((note, index) => ({
+            notes?.map((note) => ({
                 id: note.id,
-                data: {
-                    label: (
-                        <div
-                            style={{
-                                ...resizableStyle,
-                                position: "relative",
-                            }}
-                            className="node"
-                        >
-                            {/* Контент */}
-                            <div>{note.content}</div>
-
-                            {/* Теги */}
-                            <div
-                                style={{
-                                    display: "flex",
-                                    flexWrap: "wrap",
-                                    gap: "4px",
-                                    marginTop: "4px",
-                                    marginBottom:"4px",
-                                    bottom: 6,
-                                }}
-                            >
-                                {note.tags?.map((tag) => (
-                                    <span
-                                        key={tag}
-                                        style={{
-                                            fontSize: "0.6rem",
-                                            border: "1px solid #ccc",
-                                            borderRadius: "4px",
-                                            padding: "2px 4px",
-                                            backgroundColor: getColorForTag(tag),
-                                            color: "#fff",
-                                        }}
-                                    >
-                                        {tag}
-                                    </span>
-                                ))}
-                            </div>
-
-                            {/* Переключатель */}
-                            {/*<div*/}
-                            {/*    style={{*/}
-                            {/*        marginTop: "auto",*/}
-                            {/*        display: "flex",*/}
-                            {/*        justifyContent: "center",*/}
-                            {/*    }}*/}
-                            {/*>*/}
-                            {/*    <Switch*/}
-                            {/*        checked={selectedNoteIds.includes(note.id)}*/}
-                            {/*        onChange={(e) =>*/}
-                            {/*            handleNoteSelection(e, note.id, e.target.checked)*/}
-                            {/*        }*/}
-                            {/*        onClick={(e) => e.stopPropagation()}*/}
-                            {/*    />*/}
-                            {/*</div>*/}
-
-                            {/* Элемент изменения размера */}
-                            <div
-                                className="node-resize-handle"
-                                onMouseDown={(e) => handleResizeStart(e, note.id)}
-                                style={{
-                                    position: "absolute",
-                                    bottom: 0,
-                                    right: 0,
-                                    width: "12px",
-                                    height: "12px",
-                                    backgroundColor: "#ccc",
-                                    cursor: "nwse-resize",
-                                    zIndex: 10,
-                                }}
-                            />
-                        </div>
-                    ),
-                },
-                position: {x: note.x || index * 200, y: note.y || index * 100},
+                data: { label: note.title || "Без заголовка" },
+                position: { x: note.x, y: note.y },
                 style: {
                     width: `${note.width || 150}px`,
                     height: `${note.height || 150}px`,
@@ -192,6 +130,211 @@ const GraphBoard_new = ({
             }))
         );
     }, [notes]);
+
+
+
+    // useEffect(() => {
+    //     setNodes(
+    //         notes?.map((note, index) => ({
+    //             id: note.id,
+    //             data: {
+    //                 label: (
+    //                     <div
+    //                         style={{
+    //                             ...resizableStyle,
+    //                             position: "relative",
+    //                         }}
+    //                         className="node"
+    //                     >
+    //                         {<Badge style={{
+    //                             fontSize: "0.4rem",
+    //                             border: "1px solid #ccc",
+    //                             borderRadius: "4px",
+    //                             padding: "2px 4px",
+    //                             // backgroundColor: "#2196f3",
+    //                             color: "#2196f3",
+    //                         }}
+    //                             badgeContent={
+    //                                 (Array.isArray(note.files) ? note.files.length : 0) +
+    //                                 (Array.isArray(note.audios) ? note.audios.length : 0) +
+    //                                 (Array.isArray(note.urls) ? note.urls.length : 0)
+    //                             }
+    //                             color="primary"
+    //                         >
+    //                             {note.title}
+    //                         </Badge>}
+    //                         {/* Контент */}
+    //                         <div>{note.content}</div>
+    //
+    //                         {/* Теги */}
+    //                         <div
+    //                             style={{
+    //                                 display: "flex",
+    //                                 flexWrap: "wrap",
+    //                                 gap: "4px",
+    //                                 marginTop: "4px",
+    //                                 marginBottom:"4px",
+    //                                 marginLeft: "2px",
+    //                                 bottom: 8,
+    //                             }}
+    //                         >
+    //                             {note.tags?.map((tag) => (
+    //                                 <span
+    //                                     key={tag}
+    //                                     style={{
+    //                                         fontSize: "0.4rem",
+    //                                         border: "1px solid #ccc",
+    //                                         borderColor:  getColorForTag(tag),
+    //                                         borderRadius: "4px",
+    //                                         padding: "2px 4px",
+    //                                         backgroundColor: "#fff",
+    //                                         color: getColorForTag(tag),
+    //                                     }}
+    //                                 >
+    //                                     {tag}
+    //                                 </span>
+    //                             ))}
+    //                         </div>
+    //
+    //                         {/* Переключатель */}
+    //                         {/*<div*/}
+    //                         {/*    style={{*/}
+    //                         {/*        marginTop: "auto",*/}
+    //                         {/*        display: "flex",*/}
+    //                         {/*        justifyContent: "center",*/}
+    //                         {/*    }}*/}
+    //                         {/*>*/}
+    //                         {/*    <Switch*/}
+    //                         {/*        checked={selectedNoteIds.includes(note.id)}*/}
+    //                         {/*        onChange={(e) =>*/}
+    //                         {/*            handleNoteSelection(e, note.id, e.target.checked)*/}
+    //                         {/*        }*/}
+    //                         {/*        onClick={(e) => e.stopPropagation()}*/}
+    //                         {/*    />*/}
+    //                         {/*</div>*/}
+    //
+    //                         {/* Элемент изменения размера */}
+    //                         <div
+    //                             className="node-resize-handle"
+    //                             onMouseDown={(e) => handleResizeStart(e, note.id)}
+    //                             style={{
+    //                                 position: "absolute",
+    //                                 bottom: 0,
+    //                                 right: 0,
+    //                                 width: "12px",
+    //                                 height: "12px",
+    //                                 backgroundColor: "#ccc",
+    //                                 cursor: "nwse-resize",
+    //                                 zIndex: 10,
+    //                             }}
+    //                         />
+    //                     </div>
+    //                 ),
+    //             },
+    //             position: {x: note.x || index * 200, y: note.y || index * 100},
+    //             style: {
+    //                 width: `${note.width || 150}px`,
+    //                 height: `${note.height || 150}px`,
+    //                 background: "#fff",
+    //                 border: "1px solid #ccc",
+    //                 borderRadius: "8px",
+    //                 boxSizing: "border-box",
+    //             },
+    //         }))
+    //     );
+    // }, [notes]);
+    useEffect(() => {
+        setNodes(
+            notes?.map((note) => ({
+                id: note.id,
+                data: {
+                    label: (
+                        <div
+                            style={{
+                                position: "relative",
+                                padding: "8px",
+                                textAlign: "center",
+                                fontSize: "12px",
+                                overflow: "hidden",
+                                whiteSpace: "nowrap",
+                            }}
+                        >
+                            {/* Лейбл вложений */}
+                            {(Array.isArray(note.files) && note.files.length > 0) ||
+                            (Array.isArray(note.audios) && note.audios.length > 0) ||
+                            (Array.isArray(note.urls) && note.urls.length > 0) ? (
+                                <span
+                                    style={{
+                                        position: "absolute",
+                                        top: "-5px",
+                                        right: "-5px",
+                                        fontSize: "10px",
+                                        color: "white",
+                                        backgroundColor: "#1976d2",
+                                        padding: "2px 6px",
+                                        borderRadius: "10px",
+                                        fontWeight: "bold",
+                                        minWidth: "20px",
+                                        textAlign: "center",
+                                    }}
+                                >
+                                { (note.files?.length || 0) +
+                                    (note.audios?.length || 0) +
+                                    (note.urls?.length || 0) }
+                            </span>
+                            ) : null}
+
+                            {/* Заголовок заметки */}
+                            <div style={{ fontSize: "14px", fontWeight: "bold" }}>{note.title}</div>
+
+                            {/* Контент заметки (если есть) */}
+                            <div style={{ fontSize: "12px", color: "#666" }}>
+                                {note.content?.length > 50 ? note.content.slice(0, 50) + "..." : note.content}
+                            </div>
+
+                            {/* Теги */}
+                            <div
+                                style={{
+                                    display: "flex",
+                                    flexWrap: "wrap",
+                                    gap: "4px",
+                                    marginTop: "4px",
+                                    justifyContent: "center",
+                                }}
+                            >
+                                {note.tags?.map((tag) => (
+                                    <span
+                                        key={tag}
+                                        style={{
+                                            fontSize: "10px",
+                                            padding: "2px 4px",
+                                            backgroundColor: "#f0f0f0",
+                                            color: "#333",
+                                            borderRadius: "4px",
+                                        }}
+                                    >
+                                    {tag}
+                                </span>
+                                ))}
+                            </div>
+                        </div>
+                    ),
+                },
+                position: { x: note.x, y: note.y },
+                style: {
+                    width: `${note.width || 150}px`,
+                    height: `${note.height || 100}px`,
+                    background: "#fff",
+                    border: "1px solid #ccc",
+                    borderRadius: "8px",
+                    boxSizing: "border-box",
+                    padding: "8px",
+                    overflow: "hidden",
+                },
+            }))
+        );
+    }, [notes]);
+
 
     useEffect(() => {
         const loadOpenGraphData = async () => {
@@ -270,22 +413,28 @@ const GraphBoard_new = ({
             ...updatedNote,
             urls: Array.isArray(updatedNote.urls) ? updatedNote.urls : [], // Если urls отсутствует или не массив, создаём пустой массив
         };
+        const projectId = updatedNote.projectId || selectedProject;
 
         try {
             let savedNote;
 
+
             if (updatedNote.id) {
                 // Обновляем заметку
                 savedNote = await onUpdateNote(updatedNote);
-
-                setNotes((prevNotes) =>
-                    prevNotes.map((note) => (note.id === savedNote.id ? savedNote : note))
-                );
             } else {
                 // Создаём новую заметку
-                savedNote = await onCreateNote(updatedNote, selectedProject);
+                savedNote = await onCreateNote(updatedNote, projectId);
                 setNotes((prevNotes) => [...prevNotes, savedNote]);
             }
+            if (!savedNote) {
+                console.error("❌ Ошибка: savedNote undefined после сохранения", updatedNote);
+                alert("Ошибка: сервер не вернул сохраненную заметку.");
+                return;
+            }
+            setNotes((prevNotes) =>
+                prevNotes.map((note) => (note.id === savedNote.id ? savedNote : note))
+            );
                 return savedNote;
             } catch (error) {
             console.error("Ошибка при сохранении заметки:", error);
@@ -390,7 +539,7 @@ const GraphBoard_new = ({
     }, [selectedTags, activeTab]);
 
 
-
+    // console.log("📌 handleSaveNote:", handleSaveNote);
     return (
         <div className="board" style={{width: "100%", height: "90vh"}}>
             <ReactFlow
@@ -455,6 +604,7 @@ const GraphBoard_new = ({
             {/*    Выйти*/}
             {/*</button>*/}
             {isModalOpen && (
+
                 <NoteModal_new
                     open={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
@@ -463,6 +613,7 @@ const GraphBoard_new = ({
                     projects={projects}
                     selectedProject={selectedProject}
                     setNotes={setNotes} // Передача setNotes
+                    calculateNewNotePosition={() => calculateNewNotePosition(notes)} // ✅ Передаем функцию координат новой заметки
 
                 />
             )}

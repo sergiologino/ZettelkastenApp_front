@@ -5,6 +5,7 @@ import { styled } from "@mui/material/styles";
 import { Search as SearchIcon, AccountCircle } from "@mui/icons-material";
 import logo from "../logo.svg"; // ✅ Подключаем логотип
 import api from "../api/api";
+import ProfileModal from "./Profile";
 
 const SearchContainer = styled(Paper)(({ theme }) => ({
     display: "flex",
@@ -25,7 +26,9 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
 const TopNavBar = ({ onSearchResults , onToggleTheme, balance, resetAppState }) => {
     const [searchQuery, setSearchQuery] = useState("");
     const [user, setUser] = useState(null);
+    const [profileOpen, setProfileOpen] =useState(false);
     const navigate = useNavigate();
+
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -33,6 +36,8 @@ const TopNavBar = ({ onSearchResults , onToggleTheme, balance, resetAppState }) 
                 const accessToken = localStorage.getItem("accessToken");
                 if (accessToken) {
                     const response = await api.get("/users/me");
+                    // console.log("Content-Type ответа:", response.headers["content-type"]);
+                    // console.log("Полученные данные пользователя:", response.data);
                     setUser(response.data); // ✅ Загружаем пользователя при старте
                 }
             } catch (error) {
@@ -41,6 +46,13 @@ const TopNavBar = ({ onSearchResults , onToggleTheme, balance, resetAppState }) 
         };
         fetchUserData();
     }, []);
+
+    useEffect(() => {
+        if (user?.avatarUrl) {
+            // console.log("Обновленный аватар в TopNavBar:", user.avatarUrl);
+        }
+    }, [user?.avatarUrl]);
+
 
     const handleSearch = async () => {
         if (!searchQuery.trim()) return;
@@ -62,6 +74,7 @@ const TopNavBar = ({ onSearchResults , onToggleTheme, balance, resetAppState }) 
         navigate("/auth");
     };
 
+    // {console.log("Передача open в ProfileModal:", profileOpen)}
     return (
         <AppBar position="static">
             <Toolbar sx={{display: "flex", justifyContent: "space-between", alignItems: "left"}}>
@@ -94,16 +107,21 @@ const TopNavBar = ({ onSearchResults , onToggleTheme, balance, resetAppState }) 
                     {user && (
                         <>
                             <Avatar
-                                src={user.avatar || "/default-avatar.png"}
+                                src={user.avatar ? user.avatar : process.env.PUBLIC_URL + "/default-avatar.png"}
                                 alt={user.username}
                                 sx={{width: 32, height: 32, mr: 1}}
                             />
                             <Typography variant="body1">{user.username}</Typography>
+                            {/* ✅ Проверяем, что передаём проп `open` корректно */}
+                            <ProfileModal open={profileOpen} onClose={() => setProfileOpen(false)} />
                         </>
                     )}
                 </Box>
 
-                <IconButton color="inherit" onClick={() => navigate("/profile")}>
+                <IconButton color="inherit" onClick={() => {
+                    // console.log("Клик по кнопке профиля");
+                    setProfileOpen(true);
+                }}>
                     <AccountCircle/>
                     <Typography variant="body1" sx={{mr: 2}}>
                         Профиль

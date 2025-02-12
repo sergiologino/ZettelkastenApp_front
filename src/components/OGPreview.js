@@ -1,5 +1,5 @@
 const OGPreview = ({ ogData }) => {
-    console.log("OgData in OGPreview: ",ogData);
+    // console.log("OgData in OGPreview: ",ogData);
     // return <div>OGPreview content</div>;
     if (!ogData) return <p>Нет данных</p>;
     return (

@@ -138,15 +138,6 @@ const ProjectPanel_new = ({
         return "Некорректная дата";
     };
 
-    //     // Преобразуем в дату
-    //     const date = new Date(timestamp);
-    //     console.log("Итог Дата время ",date);
-    //     return isNaN(date.getTime()) ? "Некорректная дата" : format(date, "dd.MM.yy HH:mm", { locale: ru });
-    // };
-
-
-
-
     const handleResize = (e) => {
         const newWidth = Math.max(5, Math.min(25, (e.clientX / window.innerWidth) * 100));
         setPanelWidth(newWidth);
