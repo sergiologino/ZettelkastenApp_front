@@ -18,14 +18,14 @@ const OGPreview = ({ ogData }) => {
                             }}
                         />
                         <div>
-                            <div style={{ fontWeight: "bold" }}>{ogData.title}</div>
+                            <div style={{ fontSize: "0.8rem", fontWeight: "bold" }}>{ogData.title}</div>
                             <div style={{fontSize: "0.8rem", color: "#666"}}>{ogData.description}</div>
                         </div>
                     </div>
-                    <div style={{marginTop: "8px", fontSize: "0.9rem"}}>
+                    <div style={{marginTop: "8px", fontSize: "0.7rem"}}>
                         <p>{ogData.description}</p>
                         <a href={ogData.url} target="_blank" rel="noopener noreferrer">
-                            Перейти на сайт
+                            Перейти на сайт (в новой вкладке)
                         </a>
                     </div>
                 </>

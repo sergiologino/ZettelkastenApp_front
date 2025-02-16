@@ -274,6 +274,8 @@ const App = () => {
                         onEdit={handleEditProject}
                         onTagChange={setTags}
                         selectedTags={selectedTags}
+                        setFilteredNotes={setFilteredNotes}
+                        setSelectedTags = {setSelectedTags }
                     />
                     <Routes>
                       <Route path="/" element={<Navigate to="/notes" />} />

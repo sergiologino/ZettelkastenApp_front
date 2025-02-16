@@ -14,7 +14,7 @@ import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { SketchPicker } from "react-color";
-import { fetchAllTags } from "../api/api";
+import {fetchAllNotes, fetchAllTags, fetchNotes, fetchNotesByTags} from "../api/api";
 import "./appStyle.css";
 import {format, formatDate} from "date-fns";
 import { ru } from "date-fns/locale";
@@ -32,6 +32,10 @@ const ProjectPanel_new = ({
                           activeTab,
                           onTabChange,
                           selectedTags,
+                          setFilteredNotes,
+                          notes,
+                          setSelectedTags,
+                          setTags
                       }) => {
     const [newProjectName, setNewProjectName] = useState("");
     const [newProjectDescription, setNewProjectDescription] = useState("");
@@ -43,21 +47,74 @@ const ProjectPanel_new = ({
     const [isEditingProject, setIsEditingProject] = useState(false); // Открыто ли окно редактирования
     const [editColor, setEditColor] = useState("#1976d2");
     const [colorPickerAnchor, setColorPickerAnchor] = useState(null);
+    const [filteredTags, setFilteredTags] = useState(tags);
 
 
     useEffect(() => {
         if (activeTab === 1) {
+            // setFilteredNotes(notes);
             const loadTags = async () => {
                 try {
-                    const tags = await fetchAllTags();
-                    onTagChange(tags);
+                    const fetchedTags = await fetchAllTags();
+                    console.log(fetchedTags);
+                    setFilteredTags(fetchedTags);
                 } catch (error) {
                     console.error("Ошибка при загрузке тегов:", error);
                 }
             };
             loadTags();
         }
-    }, [activeTab]);
+    }, [activeTab, setTags]);
+    // useEffect(() => {
+    //     const loadTags = async () => {
+    //         try {
+    //             const fetchedTags = await fetchAllTags();
+    //             setTags(fetchedTags);
+    //             setFilteredTags(fetchedTags.sort());
+    //         } catch (error) {
+    //             console.error("Ошибка при загрузке тегов:", error);
+    //         }
+    //     };
+    //     loadTags();
+    // }, [setTags]);
+
+
+    useEffect(() => {
+        if (activeTab === 1) {
+            setFilteredNotes(notes); // ✅ При смене на теги всегда загружаем все заметки
+        } else if (selectedTags?.length > 0) {
+            const filterNotesByTags = async () => {
+                try {
+                    const filteredNotes = await fetchNotesByTags(selectedTags);
+                    setFilteredNotes(filteredNotes);
+                    const remainingTags = new Set(filteredNotes.flatMap(note => note.tags));
+                    setFilteredTags(Array.from(remainingTags).sort());
+                } catch (error) {
+                    console.error("Ошибка при фильтрации заметок по тегам:", error);
+                }
+            };
+            filterNotesByTags();
+        } else {
+            setFilteredTags(tags);
+            setFilteredNotes(notes);
+        }
+    }, [selectedTags, tags, notes, activeTab]); // ✅ Добавляем activeTab в зависимости
+
+    useEffect(() => {
+        if (activeTab === 0 && selectedProjectId) {
+            const loadProjectNotes = async () => {
+                try {
+                    const projectNotes = await fetchNotes(selectedProjectId);
+                    setFilteredNotes(projectNotes);
+                } catch (error) {
+                    console.error("Ошибка при загрузке заметок проекта:", error);
+                }
+            };
+            loadProjectNotes();
+        }
+    }, [activeTab, selectedProjectId]);
+
+
 
     // Открытие модального окна для редактирования
     const handleEditProject = (project) => {
@@ -66,6 +123,21 @@ const ProjectPanel_new = ({
         setNewProjectDescription(project.description);
         setEditColor(project.color || "#1976d2");
         setIsEditingProject(true);
+    };
+
+    const handleResetFilter = async () => {
+        setSelectedTags([]);
+        try {
+            const allNotes = await fetchAllNotes();
+            setFilteredNotes(allNotes);
+
+            const allTags = await fetchAllTags();
+            await setTags(allTags); // ✅ Гарантируем обновление списка тегов
+            setFilteredTags(allTags.sort());
+            onTabChange(1);
+        } catch (error) {
+            console.error("Ошибка при загрузке всех заметок:", error);
+        }
     };
 
     // Закрытие модального окна
@@ -294,12 +366,18 @@ const ProjectPanel_new = ({
                                         onDoubleClick={() => handleEditProject(project)}
                                     >
                                         {/* Название проекта */}
-                                        <Typography variant="h6" sx={{ fontSize: "0.9rem", fontWeight: "normal", color: "#fff" }}>
+                                        <Typography variant="h6" sx={{ top:2, fontSize: "0.9rem", fontWeight: "normal", color: "#fff" }}>
                                             {project.name}
                                         </Typography>
                                         {/* Описание проекта */}
                                         <Typography variant="body2" sx={{ fontSize: "0.8rem", color: "#fff", opacity: 0.8, wordWrap: "normal" }}>
                                             {project.description}
+                                        </Typography>
+                                        <Typography
+                                            variant="body2"
+                                            sx={{ position: "absolute", bottom: 4, fontSize: "0.7rem", left: 4, color: "#fff", opacity: 0.8 }}
+                                        >
+                                            {`[${project.noteCount}]`} {/* Количество заметок в фигурных скобках */}
                                         </Typography>
                                         {/* Дата проекта */}
                                         <Typography
@@ -455,6 +533,9 @@ const ProjectPanel_new = ({
                         <Typography variant="h6" sx={{ mb: 2 }}>
                             Теги
                         </Typography>
+                        <Button variant="outlined" fullWidth sx={{ margin: "8px 0" }} onClick={handleResetFilter}>
+                            Сбросить фильтр
+                        </Button>
                         <Box
                             sx={{
                                 display: "flex",
@@ -462,7 +543,7 @@ const ProjectPanel_new = ({
                                 gap: "8px",
                             }}
                         >
-                            {tags?.map((tag) => {
+                            {filteredTags.map((tag)  => {
                                 const isSelected = selectedTags.includes(tag);
                                 const tagColor = getColorForTag(tag);
                                 return (
@@ -477,7 +558,7 @@ const ProjectPanel_new = ({
                                             borderRadius: "15px",
                                             padding: "4px 4px",
                                             fontSize: "0.6rem",
-                                            color: isSelected ? "#fff" : "#000",
+                                            color: selectedTags.includes(tag) ? "#fff" : "#000",
                                             transition: "all 0.3s ease",
                                             "&:hover": {
                                                 transform: "scale(1.1)",

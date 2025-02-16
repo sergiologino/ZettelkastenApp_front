@@ -102,7 +102,7 @@ const TopNavBar = ({ onSearchResults , onToggleTheme, balance, resetAppState }) 
                 {/* ✅ Баланс, имя пользователя и аватар */}
                 <Box sx={{display: "flex", alignItems: "center", mx: 2}}>
                     <Typography variant="body1" sx={{mr: 2}}>
-                        Баланс: {balance} руб.
+                        Баланс: {balance} 0.00 руб.
                     </Typography>
                     {user && (
                         <>

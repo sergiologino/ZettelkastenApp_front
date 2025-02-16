@@ -8,7 +8,10 @@ export const fetchProjects = async () => {
     const response = await api.get('/projects');
 
     //console.log("Полученные проекты:", response.data);
-    return response.data;
+    return response.data.map(project => ({
+        ...project,
+        noteCount: project.noteCount || 0, // Убедимся, что значение не undefined
+    }));
 };
 
 // Получить список заметок проекта
@@ -153,7 +156,8 @@ export const updateNoteCoordinates = async (noteId, x, y) => {
 
 export const uploadFiles = async (noteId, formData) => {
     try {
-        console.log(`Отправляем файлы для заметки ${noteId} `);
+
+
         const response = await api.post(`/notes/${noteId}/files`, formData, {
             headers: { "Content-Type": "multipart/form-data" },
         });
@@ -161,7 +165,7 @@ export const uploadFiles = async (noteId, formData) => {
         return response.data;
 
     } catch (error) {
-        console.error("Ошибка при загрузке файлов:", error);
+        console.error("Ошибка при отправке файлов на сервер:", error);
         throw error;
     }
 };
@@ -177,7 +181,7 @@ export const uploadAudioFiles = async (noteId, formData) => {
         console.log(`АудиоЗаписи для заметки ${noteId} обновлены на сервере:`, response.data);
         return response.data;
     } catch (error) {
-        console.error("Ошибка при загрузке аудиофайлов:", error);
+        console.error("Ошибка при отправке аудиофайлов на сервер:", error);
         throw error;
     }
 };
