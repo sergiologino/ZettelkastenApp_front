@@ -28,12 +28,15 @@ const NoteModal_new = ({
                        open,
                        onClose,
                        onSave,
+                       onDelete,
+                       setNotes,
+                       notes,
                        projects = [],
                        isGlobalAnalysisEnabled = false,
                        note = null,
                        selectedProject,
                        calculateNewNotePosition,
-                       // setNotes = () => {},
+
                    }) => {
     const [activeTab, setActiveTab] = useState(0);
     const [title, setTitle] = useState(note?.title ?? "Новая заметка");
@@ -55,18 +58,12 @@ const NoteModal_new = ({
     const [deletedFiles, setDeletedFiles] = useState([]);
     const [deletedAudios, setDeletedAudios] = useState([]);
     const [project, setProjectName] = useState(note?.project|| "Не заполнено");
-    const [notes, setNotes]=useState([]);
-
+    // const [notes, setNotes]=useState([]);
     const [errors, setErrors] = useState({});
     const noteId = note?.id || "Нет ID";
     const BASE_URL = "http://localhost:8080";
     const titleRef = useRef(title);
-    //console.log("Поступившая заметка: ", note)
-    // console.log("selectedProject: ", selectedProject);
-    // console.log("Projects: ", projects);
-    // console.log("selectedProjectModal: ", selectedProjectModal);
-    // console.log("note.projectName: ", note?.projectName);
-    //console.log("onSave при открытии NoteModal: ", onSave);
+
 
     useEffect(() => {
         if (!note?.projectId) {
@@ -345,6 +342,7 @@ const NoteModal_new = ({
             } else {
                 console.log("Отправляем ПУСТЫЕ файлы для заметки");
                 await uploadFiles(savedNote.id, new FormData());
+
             }
 
             // Загружаем аудиофайлы, если есть
@@ -681,7 +679,29 @@ const NoteModal_new = ({
                     <Button variant="contained" color="primary" onClick={handleSave} sx={{ width: "40%" }}>
                         Сохранить
                     </Button>
+                    {note?.id && (
+                        <Button
+                            variant="outlined"
+                            color="error"
+                            onClick={async () => {
+                                if (window.confirm("Вы уверены, что хотите удалить заметку?")) {
+                                    try {
+                                        await onDelete(note.id);
+                                        setNotes((prevNotes) => prevNotes.filter((n) => n.id !== note.id));
+                                        onClose(); // ✅ Закрываем окно после удаления
+                                    } catch (error) {
+                                        console.error("Ошибка при удалении заметки:", error);
+                                        alert("Ошибка при удалении заметки.");
+                                    }
+                                }
+                            }}
+                            sx={{ width: "40%", marginRight: "10px" }}
+                        >
+                            Удалить
+                        </Button>
+                    )}
                 </Box>
+
             </Box>
         </Modal>
     );

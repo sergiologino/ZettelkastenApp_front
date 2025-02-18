@@ -48,7 +48,7 @@ export const updateNote = async (note) => {
 };
 
 
-///-----------------
+///-  создать заметку ----------------
 export const addNote = async (note,projectId) => {
     console.log("Создаем заметку: ", note);
     console.log("по проекту: ", projectId);
@@ -66,7 +66,7 @@ export const addNote = async (note,projectId) => {
     }
 };
 
-
+// создать проект
 export const createProject = async (project) => {
     try {
         // const token = localStorage.getItem("accessToken");
@@ -82,7 +82,7 @@ export const createProject = async (project) => {
         throw error;
     }
 };
-
+// изменить проект
 export const updateProject = async (project) => {
     try {
         console.log("Отправляем в API:", JSON.stringify(project)); // Логируем данные
@@ -241,7 +241,13 @@ export const updateUserProfile = async (userId, userData) => {
     return api.put(`/users/${userId}`, userData);
 };
 
-
-
+export const deleteNote = async (noteId) => {
+    try {
+        await api.delete(`/notes/${noteId}`);
+    } catch (error) {
+        console.error("Ошибка при удалении заметки:", error.response?.data || error.message);
+        throw error;
+    }
+};
 
 export default api;

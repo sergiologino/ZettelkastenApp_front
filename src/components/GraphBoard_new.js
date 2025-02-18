@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
 import ReactFlow, { MiniMap, Controls, Background, applyEdgeChanges, applyNodeChanges } from "reactflow";
 import "reactflow/dist/style.css";
-import {Badge, Box, Button, Switch} from "@mui/material";
-import {analyzeNotes, fetchOpenGraphDataForNote, updateNoteCoordinates} from "../api/api";
+import {Badge, Box, Button, IconButton, Switch} from "@mui/material";
+import {analyzeNotes, deleteNote, fetchOpenGraphDataForNote, updateNoteCoordinates} from "../api/api";
 import { useNavigate } from "react-router-dom";
 import NoteModal_new from "./NoteModal_new";
 import AttachFileIcon from "@mui/icons-material/AttachFile";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 const GraphBoard_new = ({
                         notes,
@@ -26,6 +27,7 @@ const GraphBoard_new = ({
     const [selectedTags, setSelectedTags] = useState([]); // Выбранные теги.
     const [openGraphData, setOpenGraphData] = useState({});
     const navigate = useNavigate();
+    const [hoveredNote, setHoveredNote] = useState(null);
 
     const handleLogout = () => {
         localStorage.removeItem("accessToken");
@@ -92,7 +94,20 @@ const GraphBoard_new = ({
         const minX = Math.min(...notes.map(note => note.x || 0));
         const minY = Math.min(...notes.map(note => note.y || 0));
 
+        console.log("initial coordinates X:: ", minX, " Y: ", minY);
+
         return { x: minX + 50, y: minY + 50 }; // Смещаем новую заметку вниз и вправо
+    };
+
+    const handleDeleteNote = async (noteId) => {
+        if (window.confirm("Вы действительно хотите удалить эту заметку?")) {
+            try {
+                await deleteNote(noteId);
+                setNotes((prevNotes) => prevNotes.filter((note) => note.id !== noteId)); // ✅ Удаление из состояния
+            } catch (error) {
+                alert("Ошибка при удалении заметки.");
+            }
+        }
     };
 
 
@@ -118,8 +133,48 @@ const GraphBoard_new = ({
         setNodes(
             notes?.map((note) => ({
                 id: note.id,
-                data: { label: note.title || "Без заголовка" },
-                position: { x: note.x, y: note.y },
+                data: {
+                    label:
+                        (
+                            <div
+                                style={{
+                                    position: "relative",
+                                    padding: "8px",
+                                    textAlign: "center",
+                                    fontSize: "12px",
+                                    overflow: "hidden",
+                                    whiteSpace: "nowrap",
+                                }}
+                                onMouseEnter={() => setHoveredNote(note.id)} // ✅ Наведение мыши
+                                onMouseLeave={() => setHoveredNote(null)} // ✅ Уход мыши
+                            >
+                                <div style={{ fontSize: "14px", fontWeight: "bold" }}>{note.title}</div>
+                                <div style={{ fontSize: "12px", color: "#666" }}>
+                                    {note.content?.length > 50 ? note.content.slice(0, 50) + "..." : note.content}
+                                </div>
+
+                                {hoveredNote === note.id && (
+                                    <IconButton
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDeleteNote(note.id);
+                                        }}
+                                        style={{
+                                            position: "absolute",
+                                            top: "5px",
+                                            right: "5px",
+                                            background: "white",
+                                            borderRadius: "50%",
+                                            padding: "5px",
+                                        }}
+                                    >
+                                        <DeleteIcon color="error"/>
+                                    </IconButton>
+                                )}
+                            </div>
+                        ),
+                },
+                position: {x: note.x, y: note.y},
                 style: {
                     width: `${note.width || 150}px`,
                     height: `${note.height || 150}px`,
@@ -130,9 +185,7 @@ const GraphBoard_new = ({
                 },
             }))
         );
-    }, [notes]);
-
-
+    }, [notes, hoveredNote]);
 
 
     useEffect(() => {
@@ -152,10 +205,10 @@ const GraphBoard_new = ({
                             }}
                         >
                             {/* Заголовок заметки */}
-                            <div style={{ fontSize: "14px", fontWeight: "bold" }}>{note.title}</div>
+                            <div style={{fontSize: "14px", fontWeight: "bold"}}>{note.title}</div>
 
                             {/* Контент заметки */}
-                            <div style={{ fontSize: "12px", color: "#666" }}>
+                            <div style={{fontSize: "12px", color: "#666"}}>
                                 {note.content?.length > 50 ? note.content.slice(0, 50) + "..." : note.content}
                             </div>
 
@@ -163,7 +216,7 @@ const GraphBoard_new = ({
                             <div
                                 style={{
                                     display: "flex",
-                                        flexWrap: "wrap",
+                                    flexWrap: "wrap",
                                         gap: "4px",
                                         marginTop: "4px",
                                         marginBottom:"4px",
@@ -506,7 +559,9 @@ const GraphBoard_new = ({
                     projects={projects}
                     selectedProject={selectedProject}
                     setNotes={setNotes} // Передача setNotes
+                    notes={notes}
                     calculateNewNotePosition={() => calculateNewNotePosition(notes)} // ✅ Передаем функцию координат новой заметки
+                    onDelete={handleDeleteNote}
 
                 />
             )}
