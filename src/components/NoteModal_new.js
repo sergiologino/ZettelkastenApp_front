@@ -28,6 +28,7 @@ const NoteModal_new = ({
                        open,
                        onClose,
                        onSave,
+                       onUpdateNote,
                        onDelete,
                        setNotes,
                        notes,
@@ -293,8 +294,6 @@ const NoteModal_new = ({
 
     const handleSave = async () => {
         if (!validate()) return;
-
-
             let savedNote = {
                 ...note,
                 title,
@@ -310,9 +309,12 @@ const NoteModal_new = ({
             console.log("Подготовленная заметка перед сохранением:", savedNote);
 
             // Если это новая заметка, сначала создаем ее
-            if (!savedNote.id) {
-                console.log("Создаем новую заметку...");
-                savedNote = await onSave(savedNote); // Сохраняем и получаем ID
+            if (savedNote.id) {
+                // Если заметка уже существует, вызываем функцию обновления
+                savedNote = await onUpdateNote(savedNote);
+            } else {
+                // Если заметка новая, вызываем функцию создания
+                savedNote = await onSave(savedNote);
             }
 
             if (!savedNote.id) {
@@ -560,6 +562,7 @@ const NoteModal_new = ({
                                             />
                                         ))}
                                     </Box>
+                                    <Typography sx={{ color: "#757575", display: "flex", flexWrap: "wrap", left: "50%",bottom:"2px", mt: 2 }}>id заметки: {note.id}</Typography>
                                 </>
                             )}
                         </Box>

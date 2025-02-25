@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import ReactFlow, { MiniMap, Controls, Background, applyEdgeChanges, applyNodeChanges } from "reactflow";
 import "reactflow/dist/style.css";
-import {Badge, Box, Button, IconButton, Switch} from "@mui/material";
+import { IconButton} from "@mui/material";
+// import {Badge, Box, Button, Switch} from "@mui/material";
 import {analyzeNotes, deleteNote, fetchOpenGraphDataForNote, updateNoteCoordinates} from "../api/api";
 import { useNavigate } from "react-router-dom";
 import NoteModal_new from "./NoteModal_new";
@@ -23,17 +24,19 @@ const GraphBoard_new = ({
     const [selectedNote, setSelectedNote] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedNoteIds, setSelectedNoteIds] = useState([]);
-    const [activeTab, setActiveTab] = useState(0); // Активный таб
+    const [activeTab] = useState(0); // Активный таб
     const [selectedTags, setSelectedTags] = useState([]); // Выбранные теги.
     const [openGraphData, setOpenGraphData] = useState({});
     const navigate = useNavigate();
     const [hoveredNote, setHoveredNote] = useState(null);
+    const [recentlyHoveredNote, setRecentlyHoveredNote] = useState(null);
 
-    const handleLogout = () => {
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-        navigate("/auth");
-    };
+
+    // const handleLogout = () => {
+    //     localStorage.removeItem("accessToken");
+    //     localStorage.removeItem("refreshToken");
+    //     navigate("/auth");
+    // };
 
     const resizableStyle = {
         display: "flex",
@@ -49,42 +52,55 @@ const GraphBoard_new = ({
 
 
     const onNodeDragStop = async (_, node) => {
-        const updatedNodes = nodes.map((n) =>
-            n.id === node.id ? { ...n, position: node.position } : n
-        );
-        setNodes(updatedNodes);
-
         const movedNote = notes.find((note) => note.id === node.id);
-        if (movedNote) {
-            const updatedNote = {
-                ...movedNote,
-                x: Math.round(node.position.x),
-                y: Math.round(node.position.y),
-            };
+        if (!movedNote) return;
 
-            try {
-                await updateNoteCoordinates(updatedNote.id, updatedNote.x, updatedNote.y);
-                setNotes((prevNotes) =>
-                    prevNotes.map((note) => (note.id === updatedNote.id ? updatedNote : note))
-                );
-            } catch (error) {
-                console.error("Ошибка при обновлении координат на сервере:", error);
-            }
+        const updatedNote = { ...movedNote, x: Math.round(node.position.x), y: Math.round(node.position.y) };
 
-            setSelectedNote(updatedNote);
+        try {
+            await updateNoteCoordinates(updatedNote.id, updatedNote.x, updatedNote.y);
+            setNotes((prevNotes) => prevNotes.map((note) => note.id === updatedNote.id ? updatedNote : note));
+        } catch (error) {
+            console.error("Ошибка при обновлении координат на сервере:", error);
         }
     };
+    // const onNodeDragStop = async (_, node) => {
+    //     const updatedNodes = nodes.map((n) =>
+    //         n.id === node.id ? { ...n, position: node.position } : n
+    //     );
+    //     setNodes(updatedNodes);
+    //
+    //     const movedNote = notes.find((note) => note.id === node.id);
+    //     if (movedNote) {
+    //         const updatedNote = {
+    //             ...movedNote,
+    //             x: Math.round(node.position.x),
+    //             y: Math.round(node.position.y),
+    //         };
+    //
+    //         try {
+    //             await updateNoteCoordinates(updatedNote.id, updatedNote.x, updatedNote.y);
+    //             setNotes((prevNotes) =>
+    //                 prevNotes.map((note) => (note.id === updatedNote.id ? updatedNote : note))
+    //             );
+    //         } catch (error) {
+    //             console.error("Ошибка при обновлении координат на сервере:", error);
+    //         }
+    //
+    //         setSelectedNote(updatedNote);
+    //     }
+    // };
 
-    const handleNoteSelection = (event, noteId, isChecked) => {
-        setNotes((prevNotes) =>
-            prevNotes.map((note) =>
-                note.id === noteId ? { ...note, individualAnalysisFlag: isChecked } : note
-            )
-        );
-        setSelectedNoteIds((prevIds) =>
-            event.target.checked ? [...prevIds, noteId] : prevIds.filter((id) => id !== noteId)
-        );
-    };
+    // const handleNoteSelection = (event, noteId, isChecked) => {
+    //     setNotes((prevNotes) =>
+    //         prevNotes.map((note) =>
+    //             note.id === noteId ? { ...note, individualAnalysisFlag: isChecked } : note
+    //         )
+    //     );
+    //     setSelectedNoteIds((prevIds) =>
+    //         event.target.checked ? [...prevIds, noteId] : prevIds.filter((id) => id !== noteId)
+    //     );
+    // };
 
     const calculateNewNotePosition = (notes) => {
         if (notes.length === 0) {
@@ -100,6 +116,7 @@ const GraphBoard_new = ({
     };
 
     const handleDeleteNote = async (noteId) => {
+        console.log("Удаляем заметку: ",noteId);
         if (window.confirm("Вы действительно хотите удалить эту заметку?")) {
             try {
                 await deleteNote(noteId);
@@ -123,74 +140,8 @@ const GraphBoard_new = ({
     }, [filteredNotes]);
 
     useEffect(() => {
-        if (notes?.length > 0) {
-            const calculatedEdges = getEdges(notes);
-            setEdges(calculatedEdges);
-        }
-    }, [notes]);
-
-    useEffect(() => {
         setNodes(
-            notes?.map((note) => ({
-                id: note.id,
-                data: {
-                    label:
-                        (
-                            <div
-                                style={{
-                                    position: "relative",
-                                    padding: "8px",
-                                    textAlign: "center",
-                                    fontSize: "12px",
-                                    overflow: "hidden",
-                                    whiteSpace: "nowrap",
-                                }}
-                                onMouseEnter={() => setHoveredNote(note.id)} // ✅ Наведение мыши
-                                onMouseLeave={() => setHoveredNote(null)} // ✅ Уход мыши
-                            >
-                                <div style={{ fontSize: "14px", fontWeight: "bold" }}>{note.title}</div>
-                                <div style={{ fontSize: "12px", color: "#666" }}>
-                                    {note.content?.length > 50 ? note.content.slice(0, 50) + "..." : note.content}
-                                </div>
-
-                                {hoveredNote === note.id && (
-                                    <IconButton
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleDeleteNote(note.id);
-                                        }}
-                                        style={{
-                                            position: "absolute",
-                                            top: "5px",
-                                            right: "5px",
-                                            background: "white",
-                                            borderRadius: "50%",
-                                            padding: "5px",
-                                        }}
-                                    >
-                                        <DeleteIcon color="error"/>
-                                    </IconButton>
-                                )}
-                            </div>
-                        ),
-                },
-                position: {x: note.x, y: note.y},
-                style: {
-                    width: `${note.width || 150}px`,
-                    height: `${note.height || 150}px`,
-                    background: "#fff",
-                    border: "1px solid #ccc",
-                    borderRadius: "8px",
-                    boxSizing: "border-box",
-                },
-            }))
-        );
-    }, [notes, hoveredNote]);
-
-
-    useEffect(() => {
-        setNodes(
-            notes?.map((note) => ({
+            notes.map((note, index) => ({
                 id: note.id,
                 data: {
                     label: (
@@ -203,13 +154,18 @@ const GraphBoard_new = ({
                                 overflow: "hidden",
                                 whiteSpace: "nowrap",
                             }}
+                            onMouseEnter={() => setHoveredNote(note.id)}
+                            onMouseLeave={() => setTimeout(() => setHoveredNote(null), 500)}
                         >
-                            {/* Заголовок заметки */}
-                            <div style={{fontSize: "14px", fontWeight: "bold"}}>{note.title}</div>
-
-                            {/* Контент заметки */}
-                            <div style={{fontSize: "12px", color: "#666"}}>
-                                {note.content?.length > 50 ? note.content.slice(0, 50) + "..." : note.content}
+                            <div style={{ fontSize: "14px", fontWeight: "bold" }}>
+                                {note.title}
+                            </div>
+                            <div style={{ fontSize: "12px", color: "#666" }}>
+                                {note.content
+                                    ? note.content.length > 50
+                                        ? note.content.slice(0, 50) + "..."
+                                        : note.content
+                                    : ""}
                             </div>
 
                             {/* Теги */}
@@ -217,11 +173,10 @@ const GraphBoard_new = ({
                                 style={{
                                     display: "flex",
                                     flexWrap: "wrap",
-                                        gap: "4px",
-                                        marginTop: "4px",
-                                        marginBottom:"4px",
-                                        marginLeft: "2px",
-                                        bottom: 8,
+                                    gap: "4px",
+                                    marginTop: "4px",
+                                    marginBottom: "4px",
+                                    marginLeft: "2px",
                                 }}
                             >
                                 {note.tags?.map((tag) => (
@@ -229,12 +184,12 @@ const GraphBoard_new = ({
                                         key={tag}
                                         style={{
                                             fontSize: "0.4rem",
-                                                border: "1px solid #ccc",
-                                                borderColor:  getColorForTag(tag),
-                                                borderRadius: "4px",
-                                                padding: "2px 4px",
-                                                backgroundColor: "#fff",
-                                                color: getColorForTag(tag),
+                                            border: "1px solid #ccc",
+                                            borderColor: getColorForTag(tag),
+                                            borderRadius: "4px",
+                                            padding: "2px 4px",
+                                            backgroundColor: "#fff",
+                                            color: getColorForTag(tag),
                                         }}
                                     >
                                     {tag}
@@ -242,32 +197,59 @@ const GraphBoard_new = ({
                                 ))}
                             </div>
 
-                            {/* Бейджик вложений в правом нижнем углу */}
-                            {(note.files?.length || 0) +
+                            {/* Бейджик вложений */}
+                            {((note.files?.length || 0) +
                                 (note.audios?.length || 0) +
-                                (note.urls?.length || 0) > 0 && (
-                                    <div
-                                        style={{
-                                            position: "absolute",
-                                            bottom: "2px",
-                                            right: "2px",
-                                            display: "flex",
-                                            alignItems: "center",
-                                            fontSize: "6px",
-                                            color: "#006400", // ✅ Темно-зеленый цвет
-                                            fontWeight: "bold",
-                                        }}
-                                    >
-                                        <AttachFileIcon style={{ fontSize: "10px", marginRight: "2px" }} />{" "}
-                                        { (note.files?.length || 0) +
-                                            (note.audios?.length || 0) +
-                                            (note.urls?.length || 0) }
-                                    </div>
-                                )}
+                                (note.urls?.length || 0)) > 0 && (
+                                <div
+                                    style={{
+                                        position: "absolute",
+                                        bottom: "2px",
+                                        right: "2px",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        fontSize: "6px",
+                                        color: "#006400",
+                                        fontWeight: "bold",
+                                    }}
+                                >
+                                    <AttachFileIcon style={{ fontSize: "10px", marginRight: "2px" }} />
+                                    {(note.files?.length || 0) +
+                                        (note.audios?.length || 0) +
+                                        (note.urls?.length || 0)}
+                                </div>
+                            )}
+
+                            {/* Кнопка удаления */}
+                            {(hoveredNote === note.id || recentlyHoveredNote === note.id) && (
+                                <IconButton
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDeleteNote(note.id);
+                                    }}
+                                    onMouseEnter={() => setRecentlyHoveredNote(note.id)}
+                                    onMouseLeave={() => setTimeout(() => setRecentlyHoveredNote(null), 500)}
+                                    style={{
+                                        position: "absolute",
+                                        bottom: "2px",
+                                        right: "-2px",
+                                        background: "rgba(255,255,255,0.9)",
+                                        borderRadius: "50%",
+                                        padding: "4px",
+                                        width: "30px",
+                                        height: "30px",
+                                        transition: "opacity 0.2s ease-in-out",
+                                        opacity: hoveredNote === note.id || recentlyHoveredNote === note.id ? 1 : 0.2,
+                                        zIndex: 20, // Подняли выше всего
+                                    }}
+                                >
+                                    <DeleteIcon color="error" />
+                                </IconButton>
+                            )}
                         </div>
                     ),
                 },
-                position: { x: note.x, y: note.y },
+                position: { x: note.x || index * 100, y: note.y || index * 50 },
                 style: {
                     width: `${note.width || 150}px`,
                     height: `${note.height || 100}px`,
@@ -280,61 +262,51 @@ const GraphBoard_new = ({
                 },
             }))
         );
-    }, [notes]);
+    }, [notes]); // ✅ hoveredNote убран из зависимостей, обновление UI через onMouseEnter/onMouseLeave
+// ✅ hoveredNote убран из зависимостей, но UI обновляется через onMouseEnter/onMouseLeave
 
-    useEffect(() => {
-        const loadOpenGraphData = async () => {
-            const newOpenGraphData = {};
 
-            for (const note of notes) {
-                if (note.urls?.length) {
-                    try {
-                        console.log("получаем OpenGraphData для каждой заметки")
-                        const ogData = await fetchOpenGraphDataForNote(note.id, note.urls);
-                        newOpenGraphData[note.id] = ogData; // Сохраняем данные для каждой заметки
-                    } catch (error) {
-                        console.error(`Ошибка загрузки OpenGraph данных для заметки ${note.id}:`, error);
-                    }
-                }
-            }
 
-            setOpenGraphData(newOpenGraphData);
-        };
-
-        if (notes?.length > 0) {
-            loadOpenGraphData().then(r => '');
-        }
-    }, [filteredNotes, notes]);
 
     const getEdges = (notes) => {
         const edges = [];
-        const addedEdges = new Set();
+        // Группируем заметки по тегам
+        const tagToNotes = {};
 
-        notes.forEach((noteA, indexA) => {
-            notes.forEach((noteB, indexB) => {
-                if (indexA < indexB && noteA.tags && noteB.tags) {
-                    const commonTags = noteA.tags.filter((tag) => noteB.tags.includes(tag));
-                    commonTags.forEach((tag) => {
-                        const edgeId = `${noteA.id}-${noteB.id}-${tag}`;
-                        const reverseEdgeId = `${noteB.id}-${noteA.id}-${tag}`;
+        notes.forEach((note) => {
+            if (note.tags) {
+                note.tags.forEach((tag) => {
+                    if (!tagToNotes[tag]) {
+                        tagToNotes[tag] = [];
+                    }
+                    tagToNotes[tag].push(note);
+                });
+            }
+        });
 
-                        if (!addedEdges.has(edgeId) && !addedEdges.has(reverseEdgeId)) {
-                            edges.push({
-                                id: edgeId,
-                                source: noteA.id,
-                                target: noteB.id,
-                                animated: true,
-                                style: { stroke: getColorForTag(tag) },
-                            });
-                            addedEdges.add(edgeId);
-                        }
+        // Для каждой группы по тегу
+        Object.entries(tagToNotes).forEach(([tag, notesWithTag]) => {
+            if (notesWithTag.length > 1) {
+                // Сортируем по дате создания (от старой к новой)
+                notesWithTag.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+                const sourceNote = notesWithTag[0]; // самая старая заметка
+                // Создаём связь от самой старой ко всем остальным
+                for (let i = 1; i < notesWithTag.length; i++) {
+                    const targetNote = notesWithTag[i];
+                    edges.push({
+                        id: `${sourceNote.id}-${targetNote.id}-${tag}`,
+                        source: sourceNote.id,
+                        target: targetNote.id,
+                        animated: true,
+                        style: { stroke: getColorForTag(tag) },
                     });
                 }
-            });
+            }
         });
 
         return edges;
     };
+
 
     const getColorForTag = (tag) => {
         const hash = Array.from(tag).reduce((sum, char) => sum + char.charCodeAt(0), 0);
@@ -355,10 +327,10 @@ const GraphBoard_new = ({
     const handleSaveNote = async (updatedNote) => {
 
         // Гарантируем, что urls всегда массив
-        const noteWithUrls = {
-            ...updatedNote,
-            urls: Array.isArray(updatedNote.urls) ? updatedNote.urls : [], // Если urls отсутствует или не массив, создаём пустой массив
-        };
+        // const noteWithUrls = {
+        //     ...updatedNote,
+        //     urls: Array.isArray(updatedNote.urls) ? updatedNote.urls : [], // Если urls отсутствует или не массив, создаём пустой массив
+        // };
         const projectId = updatedNote.projectId || selectedProject;
 
         try {
@@ -402,17 +374,17 @@ const GraphBoard_new = ({
     };
 
     // Выбор тега
-    const handleSelectTag = (tag) => {
-        const updatedTags = selectedTags.includes(tag)
-            ? selectedTags.filter((t) => t !== tag)
-            : [...selectedTags, tag];
-        setSelectedTags(updatedTags);
-
-        const filteredByTags = notes.filter((note) =>
-            updatedTags.some((selectedTag) => note.tags.includes(selectedTag))
-        );
-        setFilteredNotes(filteredByTags);
-    };
+    // const handleSelectTag = (tag) => {
+    //     const updatedTags = selectedTags.includes(tag)
+    //         ? selectedTags.filter((t) => t !== tag)
+    //         : [...selectedTags, tag];
+    //     setSelectedTags(updatedTags);
+    //
+    //     const filteredByTags = notes.filter((note) =>
+    //         updatedTags.some((selectedTag) => note.tags.includes(selectedTag))
+    //     );
+    //     setFilteredNotes(filteredByTags);
+    // };
 
 
     const onNodeResizeStart = (event, node) => {
@@ -555,6 +527,7 @@ const GraphBoard_new = ({
                     open={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
                     onSave={handleSaveNote}
+                    onUpdateNote={handleSaveNote}
                     note={selectedNote || {urls: []}} // Передаём объект с полем urls
                     projects={projects}
                     selectedProject={selectedProject}
