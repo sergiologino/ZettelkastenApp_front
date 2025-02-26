@@ -82,6 +82,7 @@ const ProfileModal  = ({ open = false, onClose }) =>  {
             }
 
             alert("Аватар успешно обновлён!");
+            console.log("новый аватар:", response.data.avatarUrl);
         } catch (error) {
             console.error("Ошибка обновления аватара:", error);
         }
@@ -100,10 +101,9 @@ const ProfileModal  = ({ open = false, onClose }) =>  {
 
 
     // console.log("ProfileModal перед рендерингом JSX, user:", user);
-    const avatarSrc = user?.avatarUrl && user.avatarUrl !== "0"
+    const avatarSrc = user?.avatarUrl && user.avatarUrl.startsWith("data:image")
         ? user.avatarUrl
         : process.env.PUBLIC_URL + "/default-avatar.png";
-
     // console.log("Аватар для рендера:", avatarSrc);
 
     return (

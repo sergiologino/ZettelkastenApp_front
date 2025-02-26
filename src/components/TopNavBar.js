@@ -82,7 +82,7 @@ const TopNavBar = ({ onSearchResults , onToggleTheme, balance, resetAppState }) 
                 <Box sx={{display: "flex", alignItems: "center"}}>
                     <img src={logo} alt="Логотип" style={{width: 40, height: 40, marginRight: 10}}/>
                     <Typography variant="h6" noWrap sx={{fontWeight: "bold", color: "white"}}>
-                        Alta Note
+                        AltaNote
                     </Typography>
                 </Box>
                 {/* Поле поиска с кнопкой лупы */}

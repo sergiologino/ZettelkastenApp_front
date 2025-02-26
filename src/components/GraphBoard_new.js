@@ -64,43 +64,7 @@ const GraphBoard_new = ({
             console.error("Ошибка при обновлении координат на сервере:", error);
         }
     };
-    // const onNodeDragStop = async (_, node) => {
-    //     const updatedNodes = nodes.map((n) =>
-    //         n.id === node.id ? { ...n, position: node.position } : n
-    //     );
-    //     setNodes(updatedNodes);
-    //
-    //     const movedNote = notes.find((note) => note.id === node.id);
-    //     if (movedNote) {
-    //         const updatedNote = {
-    //             ...movedNote,
-    //             x: Math.round(node.position.x),
-    //             y: Math.round(node.position.y),
-    //         };
-    //
-    //         try {
-    //             await updateNoteCoordinates(updatedNote.id, updatedNote.x, updatedNote.y);
-    //             setNotes((prevNotes) =>
-    //                 prevNotes.map((note) => (note.id === updatedNote.id ? updatedNote : note))
-    //             );
-    //         } catch (error) {
-    //             console.error("Ошибка при обновлении координат на сервере:", error);
-    //         }
-    //
-    //         setSelectedNote(updatedNote);
-    //     }
-    // };
 
-    // const handleNoteSelection = (event, noteId, isChecked) => {
-    //     setNotes((prevNotes) =>
-    //         prevNotes.map((note) =>
-    //             note.id === noteId ? { ...note, individualAnalysisFlag: isChecked } : note
-    //         )
-    //     );
-    //     setSelectedNoteIds((prevIds) =>
-    //         event.target.checked ? [...prevIds, noteId] : prevIds.filter((id) => id !== noteId)
-    //     );
-    // };
 
     const calculateNewNotePosition = (notes) => {
         if (notes.length === 0) {
@@ -141,7 +105,7 @@ const GraphBoard_new = ({
 
     useEffect(() => {
         setNodes(
-            notes.map((note, index) => ({
+            notes?.map((note, index) => ({
                 id: note.id,
                 data: {
                     label: (
@@ -220,7 +184,7 @@ const GraphBoard_new = ({
                                 </div>
                             )}
 
-                            {/* Кнопка удаления */}
+                            {/* Кнопка удаления - в правом верхнем углу */}
                             {(hoveredNote === note.id || recentlyHoveredNote === note.id) && (
                                 <IconButton
                                     onClick={(e) => {
@@ -231,19 +195,19 @@ const GraphBoard_new = ({
                                     onMouseLeave={() => setTimeout(() => setRecentlyHoveredNote(null), 500)}
                                     style={{
                                         position: "absolute",
-                                        bottom: "2px",
-                                        right: "-2px",
+                                        top: "4px",
+                                        right: "4px",
                                         background: "rgba(255,255,255,0.9)",
+                                        width: "20px",
+                                        height: "20px",
+                                        zIndex: 10,
                                         borderRadius: "50%",
-                                        padding: "4px",
-                                        width: "30px",
-                                        height: "30px",
-                                        transition: "opacity 0.2s ease-in-out",
-                                        opacity: hoveredNote === note.id || recentlyHoveredNote === note.id ? 1 : 0.2,
-                                        zIndex: 20, // Подняли выше всего
+                                        border: "1px solid #ccc",
+                                        boxShadow: "0 2px 5px rgba(0,0,0,0.2)",
+                                        padding: "2px",
                                     }}
                                 >
-                                    <DeleteIcon color="error" />
+                                    <DeleteIcon color="error" style={{ fontSize: "16px" }} />
                                 </IconButton>
                             )}
                         </div>
@@ -262,9 +226,8 @@ const GraphBoard_new = ({
                 },
             }))
         );
-    }, [notes]); // ✅ hoveredNote убран из зависимостей, обновление UI через onMouseEnter/onMouseLeave
-// ✅ hoveredNote убран из зависимостей, но UI обновляется через onMouseEnter/onMouseLeave
-
+        setEdges(getEdges(notes));
+    }, [notes]); // ✅ hoveredNote убран из зависимостей
 
 
 
@@ -273,9 +236,9 @@ const GraphBoard_new = ({
         // Группируем заметки по тегам
         const tagToNotes = {};
 
-        notes.forEach((note) => {
+        notes?.forEach((note) => {
             if (note.tags) {
-                note.tags.forEach((tag) => {
+                note.tags?.forEach((tag) => {
                     if (!tagToNotes[tag]) {
                         tagToNotes[tag] = [];
                     }
@@ -285,7 +248,7 @@ const GraphBoard_new = ({
         });
 
         // Для каждой группы по тегу
-        Object.entries(tagToNotes).forEach(([tag, notesWithTag]) => {
+        Object.entries(tagToNotes)?.forEach(([tag, notesWithTag]) => {
             if (notesWithTag.length > 1) {
                 // Сортируем по дате создания (от старой к новой)
                 notesWithTag.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
@@ -326,11 +289,7 @@ const GraphBoard_new = ({
 
     const handleSaveNote = async (updatedNote) => {
 
-        // Гарантируем, что urls всегда массив
-        // const noteWithUrls = {
-        //     ...updatedNote,
-        //     urls: Array.isArray(updatedNote.urls) ? updatedNote.urls : [], // Если urls отсутствует или не массив, создаём пустой массив
-        // };
+
         const projectId = updatedNote.projectId || selectedProject;
 
         try {
@@ -457,7 +416,6 @@ const GraphBoard_new = ({
     }, [selectedTags, activeTab]);
 
 
-    // console.log("📌 handleSaveNote:", handleSaveNote);
     return (
         <div className="board" style={{width: "100%", height: "90vh"}}>
             <ReactFlow
