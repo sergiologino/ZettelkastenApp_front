@@ -1,3 +1,5 @@
+import OGPreview from "./OGPreviewBoard"; // Импортируем OGPreview
+import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline"; // Импорт иконки копирования
 import React, { useState, useEffect } from "react";
 import ReactFlow, { MiniMap, Controls, Background, applyEdgeChanges, applyNodeChanges } from "reactflow";
 import "reactflow/dist/style.css";
@@ -50,6 +52,24 @@ const GraphBoard_new = ({
         overflow: "hidden", // Скрываем выходящий контент
     };
 
+    const ResizableHandle = ({ onResizeStart }) => (
+        <div
+            onMouseDown={onResizeStart}
+            style={{
+                position: "absolute",
+                bottom: "-8px", // 🔹 Снаружи ноды
+                right: "-8px",  // 🔹 Снаружи ноды
+                width: "12px",
+                height: "12px",
+                backgroundColor: "#888",
+                cursor: "se-resize",
+                borderRadius: "4px",
+                border: "2px solid #fff",
+                zIndex: 20, // 🔹 Выше всех остальных элементов
+            }}
+        />
+    );
+
 
     const onNodeDragStop = async (_, node) => {
         const movedNote = notes.find((note) => note.id === node.id);
@@ -89,6 +109,25 @@ const GraphBoard_new = ({
                 alert("Ошибка при удалении заметки.");
             }
         }
+    };
+
+    const handleCopyNote = (originalNote) => {
+        const copiedNote = {
+            title: `Copy: ${originalNote.title}`,
+            content: originalNote.content,
+            tags: [...originalNote.tags],
+            projectId: originalNote.projectId,
+        };
+
+        setSelectedNote(copiedNote);
+        setIsModalOpen(true);
+    };
+
+
+    const getOpenGraphThumbnail = (note) => {
+        if (!note.openGraphData || Object.keys(note.openGraphData).length === 0) return null;
+        const firstOG = Object.values(note.openGraphData)[0]; // Берем первую OG-ссылку
+        return <OGPreview ogData={firstOG} />;
     };
 
 
@@ -131,6 +170,9 @@ const GraphBoard_new = ({
                                         : note.content
                                     : ""}
                             </div>
+
+                            {/* Миниатюра OpenGraph */}
+                            {getOpenGraphThumbnail(note)}
 
                             {/* Теги */}
                             <div
@@ -183,6 +225,33 @@ const GraphBoard_new = ({
                                         (note.urls?.length || 0)}
                                 </div>
                             )}
+                            {/* Иконка копирования */}
+                            {(hoveredNote === note.id || recentlyHoveredNote === note.id) && (
+                                <IconButton
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleCopyNote(note);
+                                    }}
+                                    onMouseEnter={() => setHoveredNote(note.id)}
+                                    onMouseLeave={() => setTimeout(() => setHoveredNote(null), 300)}
+                                    style={{
+                                        position: "absolute",
+                                        top: "50%",
+                                        right: "-20px", // Снаружи ноды
+                                        transform: "translateY(-50%)",
+                                        background: "rgba(255,255,255,0.9)",
+                                        width: "20px",
+                                        height: "20px",
+                                        zIndex: 10,
+                                        borderRadius: "50%",
+                                        border: "1px solid #ccc",
+                                        boxShadow: "0 2px 5px rgba(0,0,0,0.2)",
+                                        padding: "2px",
+                                    }}
+                                >
+                                    <AddCircleOutlineIcon color="primary" style={{ fontSize: "16px" }} />
+                                </IconButton>
+                            )}
 
                             {/* Кнопка удаления - в правом верхнем углу */}
                             {(hoveredNote === note.id || recentlyHoveredNote === note.id) && (
@@ -210,7 +279,12 @@ const GraphBoard_new = ({
                                     <DeleteIcon color="error" style={{ fontSize: "16px" }} />
                                 </IconButton>
                             )}
+                            {/* Изменение размера - в правом нижнем углу снаружи */}
+                            <ResizableHandle onResizeStart={(e) => handleResizeStart(e, note.id)} />
+
                         </div>
+
+
                     ),
                 },
                 position: { x: note.x || index * 100, y: note.y || index * 50 },
@@ -222,6 +296,7 @@ const GraphBoard_new = ({
                     borderRadius: "8px",
                     boxSizing: "border-box",
                     padding: "8px",
+                    position: "absolute",
                     overflow: "hidden",
                 },
             }))
@@ -332,38 +407,17 @@ const GraphBoard_new = ({
         }
     };
 
-    // Выбор тега
-    // const handleSelectTag = (tag) => {
-    //     const updatedTags = selectedTags.includes(tag)
-    //         ? selectedTags.filter((t) => t !== tag)
-    //         : [...selectedTags, tag];
-    //     setSelectedTags(updatedTags);
-    //
-    //     const filteredByTags = notes.filter((note) =>
-    //         updatedTags.some((selectedTag) => note.tags.includes(selectedTag))
-    //     );
-    //     setFilteredNotes(filteredByTags);
-    // };
-
-
-    const onNodeResizeStart = (event, node) => {
-        // Проверяем, началось ли изменение через псевдоэлемент
-        if (event.target.classList.contains("node") || event.target.matches(".node::after")) {
-            event.stopPropagation(); // Останавливаем перемещение ноды
-        }
-    };
-
     const handleResizeStart = (event, nodeId) => {
-        event.stopPropagation(); // Отключаем событие drag
+        event.preventDefault(); // 🔹 Блокируем стандартное поведение браузера
+        event.stopPropagation(); // 🔹 Останавливаем событие, чтобы не перетаскивалась нода
 
         const node = nodes.find((n) => n.id === nodeId);
-
         if (!node) return;
 
         const startX = event.clientX;
         const startY = event.clientY;
         const startWidth = parseInt(node.style.width, 10) || 150;
-        const startHeight = parseInt(node.style.height, 10) || 150;
+        const startHeight = parseInt(node.style.height, 10) || 100;
 
         const handleMouseMove = (e) => {
             const newWidth = Math.max(50, startWidth + e.clientX - startX);
@@ -385,7 +439,7 @@ const GraphBoard_new = ({
             );
         };
 
-        const handleMouseUp = () => {
+        const handleMouseUp = async () => {
             document.removeEventListener("mousemove", handleMouseMove);
             document.removeEventListener("mouseup", handleMouseUp);
 
@@ -396,9 +450,15 @@ const GraphBoard_new = ({
                     width: parseInt(updatedNode.style.width, 10),
                     height: parseInt(updatedNode.style.height, 10),
                 };
-                onUpdateNote(updatedNote).catch((err) =>
-                    console.error("Ошибка сохранения размера ноды:", err)
-                );
+
+                try {
+                    await onUpdateNote(updatedNote); // ✅ Обновляем бэкенд
+                    setNotes((prevNotes) =>
+                        prevNotes.map((note) => (note.id === updatedNote.id ? updatedNote : note))
+                    );
+                } catch (err) {
+                    console.error("Ошибка сохранения размера ноды:", err);
+                }
             }
         };
 
@@ -468,17 +528,6 @@ const GraphBoard_new = ({
             >
                 +
             </button>
-            {/*<button onClick={handleLogout} style={{*/}
-            {/*    border: "thin",*/}
-            {/*    color: "blue",*/}
-            {/*    margin: "10px",*/}
-            {/*    height: "20px",*/}
-            {/*    width: "60px",*/}
-            {/*    borderRadius: "10px",*/}
-            {/*    padding: "2px"*/}
-            {/*}}>*/}
-            {/*    Выйти*/}
-            {/*</button>*/}
             {isModalOpen && (
 
                 <NoteModal_new
@@ -493,6 +542,8 @@ const GraphBoard_new = ({
                     notes={notes}
                     calculateNewNotePosition={() => calculateNewNotePosition(notes)} // ✅ Передаем функцию координат новой заметки
                     onDelete={handleDeleteNote}
+                    setSelectedNote={setSelectedNote} // 🔹 Передаём setSelectedNote в модальное окно
+                    setIsModalOpen={setIsModalOpen} // 🔹 Передаём setIsModalOpen в модальное окно
 
                 />
             )}

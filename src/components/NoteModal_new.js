@@ -16,6 +16,10 @@ import {
     Badge,
     Fade,
 } from "@mui/material";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy"; // Иконка копирования
+import SaveIcon from "@mui/icons-material/Save"; // Иконка сохранения
+import CancelIcon from "@mui/icons-material/Cancel"; // Иконка отмены
+import DeleteIcon from "@mui/icons-material/Delete"; // Иконка удаления
 import DownloadIcon from "@mui/icons-material/Download";
 import './appStyle.css';
 import { Save, Close, Add } from "@mui/icons-material";
@@ -37,6 +41,8 @@ const NoteModal_new = ({
                        note = null,
                        selectedProject,
                        calculateNewNotePosition,
+                       setSelectedNote,
+                       setIsModalOpen,
 
                    }) => {
     const [activeTab, setActiveTab] = useState(0);
@@ -109,6 +115,15 @@ const NoteModal_new = ({
             }
         }
     }, [open, note, selectedProject]);
+
+    useEffect(() => {
+        if (note) {
+            setTitle(note.title || "Новая заметка");
+            setContent(note.content || "");
+            setTags(note.tags || []);
+            setSelectedProject(note.projectId || selectedProject);
+        }
+    }, [note]); // 🔹 Следим за изменением note
 
     const validate = () => {
         const newErrors = {};
@@ -437,6 +452,21 @@ const NoteModal_new = ({
 
         return `${year}-${month}-${day}_${hours}-${minutes}_recording.mp3`;
     };
+    const handleCopyFromModal = () => {
+        const copiedNote = {
+            title: `Copy: ${title}`,
+            content,
+            tags: [...tags],
+            projectId: selectedProjectModal,
+        };
+
+        onClose(); // Закрываем текущую заметку
+        setTimeout(() => {
+            setSelectedNote(copiedNote);
+            setIsModalOpen(true);
+        }, 300); // Небольшая задержка, чтобы не было резкого переключения
+    };
+
 
     return (
         <Modal open={open} onClose={onClose} aria-labelledby="modal-title" aria-describedby="modal-description">
@@ -676,35 +706,42 @@ const NoteModal_new = ({
                     </Fade>
                 </Box>
                 <Box sx={{ display: "flex", justifyContent: "space-between", padding: "16px", borderTop: "1px solid #e0e0e0" }}>
-                    <Button variant="outlined" color="secondary" onClick={onClose} sx={{ width: "40%" }}>
-                        Отмена
-                    </Button>
-                    <Button variant="contained" color="primary" onClick={handleSave} sx={{ width: "40%" }}>
-                        Сохранить
-                    </Button>
+
+                    {/* Кнопка удаления (левая) */}
                     {note?.id && (
-                        <Button
-                            variant="outlined"
+                        <IconButton
                             color="error"
                             onClick={async () => {
                                 if (window.confirm("Вы уверены, что хотите удалить заметку?")) {
                                     try {
                                         await onDelete(note.id);
                                         setNotes((prevNotes) => prevNotes.filter((n) => n.id !== note.id));
-                                        onClose(); // ✅ Закрываем окно после удаления
+                                        onClose();
                                     } catch (error) {
-                                        console.error("Ошибка при удалении заметки:", error);
                                         alert("Ошибка при удалении заметки.");
                                     }
                                 }
                             }}
-                            sx={{ width: "40%", marginRight: "10px" }}
                         >
-                            Удалить
-                        </Button>
+                            <DeleteIcon />
+                        </IconButton>
                     )}
-                </Box>
 
+                    {/* Кнопка копирования */}
+                    <IconButton color="primary" onClick={() => handleCopyFromModal()}>
+                        <ContentCopyIcon />
+                    </IconButton>
+
+                    {/* Кнопка отмены */}
+                    <IconButton color="secondary" onClick={onClose}>
+                        <CancelIcon />
+                    </IconButton>
+
+                    {/* Кнопка сохранения */}
+                    <IconButton color="primary" onClick={handleSave}>
+                        <SaveIcon />
+                    </IconButton>
+                </Box>
             </Box>
         </Modal>
     );
