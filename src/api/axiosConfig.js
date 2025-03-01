@@ -7,4 +7,15 @@ const api = axios.create({
     },
 });
 
+// Добавляем интерцептор для вставки токена в заголовки запросов
+api.interceptors.request.use((config) => {
+    const accessToken = localStorage.getItem("accessToken");
+
+    // 💡 Не добавляем токен для регистрации
+    if (accessToken && !config.url.includes("/auth/register")) {
+        config.headers.Authorization = `Bearer ${accessToken}`;
+    }
+    return config;
+});
+
 export default api;

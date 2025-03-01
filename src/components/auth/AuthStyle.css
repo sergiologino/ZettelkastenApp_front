@@ -1,16 +1,34 @@
+/* AuthStyle.css */
+
+/* Стили для кнопки входа через Яндекс */
 .yandex-login-button {
-    background-color: #ffcc00; /* Цвет Яндекса */
-    color: #000; /* Чёрный текст */
-    font-size: 16px;
-    font-weight: bold;
+    background-color: #ffcc00;
+    color: #000;
     border: none;
-    border-radius: 8px;
     padding: 10px 20px;
+    border-radius: 5px;
     cursor: pointer;
+    font-size: 16px;
     transition: background-color 0.3s ease;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .yandex-login-button:hover {
-    background-color: #f1c40f; /* Чуть более тёмный оттенок */
+    background-color: #e6b800;
+}
+
+/* Анимация для формы */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Применение анимации к форме */
+.MuiPaper-root {
+    animation: fadeIn 0.5s ease-in-out;
 }

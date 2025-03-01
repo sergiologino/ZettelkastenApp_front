@@ -8,7 +8,10 @@ export const fetchProjects = async () => {
     const response = await api.get('/projects');
 
     //console.log("Полученные проекты:", response.data);
-    return response.data;
+    return response.data.map(project => ({
+        ...project,
+        noteCount: project.noteCount || 0, // Убедимся, что значение не undefined
+    }));
 };
 
 // Получить список заметок проекта
@@ -26,7 +29,7 @@ export const fetchNotes = async (projectId) => {
         throw error;
     }
 };
-
+// обновить существующую заметку
 export const updateNote = async (note) => {
 
     try {
@@ -35,16 +38,17 @@ export const updateNote = async (note) => {
         const response = await api.put(`/notes`, note, {
             headers: { "Content-Type": "application/json" },
         });
+        console.log("успешное обновление заметки: ",response.data);
         return response.data; // Возвращаем данные обновленной заметки
 
     } catch (error) {
-        console.error("Ошибка при вызове API для обновления заметки:", error);
+        console.error("api.js: Ошибка при передаче на сервер обновления заметки:", error);
         throw error;
     }
 };
 
 
-///-----------------
+///-  создать заметку ----------------
 export const addNote = async (note,projectId) => {
     console.log("Создаем заметку: ", note);
     console.log("по проекту: ", projectId);
@@ -57,22 +61,44 @@ export const addNote = async (note,projectId) => {
         console.log("Ответ сервера по сохранению заметки: ", response.data);
         return response.data; // Возвращаем данные созданной заметки
     } catch (error) {
-        console.error("Ошибка при вызове API для создания заметки:", error);
+        console.error("api.js: Ошибка при передаче на сервер создания заметки:", error);
         throw error;
     }
 };
 
-
+// создать проект
 export const createProject = async (project) => {
     try {
-        // eslint-disable-next-line no-template-curly-in-string
-        const response = await api.post('/projects', project);
+        // const token = localStorage.getItem("accessToken");
+        const response = await api.post('/projects', project); // , {
+            // headers: {
+            //     Authorization: `Bearer ${token}`,
+            //     "Content-Type": "application/json",
+            // },
+        // });
         return response.data;
     } catch (error) {
         console.error("Ошибка при создании проекта:", error.response?.data || error.message);
         throw error;
     }
 };
+// изменить проект
+export const updateProject = async (project) => {
+    try {
+        console.log("Отправляем в API:", JSON.stringify(project)); // Логируем данные
+
+        const response = await api.put(`/projects/${project.id}`, project, {
+            headers: { "Content-Type": "application/json" },
+        });
+
+        // console.log("Ответ API:", response.data);
+        return response.data;
+    } catch (error) {
+        console.error("Ошибка при обновлении проекта:", error.response?.data || error.message);
+        throw error;
+    }
+};
+
 
 export const deleteProject = async (projectId) => {
     try {
@@ -95,7 +121,7 @@ export const fetchOpenGraphData = async (url) => {
         const response = await api.get(`/notes/og-data-clear`, {
             params: { url },
         });
-        console.log("Ответ с OpenGraph: ",response.data);
+        // console.log("Ответ с OpenGraph: ",response.data);
         return response.data; // Возвращаем данные OpenGraph
     } catch (error) {
         console.error("Ошибка при получении данных OpenGraph:", error);
@@ -117,10 +143,10 @@ export const fetchOpenGraphData = async (url) => {
 };
 
 export const updateNoteCoordinates = async (noteId, x, y) => {
-    console.log(`отправка координат на сервер`);
+    // console.log(`отправка координат на сервер`);
     try {
         const response = await api.put(`/notes/${noteId}/coordinates`, { x, y });
-        console.log(`Координаты для заметки ${noteId} обновлены на сервере:`, response.data);
+        // console.log(`Координаты для заметки ${noteId} обновлены на сервере:`, response.data);
         return response.data;
     } catch (error) {
         console.error(`Ошибка при обновлении координат для заметки ${noteId}:`, error);
@@ -130,6 +156,8 @@ export const updateNoteCoordinates = async (noteId, x, y) => {
 
 export const uploadFiles = async (noteId, formData) => {
     try {
+
+
         const response = await api.post(`/notes/${noteId}/files`, formData, {
             headers: { "Content-Type": "multipart/form-data" },
         });
@@ -137,7 +165,7 @@ export const uploadFiles = async (noteId, formData) => {
         return response.data;
 
     } catch (error) {
-        console.error("Ошибка при загрузке файлов:", error);
+        console.error("Ошибка при отправке файлов на сервер:", error);
         throw error;
     }
 };
@@ -153,7 +181,7 @@ export const uploadAudioFiles = async (noteId, formData) => {
         console.log(`АудиоЗаписи для заметки ${noteId} обновлены на сервере:`, response.data);
         return response.data;
     } catch (error) {
-        console.error("Ошибка при загрузке аудиофайлов:", error);
+        console.error("Ошибка при отправке аудиофайлов на сервер:", error);
         throw error;
     }
 };
@@ -200,7 +228,26 @@ export const fetchAllTags = async () => {
     }
 };
 
+export const updateAvatar = async (userId, avatarFile) => {
+    const formData = new FormData();
+    formData.append("avatar", avatarFile);
 
+    return api.put(`/users/${userId}/avatar`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+    });
+};
 
+export const updateUserProfile = async (userId, userData) => {
+    return api.put(`/users/${userId}`, userData);
+};
+
+export const deleteNote = async (noteId) => {
+    try {
+        await api.delete(`/notes/${noteId}`);
+    } catch (error) {
+        console.error("Ошибка при удалении заметки:", error.response?.data || error.message);
+        throw error;
+    }
+};
 
 export default api;

@@ -39,17 +39,12 @@ const NoteModal = ({
     const [content, setContent] = useState(note?.content || "");
     const [file, setFile] = useState(null);
     const [selectedProjectModal, setSelectedProject] = useState(note?.projectId || selectedProject || null);
-    const [individualAnalysisFlag, setIndividualAnalysisFlag] = useState(
-        isGlobalAnalysisEnabled
-    );
+    const [individualAnalysisFlag, setIndividualAnalysisFlag] = useState(isGlobalAnalysisEnabled);
     const [tags, setTags] = useState(note?.tags || []);
     const [newTag, setNewTag] = useState("");
     const [files, setFiles] = useState(note?.files || []); // Состояние для загруженных файлов
-
-
     const [urls, setUrls] = useState(note?.urls || []); // Состояние для ссылок
     const [newUrl, setNewUrl] = useState("");
-
     const [audios, setAudioFiles] = useState(note?.audioFiles || []); // Список аудиофайлов
     const [isRecording, setIsRecording] = useState(false); // Флаг записи
     const [mediaRecorder, setMediaRecorder] = useState(null); // MediaRecorder
@@ -333,6 +328,7 @@ const NoteModal = ({
                     const newAudiosFormData = await prepareFormDataForAudios(audios);
 
                     if (newAudiosFormData.has("audios")) {
+
                         console.log("audios in formdata: ",newAudiosFormData);
                         await uploadAudioFiles(savedNote.id, newAudiosFormData);
                     }
