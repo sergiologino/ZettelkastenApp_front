@@ -1,6 +1,7 @@
 import api from "./axiosConfig";
 
 
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:8080";
 
 // Получить список проектов
 export const fetchProjects = async () => {

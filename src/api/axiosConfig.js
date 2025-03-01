@@ -1,7 +1,8 @@
 import axios from "axios";
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:8080";
 
 const api = axios.create({
-    baseURL: "http://localhost:8080/api", // Базовый URL вашего API
+    baseURL: API_URL+"/api", // Базовый URL вашего API
     headers: {
         "Content-Type": "application/json", // Глобально указываем тип контента
     },
