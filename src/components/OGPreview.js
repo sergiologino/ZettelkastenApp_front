@@ -12,7 +12,7 @@ const OGPreview = ({ ogData }) => {
                             alt=""
                             style={{
                                 width: "40px",
-                                height: "40px",
+                                height: "100%",
                                 marginRight: "8px",
                                 objectFit: "cover",
                             }}

@@ -1,11 +1,12 @@
 import api from "./axiosConfig";
 
 
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:8080";
+// const API_URL = process.env.REACT_APP_API_URL || "http://localhost:8080";
 
 // Получить список проектов
 export const fetchProjects = async () => {
     // eslint-disable-next-line no-template-curly-in-string
+    console.log("API загружен как:", api());
     const response = await api.get('/projects');
 
     //console.log("Полученные проекты:", response.data);
@@ -244,6 +245,7 @@ export const updateUserProfile = async (userId, userData) => {
 
 export const deleteNote = async (noteId) => {
     try {
+        console.log("Удаление заметки: ",noteId);
         await api.delete(`/notes/${noteId}`);
     } catch (error) {
         console.error("Ошибка при удалении заметки:", error.response?.data || error.message);

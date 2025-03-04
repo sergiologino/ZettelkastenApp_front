@@ -54,7 +54,7 @@ const AuthForm = ({ resetAppState, loadProjectsAndSelectFirst }) => {
     const handleLogin = async () => {
         try {
             const response = await api.post(
-                "http://localhost:8080/api/auth/login",
+                "/auth/login",
                 {
                     username: formData.username,
                     password: formData.password,

@@ -10,6 +10,8 @@ import { useNavigate } from "react-router-dom";
 import NoteModal_new from "./NoteModal_new";
 import AttachFileIcon from "@mui/icons-material/AttachFile";
 import DeleteIcon from "@mui/icons-material/Delete";
+import {format} from "date-fns";
+import {ru} from "date-fns/locale";
 
 const GraphBoard_new = ({
                         notes,
@@ -129,6 +131,18 @@ const GraphBoard_new = ({
         const firstOG = Object.values(note.openGraphData)[0]; // Берем первую OG-ссылку
         return <OGPreview ogData={firstOG} />;
     };
+    const formatDate = (dateInput) => {
+        if (!dateInput) return "Нет даты";
+
+        // Если `dateInput` - массив чисел, конвертируем в дату
+        if (Array.isArray(dateInput) && dateInput.length >= 6) {
+            const [year, month, day, hour, minute, second, millisecond = 0] = dateInput;
+            const date = new Date(year, month - 1, day, hour, minute, second, millisecond);
+            return format(date, "dd.MM.yy HH:mm", { locale: ru });
+        }
+
+        return "Некорректная дата";
+    };
 
 
     useEffect(() => {
@@ -150,8 +164,8 @@ const GraphBoard_new = ({
                     label: (
                         <div
                             style={{
-                                position: "relative",
-                                padding: "8px",
+                                position: "revert",
+                                padding: "4px",
                                 textAlign: "center",
                                 fontSize: "12px",
                                 overflow: "hidden",
@@ -160,13 +174,16 @@ const GraphBoard_new = ({
                             onMouseEnter={() => setHoveredNote(note.id)}
                             onMouseLeave={() => setTimeout(() => setHoveredNote(null), 500)}
                         >
-                            <div style={{ fontSize: "14px", fontWeight: "bold" }}>
+                            <div style={{fontSize: "12px", fontWeight: "regular", right:"8px", color: "rgba(155,159,156,0.45)"}}>
+                                {formatDate(note.createdAt)}
+                            </div>
+                            <div style={{fontSize: "18px", fontWeight: "bold"}}>
                                 {note.title}
                             </div>
-                            <div style={{ fontSize: "12px", color: "#666" }}>
+                            <div style={{fontSize: "16px", color: "#666"}}>
                                 {note.content
-                                    ? note.content.length > 50
-                                        ? note.content.slice(0, 50) + "..."
+                                    ? note.content.length > 30
+                                        ? note.content.slice(0, 30) + "..."
                                         : note.content
                                     : ""}
                             </div>
@@ -214,12 +231,17 @@ const GraphBoard_new = ({
                                         right: "2px",
                                         display: "flex",
                                         alignItems: "center",
-                                        fontSize: "6px",
+                                        fontSize: "12px",
                                         color: "#006400",
                                         fontWeight: "bold",
                                     }}
                                 >
-                                    <AttachFileIcon style={{ fontSize: "10px", marginRight: "2px" }} />
+                                    <AttachFileIcon style={{
+                                        fontSize: "12px",
+                                        fontWeight: "bold",
+                                        marginRight: "2px",
+                                        marginBottom: "2px"
+                                    }}/>
                                     {(note.files?.length || 0) +
                                         (note.audios?.length || 0) +
                                         (note.urls?.length || 0)}
@@ -249,7 +271,7 @@ const GraphBoard_new = ({
                                         padding: "2px",
                                     }}
                                 >
-                                    <AddCircleOutlineIcon color="primary" style={{ fontSize: "16px" }} />
+                                    <AddCircleOutlineIcon color="primary" style={{fontSize: "16px"}}/>
                                 </IconButton>
                             )}
 
@@ -276,21 +298,21 @@ const GraphBoard_new = ({
                                         padding: "2px",
                                     }}
                                 >
-                                    <DeleteIcon color="error" style={{ fontSize: "16px" }} />
+                                    <DeleteIcon color="error" style={{fontSize: "16px"}}/>
                                 </IconButton>
                             )}
                             {/* Изменение размера - в правом нижнем углу снаружи */}
-                            <ResizableHandle onResizeStart={(e) => handleResizeStart(e, note.id)} />
+                            <ResizableHandle onResizeStart={(e) => handleResizeStart(e, note.id)}/>
 
                         </div>
 
 
                     ),
                 },
-                position: { x: note.x || index * 100, y: note.y || index * 50 },
+                position: {x: note.x || index * 100, y: note.y || index * 50},
                 style: {
-                    width: `${note.width || 150}px`,
-                    height: `${note.height || 100}px`,
+                    width: `${note.width || 300}px`,
+                    height: `${note.height || 200}px`,
                     background: "#fff",
                     border: "1px solid #ccc",
                     borderRadius: "8px",

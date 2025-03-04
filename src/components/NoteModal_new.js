@@ -712,7 +712,7 @@ const NoteModal_new = ({
                         <IconButton
                             color="error"
                             onClick={async () => {
-                                if (window.confirm("Вы уверены, что хотите удалить заметку?")) {
+                                // if (window.confirm("Вы уверены, что хотите удалить заметку?")) {
                                     try {
                                         await onDelete(note.id);
                                         setNotes((prevNotes) => prevNotes.filter((n) => n.id !== note.id));
@@ -720,7 +720,7 @@ const NoteModal_new = ({
                                     } catch (error) {
                                         alert("Ошибка при удалении заметки.");
                                     }
-                                }
+                                // }
                             }}
                         >
                             <DeleteIcon />
