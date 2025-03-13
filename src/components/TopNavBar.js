@@ -3,7 +3,7 @@ import {AppBar, Toolbar, IconButton, Button, Typography, Avatar, Box, Paper, Inp
 import { useNavigate } from "react-router-dom";
 import { styled } from "@mui/material/styles";
 import { Search as SearchIcon, AccountCircle } from "@mui/icons-material";
-import logo from "../logo.svg"; // ✅ Подключаем логотип
+import logo from "../altacod.svg"; // ✅ Подключаем логотип
 import api from "../api/api";
 import ProfileModal from "./Profile";
 
@@ -97,7 +97,11 @@ const TopNavBar = ({ onSearchResults , onToggleTheme, balance, resetAppState }) 
                         <SearchIcon />
                     </IconButton>
                 </SearchContainer>
-
+                {user && (
+                    <Typography variant="body1" sx={{ mr: 2 }}>
+                        {user.isAskProjectBeforeSave ? "Запрос проекта" : "Проект по умолчанию"}
+                    </Typography>
+                )}
 
                 {/* ✅ Баланс, имя пользователя и аватар */}
                 <Box sx={{display: "flex", alignItems: "center", mx: 2}}>
@@ -107,7 +111,7 @@ const TopNavBar = ({ onSearchResults , onToggleTheme, balance, resetAppState }) 
                     {user && (
                         <>
                             <Avatar
-                                src={user.avatar ? user.avatar : process.env.PUBLIC_URL + "/default-avatar.png"}
+                                // src={user.avatar ? user.avatar : process.env.PUBLIC_URL + "/default-avatar.png"}
                                 alt={user.username}
                                 sx={{width: 32, height: 32, mr: 1}}
                             />

@@ -54,7 +54,7 @@ const AuthForm = ({ resetAppState, loadProjectsAndSelectFirst }) => {
     const handleLogin = async () => {
         try {
             const response = await api.post(
-                "http://localhost:8080/api/auth/login",
+                "/auth/login",
                 {
                     username: formData.username,
                     password: formData.password,
@@ -75,8 +75,8 @@ const AuthForm = ({ resetAppState, loadProjectsAndSelectFirst }) => {
 
             loadProjectsAndSelectFirst(); // ✅ Загружаем проекты после входа
 
-            //navigate("/notes"); // Перенаправляем на страницу заметок
-            navigate("/"); // Перенаправляем на страницу заметок
+            navigate("/notes"); // Перенаправляем на страницу заметок
+            //navigate("/"); // Перенаправляем на страницу заметок
         } catch (error) {
             console.error("Ошибка авторизации:", error);
             alert("Ошибка авторизации. Проверьте данные.");
@@ -86,27 +86,36 @@ const AuthForm = ({ resetAppState, loadProjectsAndSelectFirst }) => {
     // Авторизация через Яндекс
     const handleYandexLogin = async () => {
         try {
-            axios.defaults.withCredentials = true;
-            const response = await api.get("http://localhost:8080/api/auth/oauth2/authorize/yandex");
-            const { state } = response.data;
-
-            if (!state) {
-                console.error("Ошибка: state отсутствует в ответе сервера");
-                alert("Не удалось получить state для авторизации.");
-                return;
-            }
-
-            const clientId = "a0bc7b7381a84739be01111f12d9447e"; // Ваш client_id
-            const redirectUri = "http://localhost:8080/login/oauth2/code/yandex";
-            const scope = "login login:email login:info";
-
-            const authUrl = `https://oauth.yandex.ru/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}`;
-            window.location.href = authUrl;
+            // Перенаправляем на бэкенд, который уже сам сформирует ссылку OAuth
+            window.location.href = "http://localhost:8080/api/auth/oauth2/authorize/yandex";
         } catch (error) {
-            console.error("Ошибка при инициализации Yandex OAuth:", error);
-            alert("Не удалось начать авторизацию через Яндекс.");
+            console.error("Ошибка при запуске авторизации через Яндекс:", error);
+            alert("Не удалось запустить процесс авторизации.");
         }
     };
+    // const handleYandexLogin = async () => {
+    //     try {
+    //         axios.defaults.withCredentials = true;
+    //         const response = await api.get("http://localhost:8080/api/auth/oauth2/authorize/yandex");
+    //         const { state } = response.data;
+    //
+    //         if (!state) {
+    //             console.error("Ошибка: state отсутствует в ответе сервера");
+    //             alert("Не удалось получить state для авторизации.");
+    //             return;
+    //         }
+    //
+    //         const clientId = "a0bc7b7381a84739be01111f12d9447e"; // Ваш client_id
+    //         const redirectUri = "http://localhost:8080/login/oauth2/code/yandex";
+    //         const scope = "login login:email login:info";
+    //
+    //         const authUrl = `https://oauth.yandex.ru/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}`;
+    //         window.location.href = authUrl;
+    //     } catch (error) {
+    //         console.error("Ошибка при инициализации Yandex OAuth:", error);
+    //         alert("Не удалось начать авторизацию через Яндекс.");
+    //     }
+    // };
 
     return (
         <Container maxWidth="sm">

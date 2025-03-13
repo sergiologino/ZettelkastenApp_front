@@ -1,11 +1,11 @@
 import api from "./axiosConfig";
 
-
-
 // Получить список проектов
 export const fetchProjects = async () => {
     // eslint-disable-next-line no-template-curly-in-string
+    // console.log("API загружен как:", api());
     const response = await api.get('/projects');
+    // console.log("сходили за проектами:",response.data);
 
     //console.log("Полученные проекты:", response.data);
     return response.data.map(project => ({
@@ -18,9 +18,9 @@ export const fetchProjects = async () => {
 export const fetchNotes = async (projectId) => {
     try {
         // eslint-disable-next-line no-template-curly-in-string
-
+        // console.log("Идем за заметками по проекту:", projectId);
         const response = await api.get(`/notes/${projectId}/notes`);
-        console.log("Получены заметки по проекту:", response);
+        // console.log("Получены заметки по проекту:", response.data);
 
         return response.data;
 
@@ -30,41 +30,95 @@ export const fetchNotes = async (projectId) => {
     }
 };
 // обновить существующую заметку
-export const updateNote = async (note) => {
-
+export const updateNote = async (note, files, audios) => {
     try {
+        const formData = new FormData();
+        formData.append("note", new Blob([JSON.stringify(note)], { type: "application/json" }));
 
-        console.log("!!! отправляем измененную заметку на сервер: ", JSON.stringify(note));
-        const response = await api.put(`/notes`, note, {
-            headers: { "Content-Type": "application/json" },
+        if (files && files.length > 0) {
+            files.forEach(file => formData.append("files", file));
+        }
+        if (audios && audios.length > 0) {
+            audios.forEach(audio => formData.append("audios", audio));
+        }
+
+        console.log("Отправка заметки с файлами:", formData);
+
+        const response = await api.put(`/notes/full`, formData, {
+            headers: { "Content-Type": "multipart/form-data" },
         });
-        console.log("успешное обновление заметки: ",response.data);
-        return response.data; // Возвращаем данные обновленной заметки
 
+        return response.data;
     } catch (error) {
-        console.error("api.js: Ошибка при передаче на сервер обновления заметки:", error);
+        console.error("Ошибка при обновлении заметки:", error);
         throw error;
     }
 };
+
+export const updateNoteWithFiles = async (formData) => {
+    try {
+        console.log("Отправка заметки с файлами:", formData);
+
+
+        const response = await api.put(`/notes/full`, formData, {
+            headers: { "Content-Type": "multipart/form-data" },
+        });
+
+
+        return response.data;
+    } catch (error) {
+        console.error("Ошибка при обновлении заметки:", error);
+        throw error;
+    }
+};
+
+// **Загрузка файлов к заметке**
+export const uploadFiles = async (noteId, formDataFiles) => {
+    try {
+        const response = await api.post(`/notes/${noteId}/files`, formDataFiles, {
+            headers: { "Content-Type": "multipart/form-data" },
+        });
+
+        console.log("Файлы успешно загружены:", response.data);
+        return response.data;
+    } catch (error) {
+        console.error("Ошибка при загрузке файлов:", error);
+        throw error;
+    }
+};
+
+// **Загрузка аудиофайлов к заметке**
+export const uploadAudioFiles = async (noteId, formDataAudios) => {
+    try {
+        const response = await api.post(`/notes/${noteId}/audios`, formDataAudios, {
+            headers: { "Content-Type": "multipart/form-data" },
+        });
+
+        console.log("Аудиофайлы успешно загружены:", response.data);
+        return response.data;
+    } catch (error) {
+        console.error("Ошибка при загрузке аудиофайлов:", error);
+        throw error;
+    }
+};
+
 
 
 ///-  создать заметку ----------------
-export const addNote = async (note,projectId) => {
-    console.log("Создаем заметку: ", note);
-    console.log("по проекту: ", projectId);
-
+export const addNote = async (note, projectId) => {
     try {
-        //console.log("отправляем новую заметку на сервер: ", note);
-        const response = await api.post(`/notes/${projectId}`, note, {
+        console.log("Создание новой заметки:", note);
+        // `/notes/full`, { ...note, projectId },
+        const response = await api.post(`/notes/${projectId}`, note,{
             headers: { "Content-Type": "application/json" },
         });
-        console.log("Ответ сервера по сохранению заметки: ", response.data);
-        return response.data; // Возвращаем данные созданной заметки
+        return response.data;
     } catch (error) {
-        console.error("api.js: Ошибка при передаче на сервер создания заметки:", error);
+        console.error("Ошибка при создании заметки:", error);
         throw error;
     }
 };
+
 
 // создать проект
 export const createProject = async (project) => {
@@ -154,38 +208,6 @@ export const updateNoteCoordinates = async (noteId, x, y) => {
     }
 };
 
-export const uploadFiles = async (noteId, formData) => {
-    try {
-
-
-        const response = await api.post(`/notes/${noteId}/files`, formData, {
-            headers: { "Content-Type": "multipart/form-data" },
-        });
-        console.log(`файлы для заметки ${noteId} обновлены на сервере:`, response.data);
-        return response.data;
-
-    } catch (error) {
-        console.error("Ошибка при отправке файлов на сервер:", error);
-        throw error;
-    }
-};
-
-export const uploadAudioFiles = async (noteId, formData) => {
-    try {
-        formData.forEach((value, key) => {
-            console.log(key, value);
-        });
-        const response = await api.post(`/notes/${noteId}/audios`, formData, {
-            headers: { "Content-Type": "multipart/form-data" },
-        });
-        console.log(`АудиоЗаписи для заметки ${noteId} обновлены на сервере:`, response.data);
-        return response.data;
-    } catch (error) {
-        console.error("Ошибка при отправке аудиофайлов на сервер:", error);
-        throw error;
-    }
-};
-
 // Получение всех заметок
 export const fetchAllNotes = async () => {
     try {
@@ -238,11 +260,15 @@ export const updateAvatar = async (userId, avatarFile) => {
 };
 
 export const updateUserProfile = async (userId, userData) => {
-    return api.put(`/users/${userId}`, userData);
+    return api.put(`/users/${userId}`, {
+        ...userData,
+        isAskProjectBeforeSave: userData.isAskProjectBeforeSave || false, // Значение по умолчанию false
+    });
 };
 
 export const deleteNote = async (noteId) => {
     try {
+        console.log("Удаление заметки: ",noteId);
         await api.delete(`/notes/${noteId}`);
     } catch (error) {
         console.error("Ошибка при удалении заметки:", error.response?.data || error.message);

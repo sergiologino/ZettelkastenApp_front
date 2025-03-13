@@ -65,6 +65,7 @@ const ProjectPanel_new = ({
             loadTags();
         }
     }, [activeTab, setTags]);
+
     // useEffect(() => {
     //     const loadTags = async () => {
     //         try {
@@ -76,29 +77,54 @@ const ProjectPanel_new = ({
     //         }
     //     };
     //     loadTags();
-    // }, [setTags]);
+    // }, [activeTab, setTags]);
 
 
     useEffect(() => {
-        if (activeTab === 1) {
-            setFilteredNotes(notes); // ✅ При смене на теги всегда загружаем все заметки
-        } else if (selectedTags?.length > 0) {
-            const filterNotesByTags = async () => {
-                try {
-                    const filteredNotes = await fetchNotesByTags(selectedTags);
-                    setFilteredNotes(filteredNotes);
-                    const remainingTags = new Set(filteredNotes.flatMap(note => note.tags));
-                    setFilteredTags(Array.from(remainingTags).sort());
-                } catch (error) {
-                    console.error("Ошибка при фильтрации заметок по тегам:", error);
+        const updateTags = async () => {
+            try {
+                let notesToFilter = notes;
+
+                if (selectedTags.length > 0) {
+                    notesToFilter = await fetchNotesByTags(selectedTags);
+                    setFilteredNotes(notesToFilter);
+                } else {
+                    notesToFilter = await fetchAllNotes();
+                    setFilteredNotes(notesToFilter);
                 }
-            };
-            filterNotesByTags();
-        } else {
-            setFilteredTags(tags);
-            setFilteredNotes(notes);
+
+                // Обновляем список тегов на основе отфильтрованных заметок
+                const remainingTags = new Set(notesToFilter.flatMap(note => note.tags));
+                setFilteredTags(Array.from(remainingTags).sort());
+            } catch (error) {
+                console.error("Ошибка при обновлении тегов:", error);
+            }
+        };
+
+        if (activeTab === 1) {
+            updateTags();
         }
-    }, [selectedTags, tags, notes, activeTab]); // ✅ Добавляем activeTab в зависимости
+    }, [activeTab, selectedTags, notes]);
+    // useEffect(() => {
+    //     if (activeTab === 1) {
+    //         setFilteredNotes(notes); // ✅ При смене на теги всегда загружаем все заметки
+    //     } else if (selectedTags?.length > 0) {
+    //         const filterNotesByTags = async () => {
+    //             try {
+    //                 const filteredNotes = await fetchNotesByTags(selectedTags);
+    //                 setFilteredNotes(filteredNotes);
+    //                 const remainingTags = new Set(filteredNotes.flatMap(note => note.tags));
+    //                 setFilteredTags(Array.from(remainingTags).sort());
+    //             } catch (error) {
+    //                 console.error("Ошибка при фильтрации заметок по тегам:", error);
+    //             }
+    //         };
+    //         filterNotesByTags();
+    //     } else {
+    //         setFilteredTags(tags);
+    //         setFilteredNotes(notes);
+    //     }
+    // }, [selectedTags, tags, notes, activeTab]); // ✅ Добавляем activeTab в зависимости
 
     useEffect(() => {
         if (activeTab === 0 && selectedProjectId) {

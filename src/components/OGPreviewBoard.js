@@ -8,7 +8,7 @@ const OGPreviewBoard = ({ ogData }) => {
                 alt="OG Thumbnail"
                 style={{
                     width: "100%",
-                    height: "40px",
+                    height: "60%",
                     objectFit: "cover",
                     borderRadius: "4px",
                 }}
