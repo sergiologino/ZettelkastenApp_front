@@ -14,7 +14,7 @@ import {
     Chip,
     IconButton,
     Badge,
-    Fade,
+    Fade, Autocomplete,
 } from "@mui/material";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy"; // Иконка копирования
 import SaveIcon from "@mui/icons-material/Save"; // Иконка сохранения
@@ -25,9 +25,22 @@ import './appStyle.css';
 import { Save, Close, Add } from "@mui/icons-material";
 import { AttachFile, Delete } from "@mui/icons-material";
 import OGPreview from "./OGPreview";
-import {fetchProjects, uploadAudioFiles, uploadFiles} from "../api/api";
+import {
+    addNote,
+    fetchAllTags,
+    fetchProjects,
+    updateNote,
+    updateNoteWithFiles,
+    uploadAudioFiles,
+    uploadFiles
+} from "../api/api";
 import { fetchOpenGraphData } from "../api/api";
-
+import ReactQuill, {Quill} from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
+import hljs from 'highlight.js';
+import 'highlight.js/styles/github.css'; // Можете выбрать другие стили подсветки
+import "katex/dist/katex.min.css";
+import 'react-quill/dist/quill.bubble.css';
 const NoteModal_new = ({
                        open,
                        onClose,
@@ -68,9 +81,24 @@ const NoteModal_new = ({
     // const [notes, setNotes]=useState([]);
     const [errors, setErrors] = useState({});
     const noteId = note?.id || "Нет ID";
-    const BASE_URL = "http://localhost:8080";
+    const BASE_URL = process.env.REACT_APP_API_URL;
     const titleRef = useRef(title);
+    const [filteredTags, setFilteredTags] = useState(tags);
+    const [showEditor, setShowEditor] = useState(false);
 
+    useEffect(() => {
+        if (open && activeTab === 0) {
+            setShowEditor(false);
+            const timer = setTimeout(() => setShowEditor(true), 100); // 100 мс для полной инициализации модалки
+            return () => clearTimeout(timer);
+        }
+    }, [open, activeTab]);
+
+    useEffect(() => {
+        hljs.configure({
+            languages: ['javascript', 'java', 'python', 'html', 'css', 'json', 'xml'],
+        });
+    }, []);
 
     useEffect(() => {
         if (!note?.projectId) {
@@ -79,7 +107,6 @@ const NoteModal_new = ({
 
         }
     }, [selectedProject]);
-
 
     useEffect(() => {
         if (!note?.id) { // ✅ Только для новой заметки
@@ -124,6 +151,23 @@ const NoteModal_new = ({
             setSelectedProject(note.projectId || selectedProject);
         }
     }, [note]); // 🔹 Следим за изменением note
+
+    const modules = {
+        syntax: {
+            highlight: text => hljs.highlightAuto(text).value, // Используем Highlight.js для подсветки кода
+        },
+        toolbar: [
+            [{ 'font': [] }, { 'size': [] }],
+            ['bold', 'italic', 'underline', 'strike'],
+            [{ 'color': [] }, { 'background': [] }],
+            [{ 'script': 'sub' }, { 'script': 'super' }],
+            [{ 'header': 1 }, { 'header': 2 }, 'blockquote', 'code-block'],
+            [{ 'list': 'ordered'}, { 'list': 'bullet' }, { 'indent': '-1' }, { 'indent': '+1' }],
+            [{ 'direction': 'rtl' }, { 'align': [] }],
+            ['link', 'image', 'video', 'formula'],
+            ['clean']
+        ]
+    };
 
     const validate = () => {
         const newErrors = {};
@@ -250,6 +294,7 @@ const NoteModal_new = ({
         }
     };
 
+    // Удаление аудиофайла
     const handleAudioDelete = (audioToDelete) => {
         setAudioFiles((prev) => prev.filter((audio) => audio !== audioToDelete));
         if (audioToDelete.id) {
@@ -306,100 +351,96 @@ const NoteModal_new = ({
         setTags(tags.filter((tag) => tag !== tagToDelete));
     };
 
-
     const handleSave = async () => {
         if (!validate()) return;
-            let savedNote = {
+
+        let savedNote = {
                 ...note,
                 title,
                 content,
                 projectId: selectedProjectModal,
                 category: selectedCategory,
-                tags: tags ?? [], // ✅ Гарантируем, что всегда массив
-                urls: urls ?? [], // ✅ Гарантируем, что всегда массив
-
+                tags: tags ?? [],
+                urls: urls ?? []
             };
 
+
+                // files.forEach((file) => {
+                //     if (file instanceof File) {
+                //         formDataFiles.append("files", file);
+                //     } else if (file.file instanceof File) {
+                //         formDataFiles.append("files", file.file);
+                //     }
+                // });
+
         try {
-            console.log("Подготовленная заметка перед сохранением:", savedNote);
+            console.log("Отправка заметки на сервер:", savedNote);
 
-            // Если это новая заметка, сначала создаем ее
             if (savedNote.id) {
-                // Если заметка уже существует, вызываем функцию обновления
-                savedNote = await onUpdateNote(savedNote);
+                savedNote = await updateNote(savedNote);
             } else {
-                // Если заметка новая, вызываем функцию создания
-                savedNote = await onSave(savedNote);
-            }
-
-            if (!savedNote.id) {
-                alert("Ошибка сохранения. Сервер не вернул ID.");
-                return;
-            }
-
-            // Устанавливаем координаты новой заметки
-            if (!note.id) { // Если это новая заметка
                 const newPosition = calculateNewNotePosition(notes);
                 savedNote.x = newPosition.x;
                 savedNote.y = newPosition.y;
+                savedNote = await addNote(savedNote, selectedProjectModal);
             }
 
-            // Загружаем файлы, если они есть
-            if (files.length > 0) {
-                const formDataFiles = new FormData();
+            if (savedNote.id) {
+                const formData = new FormData();
+                formData.append("note", new Blob([JSON.stringify(savedNote)], { type: "application/json" }));
+
                 files.forEach((file) => {
                     if (file instanceof File) {
-                        formDataFiles.append("files", file);
+                        formData.append("files", file);
                     } else if (file.file instanceof File) {
-                        formDataFiles.append("files", file.file);
+                        formData.append("files", file.file);
                     }
                 });
-                await uploadFiles(savedNote.id, formDataFiles);
 
-            } else {
-                console.log("Отправляем ПУСТЫЕ файлы для заметки");
-                await uploadFiles(savedNote.id, new FormData());
 
-            }
-
-            // Загружаем аудиофайлы, если есть
-            if (audios.length > 0) {
-                const formDataAudios = new FormData();
                 audios.forEach((audio) => {
                     if (audio.blob instanceof Blob) {
-                        formDataAudios.append("audios", audio.blob, audio.name || "recording.mp3");
+                        formData.append("audios", audio.blob, audio.name || "recording.mp3");
                     }
                 });
-                await uploadAudioFiles(savedNote.id, formDataAudios);
 
-                // if (formDataAudios.has("audios")) {
-                //     console.log("Загружаем аудио для заметки ID:", savedNote.id);
-                //     const uploadedAudios = await uploadAudioFiles(savedNote.id, formDataAudios);
-                //     savedNote.audios = uploadedAudios.files;
-                // }
+                // Добавляем список удалённых файлов
+                formData.append("deletedFiles", new Blob([JSON.stringify(deletedFiles)], { type: "application/json" }));
+
+                // Добавляем список удалённых файлов
+                formData.append("deletedAudios", new Blob([JSON.stringify(deletedAudios)], { type: "application/json" }));
+
+
+
+                console.log("Финальная FormData перед отправкой:");
+                for (let pair of formData.entries()) {
+                    console.log(pair[0], pair[1]);
+                }
+
+                savedNote = await updateNoteWithFiles(formData);
             } else {
-                await uploadAudioFiles(savedNote.id, new FormData());
+                savedNote = await onSave(savedNote);
             }
 
 
             setNotes((prevNotes) => {
                 const existingIndex = prevNotes.findIndex((n) => n.id === savedNote.id);
-                if (existingIndex !== -1) {
-                    // Обновляем существующую заметку
-                    return prevNotes.map((n) => (n.id === savedNote.id ? savedNote : n));
-                } else {
-                    // Добавляем новую заметку
-                    return [...prevNotes, savedNote];
-                }
+                return existingIndex !== -1 ? prevNotes.map((n) => (n.id === savedNote.id ? savedNote : n)) : [...prevNotes, savedNote];
             });
 
-
-            alert("Вести с фронта (NoteModal-handleSave): Заметка успешно сохранена!");
+            alert("Заметка успешно сохранена!");
             onClose();
         } catch (error) {
-            console.error("Вести с фронта (NoteModal-handleSave): Ошибка при сохранении заметки:", error.response?.data || error.message);
+            console.error("Ошибка при сохранении заметки:", error.response?.data || error.message);
         }
     };
+
+
+
+
+
+
+
 
     const handleAudioFileChange = (e) => {
         const file = e.target.files[0];
@@ -411,36 +452,7 @@ const NoteModal_new = ({
     };
 
 
-    const prepareFormDataForAudios = async (audios) => {
-        const formData = new FormData();
 
-        for (const audio of audios) {
-            if (audio.blob instanceof Blob) {
-                console.log("Если это Blob, добавляем напрямую: ", audio);
-                // Если это Blob, добавляем напрямую
-                formData.append("audios", audio.blob, audio.name || generateDefaultFileName());
-            } else if (audio.url) {
-                try {
-                    console.log("Если это ссылка, загружаем аудиофайл и создаем Blob: ", audio.url);
-                    // Если это ссылка, загружаем аудиофайл и создаем Blob
-                    const response = await fetch(audio.url);
-                    if (response.ok) {
-                        console.log("Получилось response = await fetch(audio.url) стр 344: ", response);
-                        const blob = await response.blob();
-                        formData.append("audios", blob, audio.name || generateDefaultFileName());
-                    } else {
-                        console.warn(`Не удалось загрузить аудио: ${audio.url}`);
-                    }
-                } catch (error) {
-                    console.error(`Ошибка при загрузке аудио с ${audio.url}:`, error);
-                }
-            } else {
-                console.warn("Пропущено некорректное аудио:", audio);
-            }
-        }
-
-        return formData;
-    };
 
     const generateDefaultFileName = () => {
         const now = new Date();
@@ -452,6 +464,7 @@ const NoteModal_new = ({
 
         return `${year}-${month}-${day}_${hours}-${minutes}_recording.mp3`;
     };
+
     const handleCopyFromModal = () => {
         const copiedNote = {
             title: `Copy: ${title}`,
@@ -468,6 +481,7 @@ const NoteModal_new = ({
     };
 
 
+
     return (
         <Modal open={open} onClose={onClose} aria-labelledby="modal-title" aria-describedby="modal-description">
             <Box
@@ -477,7 +491,7 @@ const NoteModal_new = ({
                     left: "50%",
                     transform: "translate(-50%, -50%)",
                     width: "900px",
-                    height: "600px",
+                    height: "700px",
                     bgcolor: "background.paper",
                     boxShadow: 24,
                     borderRadius: "8px",
@@ -486,6 +500,7 @@ const NoteModal_new = ({
                     overflow: "hidden",
                 }}
             >
+                <Typography sx={{ color: "#757575", margin: "10px", textAlign:"left" ,fontSize: "small", flexWrap: "wrap", left: "10px",bottom:"2px", mt: 2 }}>id заметки: {note.id}</Typography>
                 <TextField
                     fullWidth
                     margin="normal"
@@ -494,8 +509,33 @@ const NoteModal_new = ({
                     onChange={(e) => setTitle(e.target.value)}
                     error={!!errors.title}
                     helperText={errors.title}
-                    sx={{ mb: 2,  width: "800px", marginLeft:"25px", marginRight:"25px", }}
+                    sx={{ mb: 2,  width: "90%", marginLeft:"25px", marginRight:"25px", }}
                 />
+                <FormControl
+                    fullWidth
+                    label="Проект"
+                    margin="none"
+                    value={project}
+                    error={!!errors.project}
+                    sx={{ mb: 2,  width: "90%", marginLeft:"25px", marginRight:"25px", }}>
+                    <InputLabel id="project-select-label"></InputLabel>
+                    <Select
+                        labelId="project-select-label"
+                        value={selectedProjectModal || ""}
+                        onChange={(e) => setSelectedProject(e.target.value)}
+                    >
+                        {projects.length > 0 ? (
+                            projects.map((project) => (
+                                <MenuItem key={project.id} value={project.id}>
+                                    {project.name}
+                                </MenuItem>
+                            ))
+                        ):(
+                            <MenuItem disabled>Нет доступных проектов</MenuItem>
+                        )}
+                    </Select>
+                    {errors.project && <Typography color="error" variant="caption">{errors.project}</Typography>}
+                </FormControl>
                 <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)} centered sx={{ borderBottom: "1px solid #e0e0e0" }}>
                     <Tab label="Основное" />
                     <Tab label={<Badge
@@ -509,103 +549,57 @@ const NoteModal_new = ({
                         Вложения
                     </Badge>} />
                 </Tabs>
-                <Box sx={{ flex: 1, overflowY: "auto", padding: 4 }}>
-                    <Fade in={activeTab === 0} timeout={500}>
-                        <Box>
-                            {activeTab === 0 && (
-                                <>
-                                    {/*<TextField*/}
-                                    {/*    fullWidth*/}
-                                    {/*    margin="normal"*/}
-                                    {/*    label="Заголовок заметки"*/}
-                                    {/*    value={title}*/}
-                                    {/*    onChange={(e) => setTitle(e.target.value)}*/}
-                                    {/*    error={!!errors.title}*/}
-                                    {/*    helperText={errors.title}*/}
-                                    {/*/>*/}
-                                    <FormControl
-                                        fullWidth
-                                        margin="normal"
-                                        value={project}
-                                        error={!!errors.project}>
-                                        <InputLabel id="project-select-label">Проект</InputLabel>
-                                        <Select
-                                            labelId="project-select-label"
-                                            value={selectedProjectModal || ""}
-                                            onChange={(e) => setSelectedProject(e.target.value)}
-                                        >
-                                            {projects.length > 0 ? (
-                                              projects.map((project) => (
-                                                <MenuItem key={project.id} value={project.id}>
-                                                    {project.name}
-                                                </MenuItem>
-                                            ))
-                                                ):(
-                                                <MenuItem disabled>Нет доступных проектов</MenuItem>
-                                                )}
-                                        </Select>
-                                        {errors.project && <Typography color="error" variant="caption">{errors.project}</Typography>}
-                                    </FormControl>
-
-                                    <TextField
-                                        fullWidth
-                                        margin="normal"
-                                        label="Текст заметки"
-                                        multiline
-                                        rows={5}
+                <Box sx={{ overflowY: "auto", padding: 4 }}>
+                    {/*<Fade in={activeTab === 0} timeout={500}>*/}
+                    <Box>
+                        {activeTab === 0 && (
+                            <>
+                                {showEditor && (
+                                    <ReactQuill
+                                        style={{ height: "150px", marginBottom: "10px" }}
+                                        modules={modules}
+                                        theme="snow"
+                                        placeholder="Введите текст заметки..."
                                         value={content}
-                                        onChange={(e) => setContent(e.target.value)}
-                                        error={!!errors.content}
-                                        helperText={errors.content}
+                                        onChange={setContent}
                                     />
-                                    <FormControl fullWidth margin="normal">
-                                        <InputLabel id="category-select-label">Категория</InputLabel>
-                                        <Select
-                                            labelId="category-select-label"
-                                            value={selectedCategory}
-                                            onChange={(e) => setSelectedCategory(e.target.value)}
-                                        >
-                                            <MenuItem value="category1">Категория 1</MenuItem>
-                                            <MenuItem value="category2">Категория 2</MenuItem>
-                                        </Select>
-                                    </FormControl>
-                                    <Box>
-                                        <TextField
-                                            label="Добавить тег"
-                                            value={newTag}
-                                            onChange={(e) => setNewTag(e.target.value)}
-                                            onKeyDown={(e) => e.key === "Enter" && handleAddTag()}
-                                            sx={{ marginRight: 2 }}
+                                )}
+                                <Box sx={{ marginTop: "170px" }}>
+                                    <TextField
+                                        label="Добавить тег"
+                                        value={newTag}
+                                        onChange={(e) => setNewTag(e.target.value)}
+                                        onKeyDown={(e) => e.key === "Enter" && handleAddTag()}
+                                        sx={{ marginRight: 2 }}
+                                    />
+                                    <Button variant="contained" onClick={handleAddTag}>
+                                        Добавить
+                                    </Button>
+                                </Box>
+                                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 2 }}>
+                                    {tags.map((tag) => (
+                                        <Chip
+                                            key={tag}
+                                            label={tag}
+                                            onDelete={() => handleDeleteTag(tag)}
+                                            color="primary"
+                                            variant="outlined"
                                         />
-                                        <Button variant="contained" onClick={handleAddTag}>
-                                            Добавить
-                                        </Button>
-                                    </Box>
-                                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 2 }}>
-                                        {tags.map((tag) => (
-                                            <Chip
-                                                key={tag}
-                                                label={tag}
-                                                onDelete={() => handleDeleteTag(tag)}
-                                                color="primary"
-                                                variant="outlined"
-                                            />
-                                        ))}
-                                    </Box>
-                                    <Typography sx={{ color: "#757575", display: "flex", flexWrap: "wrap", left: "50%",bottom:"2px", mt: 2 }}>id заметки: {note.id}</Typography>
-                                </>
-                            )}
-                        </Box>
-                    </Fade>
+                                    ))}
+                                </Box>
+                            </>
+                        )}
+                    </Box>
+                    {/*</Fade>*/}
                     <Fade in={activeTab === 1} timeout={500}>
                         <Box>
                             {activeTab === 1 && (
                                 <>
-                                    <Typography variant="h6">Вложения</Typography>
+                                    {/*<Typography variant="h6">Вложения</Typography>*/}
                                     <Box mt={2}>
-                                        <Typography variant="subtitle1">Файлы:</Typography>
-                                        <Button variant="outlined" component="label" startIcon={<AttachFile />} sx={{ marginTop: "8px" }}>
-                                            Загрузить файл
+                                        {/*<Typography variant="subtitle1">Файлы:</Typography>*/}
+                                        <Button variant="outlined" component="label" startIcon={<AttachFile />} sx={{ marginTop: "8px", color:"#FFFFFF",backgroundColor:"#0033FF" }}>
+                                            {/*Загрузить файл*/}
                                             <input type="file" hidden onChange={handleFileChange} />
                                         </Button>
                                         <Box mt={2}>
@@ -623,7 +617,7 @@ const NoteModal_new = ({
                                         </Box>
                                     </Box>
                                     <Box mt={2}>
-                                        <Typography variant="subtitle1">Ссылки:</Typography>
+                                        {/*<Typography variant="subtitle1">Ссылки:</Typography>*/}
                                         <Box display="flex" mt={1}>
                                             <TextField
                                                 fullWidth
@@ -637,7 +631,7 @@ const NoteModal_new = ({
                                             </Button>
                                         </Box>
                                         <Box mt={2}>
-                                            <Typography variant="subtitle1">Ссылки:</Typography>
+                                            {/*<Typography variant="subtitle1">Ссылки:</Typography>*/}
                                             {Object.keys(openGraphData).length > 0 ? (
                                                 Object.entries(openGraphData).map(([url, ogData], index) => (
                                                     <Box key={index} display="flex" alignItems="center" justifyContent="space-between" mt={1}>
@@ -664,14 +658,14 @@ const NoteModal_new = ({
                                         </Box>
                                     </Box>
                                     <Box mt={2}>
-                                        <Typography variant="subtitle1">Аудиофайлы:</Typography>
+                                        {/*<Typography variant="subtitle1">Аудиофайлы:</Typography>*/}
                                         <Box display="flex" gap={2} mt={1}>
                                             <Button
                                                 variant="contained"
                                                 color={isRecording ? "error" : "primary"}
                                                 onClick={isRecording ? stopRecording : startRecording}
                                             >
-                                                {isRecording ? "Остановить запись" : "Записать"}
+                                                {isRecording ? "Остановить запись" : "Записать аудио"}
                                             </Button>
                                             {recordedAudio && (
                                                 <Button variant="outlined" onClick={saveRecordedAudio}>
@@ -724,22 +718,26 @@ const NoteModal_new = ({
                             }}
                         >
                             <DeleteIcon />
+                            Delete
                         </IconButton>
                     )}
 
                     {/* Кнопка копирования */}
                     <IconButton color="primary" onClick={() => handleCopyFromModal()}>
                         <ContentCopyIcon />
+                        Copy
                     </IconButton>
 
                     {/* Кнопка отмены */}
                     <IconButton color="secondary" onClick={onClose}>
                         <CancelIcon />
+                        Close
                     </IconButton>
 
                     {/* Кнопка сохранения */}
                     <IconButton color="primary" onClick={handleSave}>
                         <SaveIcon />
+                        Save
                     </IconButton>
                 </Box>
             </Box>

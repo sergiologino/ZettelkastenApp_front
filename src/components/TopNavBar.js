@@ -97,7 +97,11 @@ const TopNavBar = ({ onSearchResults , onToggleTheme, balance, resetAppState }) 
                         <SearchIcon />
                     </IconButton>
                 </SearchContainer>
-
+                {user && (
+                    <Typography variant="body1" sx={{ mr: 2 }}>
+                        {user.isAskProjectBeforeSave ? "Запрос проекта" : "Проект по умолчанию"}
+                    </Typography>
+                )}
 
                 {/* ✅ Баланс, имя пользователя и аватар */}
                 <Box sx={{display: "flex", alignItems: "center", mx: 2}}>

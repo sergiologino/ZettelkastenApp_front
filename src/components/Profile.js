@@ -7,13 +7,13 @@ import {
     Modal,
     Box,
     Typography,
-    Paper,
+    Paper, FormControlLabel, Switch,
 } from "@mui/material";
 import { PhotoCamera, Close } from "@mui/icons-material";
 import { useDropzone } from "react-dropzone";
 import api, { updateAvatar, updateUserProfile } from "../api/api";
 
-console.log("Проверка перед рендерингом ProfileModal");
+// console.log("Проверка перед рендерингом ProfileModal");
 const ProfileModal  = ({ open = false, onClose }) =>  {
     // console.log("ProfileModal рендерится, open:", open);
     const [user, setUser] = useState(null);
@@ -24,6 +24,7 @@ const ProfileModal  = ({ open = false, onClose }) =>  {
     const [phoneNumber, setPhoneNumber] = useState("");
     const [avatar, setAvatar] = useState(null);
     const [avatarPreview, setAvatarPreview] = useState("");
+    const [isAskProjectBeforeSave, setIsAskProjectBeforeSave] = useState(false);
     // console.log("открываем профиль");
 
     useEffect(() => {
@@ -38,6 +39,7 @@ const ProfileModal  = ({ open = false, onClose }) =>  {
                     setEmail(response.data.email);
                     setTlgUsername(response.data.tlgUsername);
                     setPhoneNumber(response.data.phoneNumber);
+                    setIsAskProjectBeforeSave(response.data.isAskProjectBeforeSave || false); // Значение по умолчанию false
                     // console.log("Полученный avatarUrl:", response.data.avatarUrl); // Проверка, что приходит в avatarUrl
                     setAvatarPreview(
                         response.data.avatarUrl && response.data.avatarUrl !== "0"
@@ -89,7 +91,7 @@ const ProfileModal  = ({ open = false, onClose }) =>  {
     };
 
     const handleSaveProfile = async () => {
-        const updatedUser = { username, email, password, tlgUsername, phoneNumber };
+        const updatedUser = { username, email, password, tlgUsername, phoneNumber, isAskProjectBeforeSave };
         try {
             await updateUserProfile(user.id, updatedUser);
             alert("Профиль успешно обновлён!");
@@ -179,6 +181,16 @@ const ProfileModal  = ({ open = false, onClose }) =>  {
                         value={tlgUsername}
                         onChange={(e) => setTlgUsername(e.target.value)}
                         margin="normal"
+                    />
+                    {/* Переключатель для флага isAskProjectBeforeSave */}
+                    <FormControlLabel
+                        control={
+                            <Switch
+                                checked={isAskProjectBeforeSave}
+                                onChange={(e) => setIsAskProjectBeforeSave(e.target.checked)}
+                            />
+                        }
+                        label="Запрашивать проект при отправке заметки через бота telegram"
                     />
                     <TextField
                         fullWidth

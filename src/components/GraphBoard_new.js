@@ -12,6 +12,7 @@ import AttachFileIcon from "@mui/icons-material/AttachFile";
 import DeleteIcon from "@mui/icons-material/Delete";
 import {format} from "date-fns";
 import {ru} from "date-fns/locale";
+import zIndex from "@mui/material/styles/zIndex";
 
 const GraphBoard_new = ({
                         notes,
@@ -34,6 +35,9 @@ const GraphBoard_new = ({
     const navigate = useNavigate();
     const [hoveredNote, setHoveredNote] = useState(null);
     const [recentlyHoveredNote, setRecentlyHoveredNote] = useState(null);
+    const [showEdges, setShowEdges] = useState(true);
+    const [selectedNodeForEdges, setSelectedNodeForEdges] =useState(null);
+    const BASE_URL = process.env.REACT_APP_API_URL;
 
 
     // const handleLogout = () => {
@@ -133,18 +137,24 @@ const GraphBoard_new = ({
     };
     const formatDate = (dateInput) => {
         if (!dateInput) return "Нет даты";
+         console.log("входная дата: ",dateInput);
 
         // Если `dateInput` - массив чисел, конвертируем в дату
         if (Array.isArray(dateInput) && dateInput.length >= 6) {
-            const [year, month, day, hour, minute, second, millisecond = 0] = dateInput;
+            let [year, month, day, hour, minute, second, millisecond = 0] = dateInput;
+            // Ограничиваем миллисекунды диапазоном 0-999
+            millisecond = millisecond % 1000;
             const date = new Date(year, month - 1, day, hour, minute, second, millisecond);
+            console.log("форматированная дата: ",format(date, "dd.MM.yy HH:mm", { locale: ru }));
             return format(date, "dd.MM.yy HH:mm", { locale: ru });
         }
 
         return "Некорректная дата";
     };
 
-
+    useEffect(() => {
+        setShowEdges(showEdges);
+    }, []);
     useEffect(() => {
         setNodes(
             (filteredNotes || []).map((note, index) => ({
@@ -164,7 +174,7 @@ const GraphBoard_new = ({
                     label: (
                         <div
                             style={{
-                                position: "revert",
+                                position: "relative",
                                 padding: "4px",
                                 textAlign: "center",
                                 fontSize: "12px",
@@ -174,8 +184,13 @@ const GraphBoard_new = ({
                             onMouseEnter={() => setHoveredNote(note.id)}
                             onMouseLeave={() => setTimeout(() => setHoveredNote(null), 500)}
                         >
-                            <div style={{fontSize: "12px", fontWeight: "regular", right:"8px", color: "rgba(155,159,156,0.45)"}}>
-                                {formatDate(note.createdAt)}
+                            <div style={{
+                                fontSize: "12px",
+                                fontWeight: "regular",
+                                right: "8px",
+                                color: "rgb(21,71,156)"
+                            }}>
+                                {formatDate(note.createdAt)} / {note.id}
                             </div>
                             <div style={{fontSize: "18px", fontWeight: "bold"}}>
                                 {note.title}
@@ -206,7 +221,7 @@ const GraphBoard_new = ({
                                     <span
                                         key={tag}
                                         style={{
-                                            fontSize: "0.4rem",
+                                            fontSize: "0.6rem",
                                             border: "1px solid #ccc",
                                             borderColor: getColorForTag(tag),
                                             borderRadius: "4px",
@@ -227,13 +242,14 @@ const GraphBoard_new = ({
                                 <div
                                     style={{
                                         position: "absolute",
-                                        bottom: "2px",
-                                        right: "2px",
+                                        bottom: "4px",
+                                        right: "4px",
                                         display: "flex",
                                         alignItems: "center",
                                         fontSize: "12px",
                                         color: "#006400",
                                         fontWeight: "bold",
+                                        zIndex: 1000,
                                     }}
                                 >
                                     <AttachFileIcon style={{
@@ -254,17 +270,17 @@ const GraphBoard_new = ({
                                         e.stopPropagation();
                                         handleCopyNote(note);
                                     }}
-                                    onMouseEnter={() => setHoveredNote(note.id)}
-                                    onMouseLeave={() => setTimeout(() => setHoveredNote(null), 300)}
+                                    // onMouseEnter={() => setHoveredNote(note.id)}
+                                    // onMouseLeave={() => setTimeout(() => setHoveredNote(null), 300)}
                                     style={{
                                         position: "absolute",
                                         top: "50%",
-                                        right: "-20px", // Снаружи ноды
+                                        right: "5px", // Снаружи ноды
                                         transform: "translateY(-50%)",
                                         background: "rgba(255,255,255,0.9)",
                                         width: "20px",
                                         height: "20px",
-                                        zIndex: 10,
+                                        zIndex: 800,
                                         borderRadius: "50%",
                                         border: "1px solid #ccc",
                                         boxShadow: "0 2px 5px rgba(0,0,0,0.2)",
@@ -311,8 +327,8 @@ const GraphBoard_new = ({
                 },
                 position: {x: note.x || index * 100, y: note.y || index * 50},
                 style: {
-                    width: `${note.width || 300}px`,
-                    height: `${note.height || 200}px`,
+                    width: `${note.width || 400}px`,
+                    height: `${note.height || 300}px`,
                     background: "#fff",
                     border: "1px solid #ccc",
                     borderRadius: "8px",
@@ -375,6 +391,21 @@ const GraphBoard_new = ({
     };
 
     const handleNodeClick = (event, node) => {
+
+        event.preventDefault();
+        const nodeId = node.id;
+        setSelectedNodeForEdges(prev => prev === nodeId ? null : nodeId);
+
+        // const note = notes.find((n) => n.id === node.id);
+        // if (!note) {
+        //     console.error("Заметка не найдена:", node.id);
+        //     return;
+        // }
+        // setSelectedNote(note);
+        // setIsModalOpen(true);
+    };
+    const onNodeDoubleClick  = (event, node) => {
+
         const note = notes.find((n) => n.id === node.id);
         if (!note) {
             console.error("Заметка не найдена:", node.id);
@@ -383,6 +414,9 @@ const GraphBoard_new = ({
         setSelectedNote(note);
         setIsModalOpen(true);
     };
+    const displayedEdges = selectedNodeForEdges
+        ? edges.filter(e => e.target === selectedNodeForEdges)
+        : edges;
 
     const handleSaveNote = async (updatedNote) => {
 
@@ -502,7 +536,9 @@ const GraphBoard_new = ({
         <div className="board" style={{width: "100%", height: "90vh"}}>
             <ReactFlow
                 nodes={nodes}
-                edges={edges} // Пока без связей
+                edges={ displayedEdges ? edges : [] }
+
+            // Пока без связей
                 onNodesChange={(changes) => {
                     const updatedNodes = applyNodeChanges(changes, nodes);
                     setNodes(updatedNodes);
@@ -519,10 +555,11 @@ const GraphBoard_new = ({
                 fitView
 
                 onNodeClick={handleNodeClick}
+                onNodeDoubleClick={onNodeDoubleClick}
                 // onNodeDragStart={onNodeDragStart}
                 onNodeDragStop={onNodeDragStop}
-
                 style={{flex: 1}}
+
 
             >
                 <MiniMap/>
@@ -580,8 +617,8 @@ const GraphBoard_new = ({
                         backgroundColor: "#007bff",
                         color: "#fff",
                         fontSize: "0.8rem", // Уменьшение текста
-                        border: "none",
-
+                        border: "inherit",
+                        zIndex: 900,
                         borderRadius: "6px", // Сделаем углы чуть более острыми
                         cursor: "pointer",
                     }}
